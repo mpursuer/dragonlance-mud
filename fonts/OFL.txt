@@ -1,0 +1,5 @@
+fonts/ 下的两个文件是这两种字体的子集，都按 SIL Open Font License 1.1 发布：
+  DLSerif-400.woff2 —— 思源宋体（Noto Serif SC），© 2017-2024 Adobe (http://www.adobe.com/)
+  DLDisplay.woff2 —— 站酷小薇（ZCOOL XiaoWei），Copyright 2018 The ZCOOL XiaoWei Project Authors (https://www.github.com/googlefonts/xiaowei)
+子集只为网页显示而切，字体文件里的名称和版权信息原样保留。
+许可证全文：https://openfontlicense.org/open-font-license-official-text/

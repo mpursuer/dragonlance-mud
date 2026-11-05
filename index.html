@@ -15,11 +15,25 @@
 <meta property="og:image" content="https://mpursuer.github.io/dragonlance-mud/illus/open_v01.webp">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="claude:viewport-fit-sides" content="cover">
+<script>
+/* 字体自己带（1.5.1）：按游戏里用到的字切的子集，放在 fonts/（tools/build_fonts.py 生成）。大陆连不上谷歌字体；带了这两个文件，书页的样子在哪里都一样。
+   直接双击打开本地 html 时浏览器不让读字体文件，这时候不加，退回谷歌字体或系统字体。 */
+(function () {
+  if (location.protocol === 'file:') return;
+  var h = document.head, F = [['DL Serif', 'fonts/DLSerif-400.woff2'], ['DL Display', 'fonts/DLDisplay.woff2']], css = '';
+  F.forEach(function (f) {
+    var l = document.createElement('link'); l.rel = 'preload'; l.as = 'font'; l.type = 'font/woff2'; l.href = f[1]; l.crossOrigin = 'anonymous'; h.appendChild(l);
+    css += '@font-face{font-family:"' + f[0] + '";src:url("' + f[1] + '") format("woff2");font-weight:400;font-style:normal;font-display:swap}';
+  });
+  var st = document.createElement('style'); st.textContent = css; h.appendChild(st);
+})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;600&family=ZCOOL+XiaoWei&display=swap" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;600&family=ZCOOL+XiaoWei&display=swap"></noscript>
 <style>
+/* 字体自己带（1.5.1）：@font-face 由 index.html 开头的一小段脚本加上（直接双击打开本地文件时浏览器不让读字体文件，就不加，免得报错）。 */
 :root { --gem-img: url("data:image/webp;base64,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"); }
 /* 龙枪MUD · 界面样式
    布局：左侧是一页“小说”式的滚动叙事，右侧是角色侧栏；窄屏时侧栏变成抽屉。
@@ -39,9 +53,9 @@
   --blood: #963a28;
   --good: #2b6236;
   --shadow: 0 10px 40px rgba(30, 20, 40, 0.18);
-  --font-body: "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
+  --font-body: "DL Serif", "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
   --font-ui: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
-  --font-display: "ZCOOL XiaoWei", "Noto Serif SC", "Songti SC", serif;
+  --font-display: "DL Display", "ZCOOL XiaoWei", "DL Serif", "Noto Serif SC", "Songti SC", serif;
   --fs: 17px;
   color-scheme: light;
 }
@@ -478,6 +492,193 @@ table.pt thead th { color: var(--muted); font-weight: 500; }
 .fate-last { margin-top: 12px; color: var(--gem); }
 .wx-tip { margin: 0 auto 14px; max-width: 30em; padding: 8px 12px; border: 1px solid var(--ember); border-radius: 8px; color: var(--ember); font-family: var(--font-ui); font-size: 13px; line-height: 1.5; text-align: left; }
 
+/* =================================================================
+   1.5.1 视觉层（js/look.js）
+   ================================================================= */
+:root { --sd-w: #94550f; --sd-h: #5c4a99; --sd-t: #276a7a; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --sd-w: #e3a55c; --sd-h: #ab9ee6; --sd-t: #7cc6d6; } }
+:root[data-theme="dark"] { --sd-w: #e3a55c; --sd-h: #ab9ee6; --sd-t: #7cc6d6; }
+
+/* ---------- 头像 ---------- */
+.av { width: var(--s, 30px); height: var(--s, 30px); border-radius: 50%; object-fit: cover; flex: none; display: inline-flex; align-items: center; justify-content: center;
+  background: var(--panel-2); box-shadow: 0 0 0 1px var(--line-strong); font-family: var(--font-ui); font-size: calc(var(--s, 30px) * 0.42); color: var(--muted); line-height: 1; }
+.av.av-emb { background: none; box-shadow: none; }
+.av.av-emb .emb { width: calc(var(--s, 30px) * 0.78); height: calc(var(--s, 30px) * 0.86); font-size: calc(var(--s, 30px) * 0.4); margin: 0; }
+.av.av-me { color: var(--gem); }
+.has-av { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 10px; align-items: start; }
+.has-av > .av { margin-top: 0.22em; }
+.b-say.has-av .tx { min-width: 0; }
+
+/* ---------- 一、戏剧效果的舞台卡（同一幕的几块拼成一张卡） ---------- */
+.b.stg { --c: var(--sd-h); margin-block: 0; padding: 5px 18px; color: var(--ink); max-width: calc(var(--fs, 17px) * 40); box-sizing: border-box;
+  background: color-mix(in srgb, var(--c) 7%, var(--panel)); border: 0; border-left: 1px solid color-mix(in srgb, var(--c) 40%, var(--line)); border-right: 1px solid color-mix(in srgb, var(--c) 40%, var(--line)); border-radius: 0; }
+.b.stg.sd-w { --c: var(--sd-w); }
+.b.stg.sd-t { --c: var(--sd-t); }
+.b.stg.stg-head { margin-top: 1.3em; padding: 12px 18px 6px; border-top: 1px solid color-mix(in srgb, var(--c) 40%, var(--line)); border-radius: 12px 12px 0 0;
+  display: flex; align-items: center; gap: 10px; color: var(--c); font-family: var(--font-display); letter-spacing: 0.2em; font-size: 0.95em; }
+.b-dstage.stg::before, .b-dstage.stg::after { content: none; }
+.sh-mark { width: 18px; height: 18px; flex: none; background: var(--gem-img) center / contain no-repeat; filter: drop-shadow(0 0 5px var(--c)); }
+.sh-sp { margin-left: auto; font-family: var(--font-ui); font-size: 12px; letter-spacing: 0.08em; border: 1px solid var(--c); border-radius: 999px; padding: 1px 9px; }
+.b.stg.stg-end { padding: 0; height: 12px; border-bottom: 1px solid color-mix(in srgb, var(--c) 40%, var(--line)); border-radius: 0 0 12px 12px; margin-bottom: 1.1em; }
+.b.stg.stg-gem { font-size: 0.9em; color: var(--c); padding-block: 0 6px; }
+.b.stg.stg-act { font-size: 1.1em; line-height: 1.9; padding-block: 8px 10px; }
+.b.stg.stg-react { font-size: 0.97em; padding-block: 6px; border-top: 1px dashed color-mix(in srgb, var(--c) 22%, transparent); }
+.b.stg.stg-recover { color: var(--muted); padding-block: 6px; border-top: 1px dashed color-mix(in srgb, var(--c) 22%, transparent); }
+.b.stg.stg-situ { color: var(--muted); font-size: 0.92em; text-align: center; padding-block: 0 6px; }
+.b.stg.stg-roll, .b.stg.stg-note { font-family: var(--font-ui); font-size: 12.5px; line-height: 1.6; color: var(--muted); padding-block: 2px; }
+.b.stg.stg-roll { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; opacity: 1; }
+.b.stg.stg-roll::before { content: "掷骰 · "; color: var(--c); }
+.b.stg.stg-roll.open { white-space: normal; }
+.b.stg.stg-roll:focus-visible { outline-offset: -2px; }
+.hide-rolls .b-roll.stg { display: none; }
+.b.stg.b-div { color: var(--c); }
+.b.stg.b-dcount { font-family: var(--font-ui); font-size: 12.5px; color: var(--c); }
+
+/* ---------- 二、回响 ---------- */
+.b-recall { margin-block: 0.4em 1em; padding: 10px 14px 12px; border-radius: 10px; color: var(--ink);
+  background: color-mix(in srgb, var(--ember) 6%, var(--panel)); border: 1px solid color-mix(in srgb, var(--ember) 24%, var(--line)); }
+.b-recall .rc-tag { font-family: var(--font-ui); font-size: 12px; letter-spacing: 0.14em; color: var(--ember); margin-bottom: 4px; }
+.b-recall .rc-tag::before { content: "↺ "; letter-spacing: 0; }
+.b-recall .rc-row { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 10px; align-items: start; }
+.b-recall .rc-row > .av { margin-top: 0.22em; }
+.b-recall.scene { background: transparent; border-style: dashed; }
+
+/* ---------- 三、半身像 ---------- */
+.b-bust { margin-block: 0.4em 0.6em; text-align: center; white-space: normal; }
+.bust { margin: 0 auto; width: min(220px, 62%); }
+.bust .act-pt { display: block; width: 100%; padding: 0; border: 0; background: none; cursor: zoom-in; }
+.bust img { display: block; width: 100%; height: auto; border-radius: 12px 12px 0 0; -webkit-mask-image: linear-gradient(#000 72%, transparent); mask-image: linear-gradient(#000 72%, transparent); }
+.bust figcaption { position: relative; margin-top: -1.4em; font-family: var(--font-display); color: var(--ember); letter-spacing: 0.12em; font-size: 1.05em; }
+.b-busts { margin-block: 0.6em 0.8em; white-space: normal; }
+.b-busts .ring { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; }
+.b-busts figure { margin: 0; width: 88px; text-align: center; }
+.b-busts img { display: block; width: 100%; height: auto; border-radius: 10px 10px 0 0; -webkit-mask-image: linear-gradient(#000 70%, transparent); mask-image: linear-gradient(#000 70%, transparent); }
+.b-busts figcaption { margin-top: -1.2em; position: relative; font-family: var(--font-ui); font-size: 12px; color: var(--ink); }
+.b-busts .fire { height: 30px; margin-top: 2px; background: radial-gradient(ellipse 30% 100% at 50% 100%, rgba(255, 160, 70, 0.6), rgba(255, 120, 50, 0.15) 60%, transparent 75%); animation: fire 3.2s ease-in-out infinite; }
+@keyframes fire { 50% { opacity: 0.7; transform: scaleX(0.94); } }
+
+/* ---------- 四、插图：全屏、书封、标题背景 ---------- */
+img.zoomable { cursor: zoom-in; }
+.b-illus.cover { max-width: 56em; }
+.b-illus.cover .ill-frame { position: relative; filter: none; border-radius: 6px; }
+.b-illus.cover .ill-frame img { width: 100%; height: clamp(240px, 58vh, 560px); object-fit: cover; object-position: 50% 45%; animation: cv-pan 46s ease-in-out infinite alternate; }
+@keyframes cv-pan { from { object-position: 0% 45%; } to { object-position: 100% 45%; } }
+.cv-txt { position: absolute; left: 0; right: 0; bottom: 0; padding: 70px 24px 20px; line-height: 1.35; color: #f4efe4; text-align: left; pointer-events: none;
+  background: linear-gradient(rgba(10, 8, 14, 0), rgba(10, 8, 14, 0.86)); }
+.cv-vol { font-family: var(--font-ui); font-size: 13px; letter-spacing: 0.36em; color: #e8c88e; }
+.cv-name { font-family: var(--font-display); font-size: clamp(30px, 7vw, 46px); letter-spacing: 0.12em; margin-top: 2px; }
+.cv-ch { font-family: var(--font-display); font-size: 17px; letter-spacing: 0.1em; margin-top: 6px; }
+.cv-it { font-family: var(--font-ui); font-size: 12.5px; opacity: 0.72; margin-top: 6px; }
+@media (max-width: 720px) {
+  .b-illus.cover { margin-left: -16px; margin-right: -16px; max-width: none; }
+  .b-illus.cover .ill-frame { border-radius: 0; }
+  .b-illus.cover .ill-frame img { height: 60vh; }
+}
+.lb { position: fixed; inset: 0; z-index: 60; background: #070609; }
+.lb-sc { position: absolute; inset: 0; overflow: auto; display: flex; align-items: center; justify-content: center; overscroll-behavior: contain; }
+.lb.zoomed .lb-sc { display: block; }
+.lb-sc img { display: block; margin: auto; max-width: 100vw; max-height: 100vh; width: auto; height: auto; }
+.lb.zoomed .lb-sc img { max-width: none; }
+.lb-x { position: absolute; top: max(12px, env(safe-area-inset-top, 0px)); right: 12px; background: rgba(30, 26, 38, 0.85); color: #eee; border-color: rgba(255, 255, 255, 0.25); }
+.lb-cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 16px max(14px, env(safe-area-inset-bottom, 0px)); color: #ddd; font: 13px/1.6 var(--font-ui); background: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.72)); pointer-events: none; }
+.lb-tip { position: absolute; top: max(18px, env(safe-area-inset-top, 0px)); left: 16px; color: rgba(255, 255, 255, 0.55); font: 12px var(--font-ui); pointer-events: none; }
+.lb.zoomed .lb-tip, .lb.zoomed .lb-cap { display: none; }
+/* 标题画面：第一卷的开场图做背景；收起侧栏和命令框 */
+.app[data-mode="title"] .side, .app[data-mode="title"] .dock { display: none; }
+.app[data-mode="title"] #btnPanel { display: none; }
+.title-screen.has-art { position: relative; max-width: none; margin: -24px -16px -16px; padding: 10vh 16px 6vh; min-height: 100%; box-sizing: border-box;
+  background-image: linear-gradient(color-mix(in srgb, var(--bg) 58%, transparent), color-mix(in srgb, var(--bg) 88%, transparent) 46%, var(--bg) 82%), var(--title-art);
+  background-size: cover; background-position: center 28%; }
+.title-screen.has-art .tt { text-shadow: 0 2px 18px color-mix(in srgb, var(--bg) 80%, transparent); }
+.title-screen.has-art .tq { color: var(--ink); }
+
+/* ---------- 五、场合 ---------- */
+.app { background: var(--bg); }
+/* 里世界：偏紫，四角暗下去 */
+.app[data-dream] { --bg: #120f1f; --panel: #19142a; --panel-2: #231c39; --ink: #e2dbf6; --muted: #a59bc7; --line: #2e2647; --line-strong: #6f6396;
+  --ember: #cdb2ff; --say: #e3d2ff; --gem: #c3b5ff; --gem-soft: rgba(195, 181, 255, 0.12); --blood: #ff9a86; --good: #a6e0b0; color-scheme: dark; color: var(--ink); }
+.app[data-dream] .log { background: radial-gradient(ellipse 85% 70% at 50% 40%, transparent 55%, rgba(4, 2, 12, 0.6) 100%) fixed, var(--bg); letter-spacing: 0.02em; }
+.app[data-dream] .b-room .rt { text-shadow: 0 0 12px rgba(205, 178, 255, 0.5); }
+/* 章间夜：暗底，底部透出营火的光 */
+.app[data-night] { --bg: #120d0b; --panel: #1a1310; --panel-2: #251b16; --ink: #f1e4d0; --muted: #b09a83; --line: #33271f; --line-strong: #6e5a49;
+  --ember: #f2ad5e; --say: #f6d9a8; --gem: #c8b4f0; --gem-soft: rgba(200, 180, 240, 0.1); --blood: #ec8a72; --good: #9ccf9f; color-scheme: dark; color: var(--ink); }
+.app[data-night] .log { background: radial-gradient(ellipse 70% 38% at 50% 108%, rgba(240, 140, 60, 0.26), rgba(240, 140, 60, 0.06) 60%, transparent 75%) fixed, var(--bg); }
+/* 时辰：顶栏和状态条的色调 */
+.app[data-tod] .bar, .app[data-tod] .statusbar { background-image: linear-gradient(90deg, var(--tod, transparent), transparent 70%); }
+.app[data-tod="dawn"] { --tod: rgba(236, 160, 140, 0.16); }
+.app[data-tod="day"] { --tod: rgba(240, 210, 130, 0.08); }
+.app[data-tod="dusk"] { --tod: rgba(226, 122, 58, 0.18); }
+.app[data-tod="night"] { --tod: rgba(92, 104, 190, 0.18); }
+/* 三个月亮 */
+.moon-slot { display: inline-flex; align-items: center; margin-right: 6px; }
+.moons { display: inline-flex; align-items: center; gap: 3px; vertical-align: middle; }
+.mn { display: block; }
+.mn .mn-d { fill: color-mix(in srgb, var(--muted) 22%, transparent); }
+.mn .mn-o { fill: none; stroke: color-mix(in srgb, var(--muted) 55%, transparent); stroke-width: 0.8; }
+.mn.solinari .mn-l { fill: #ece9f6; }
+.mn.lunitari .mn-l { fill: #e2614f; }
+.mn.nuitari .mn-l { fill: #2a1f36; }
+.mn.nuitari .mn-o { stroke: var(--gem); }
+.mn.unseen { opacity: 0.45; }
+.mn.unseen .mn-o { stroke-dasharray: 2 2; }
+.mn.lone .mn-l { fill: #d9dbe6; }
+.sb-moons { margin-left: auto; padding-left: 8px; flex: none; display: inline-flex; }
+
+/* ---------- 六、章末卡片、卷末一页 ---------- */
+.b-page { white-space: normal; font-family: var(--font-ui); font-size: 0.92em; color: var(--ink); max-width: calc(var(--fs, 17px) * 40); }
+.cc, .vp { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); padding: 14px 16px 10px; }
+.cc-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.cc-k { color: var(--muted); font-size: 12.5px; letter-spacing: 0.06em; margin: 12px 0 6px; }
+.cc-row .cc-k { margin: 0; }
+.cc-v { font-size: 22px; color: var(--gem); font-variant-numeric: tabular-nums; }
+.cc-v small { font-size: 12px; color: var(--muted); margin-left: 6px; }
+.cc-meter { position: relative; height: 6px; border-radius: 999px; background: var(--panel-2); margin-top: 8px; overflow: hidden; }
+.cc-meter i { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(90deg, var(--sd-h), var(--sd-t) 60%, var(--sd-w)); border-radius: 999px; }
+.cc-meter b { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--bg); opacity: 0.7; }
+.cc-ticks { display: grid; grid-template-columns: 20fr 30fr 30fr 20fr; font-size: 11.5px; color: var(--muted); margin-top: 4px; }
+.cc-ticks .cur { color: var(--gem); font-weight: 600; }
+.cc-sums, .cc-ev, .vp-three { list-style: none; margin: 0; padding: 0; }
+.cc-sums li { display: flex; gap: 8px; align-items: center; padding: 3px 0; font-family: var(--font-body); font-size: 15px; }
+.cc-sums li span { border-left: 2px solid var(--c, var(--sd-h)); padding-left: 8px; }
+.cc-sums li.sd-w, .vp-three li.sd-w { --c: var(--sd-w); } .cc-sums li.sd-t, .vp-three li.sd-t { --c: var(--sd-t); } .cc-sums li.sd-h, .vp-three li.sd-h { --c: var(--sd-h); }
+.cc-ev li { padding: 2px 0 2px 14px; position: relative; font-family: var(--font-body); font-size: 15px; }
+.cc-ev li::before { content: "·"; position: absolute; left: 2px; color: var(--ember); }
+.cc-comps { display: flex; flex-wrap: wrap; gap: 6px; }
+.cc-c { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 4px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel-2); font-size: 13px; }
+.cc-c small { color: var(--muted); font-size: 12px; }
+.cc-c em { font-style: normal; font-weight: 700; }
+.cc-c em.up { color: var(--good); } .cc-c em.dn { color: var(--blood); }
+.cc-c.gone { opacity: 0.6; }
+.cc-lv { margin-top: 10px; color: var(--muted); font-size: 12.5px; }
+.cc-all { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 6px; }
+.cc-all summary { cursor: pointer; color: var(--muted); font-size: 12.5px; }
+.cc-raw { white-space: pre-wrap; color: var(--muted); font-size: 12.5px; line-height: 1.7; margin-top: 6px; }
+.vp { padding: 16px 18px 12px; }
+.vp-river .rv { display: block; width: 100%; height: auto; }
+.rv-p { fill: none; stroke: var(--sd-t); stroke-width: 3; stroke-linecap: round; opacity: 0.85; }
+.rv-fork { fill: none; stroke: var(--sd-w); stroke-width: 2.5; stroke-linecap: round; stroke-dasharray: 5 4; }
+.rv-l { font: 11px var(--font-ui); fill: var(--muted); text-anchor: middle; }
+.rv-l.cur { fill: var(--gem); font-weight: 700; }
+.vp-tier { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+.vp-tier b { font-family: var(--font-display); font-weight: 400; font-size: 24px; color: var(--gem); letter-spacing: 0.1em; }
+.vp-tier span { font-size: 18px; font-variant-numeric: tabular-nums; }
+.vp-tier small { color: var(--muted); font-size: 12.5px; }
+.vp-h { font-family: var(--font-display); font-weight: 400; font-size: 17px; color: var(--ember); letter-spacing: 0.08em; margin: 16px 0 8px; }
+.vp-three li { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 12px; align-items: center; padding: 8px 0; border-top: 1px dashed var(--line); }
+.vp-three li:first-child { border-top: 0; }
+.vp-three li span { display: block; font-family: var(--font-body); font-size: 16px; border-left: 2px solid var(--c, var(--sd-h)); padding-left: 10px; }
+.vp-three li small { display: block; color: var(--muted); font-size: 12px; padding-left: 12px; margin-top: 2px; }
+.vp-empty { color: var(--muted); font-family: var(--font-body); }
+.vp-note { margin: 14px 0 4px; padding: 10px 14px; border-left: 3px double var(--ember); font-family: var(--font-display); font-size: 17px; line-height: 1.7; color: var(--ink); background: color-mix(in srgb, var(--ember) 5%, transparent); }
+.vp-note span { display: block; font-family: var(--font-ui); font-size: 12px; color: var(--muted); letter-spacing: 0.06em; }
+.vp-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .b-illus.cover .ill-frame img, .b-busts .fire { animation: none; }
+}
+@media (max-width: 900px) { .moon-slot { display: none; } }
+@media (min-width: 901px) { .sb-moons { display: none; } }
+
 </style>
 </head>
 <body>
@@ -879,23 +1080,26 @@ table.pt thead th { color: var(--muted); font-weight: 500; }
     if (cls === 'narr' || cls === 'sys' || cls === 'hint') text = tok.quoteCmds(text);
     var blk = { cls: cls, text: text };
     if (extra) for (var k in extra) blk[k] = extra[k];
+    // 戏剧效果的那一幕（ux.js 打开）：这期间的每一块都属于同一张“舞台卡”
+    if (DL.io.stage && cls !== 'clear' && cls !== 'choice') { blk.stg = DL.io.stage.id; blk.sdir = DL.io.stage.dir; if (!blk.role) blk.role = cls === 'drama' ? 'react' : cls === 'gem' ? 'gem' : cls === 'dstage' ? 'head' : cls === 'dend' ? 'end' : 'note'; }
     // 同伴回合的战报：折叠进本轮摘要，点“展开”才显示
     if (DL.io.foldGrp && (cls === 'combat' || cls === 'roll' || cls === 'say' || cls === 'drama')) blk.fold = DL.io.foldGrp;
     DL.io.emit(blk);
   }
   DL.out = {
-    narr: function (t) { b('narr', DL.fill(t, DL.ctxVars())); },          // 叙述
-    text: function (t, cls) { b(cls || 'narr', DL.fill(t, DL.ctxVars())); },
+    narr: function (t, x) { b('narr', DL.fill(t, DL.ctxVars()), x); },          // 叙述
+    text: function (t, cls, x) { b(cls || 'narr', DL.fill(t, DL.ctxVars()), x); },
     cut: function (t) { b('cut', DL.fill(t, DL.ctxVars())); },             // 过场（逐字显示）
     say: function (who, line) {                                            // 人物台词
       b('say', (who ? DL.tok.npc(who) + '：' : '') + DL.fill(line, DL.ctxVars()), { who: who });
     },
-    sys: function (t) { b('sys', DL.fill(t, DL.ctxVars())); },             // 系统提示
+    sys: function (t, x) { b('sys', DL.fill(t, DL.ctxVars()), x); },             // 系统提示
     hint: function (t, noRec) { var s = tok.quoteCmds(DL.fill(t, DL.ctxVars())); if (!noRec && DL.recHint) DL.recHint(s); b('hint', DL.W && DL.W.linkPlaces ? DL.W.linkPlaces(s) : s); },   // 新手提示（记在这个地方，卡住时可以再看；提到的去过的地方可以点）
     combat: function (t) { b('combat', t); },
-    roll: function (t) { b('roll', t); },                                   // 掷骰细节（默认折叠）
-    drama: function (t) { b('drama', DL.fill(t, DL.ctxVars())); },          // 戏剧效果
-    gem: function (t) { b('gem', DL.fill(t, DL.ctxVars())); },              // 宝石的低语
+    roll: function (t, x) { b('roll', t, x); },                                   // 掷骰细节（默认折叠）
+    drama: function (t, x) { b('drama', DL.fill(t, DL.ctxVars()), x); },          // 戏剧效果（x.role：act 动作 / react 反应 / recover 回神 / situ 旁白；x.who：是谁）
+    gem: function (t, x) { b('gem', DL.fill(t, DL.ctxVars()), x); },              // 宝石的低语
+    recall: function (t, x) { b('recall', DL.fill(t, DL.ctxVars()), x); },        // 回响：有人提起以前的事（x.who 说话的人、x.about 当事人、x.at 地点）
     book: function (t) { b('book', t); },                                   // 那本旧小说的书页
     div: function (t) { b('div', t); },                                     // 历史偏离度
     title: function (t, sub) { b('title', t, { sub: sub || '' }); },
@@ -919,7 +1123,7 @@ table.pt thead th { color: var(--muted); font-weight: 500; }
 (function (root) {
   'use strict';
   var DL = root.DL;
-  DL.VERSION = '1.5.0';
+  DL.VERSION = '1.5.1';
   DL.SAVE_VERSION = 1;
 
   DL.newState = function () {
@@ -3076,7 +3280,7 @@ table.pt thead th { color: var(--muted); font-weight: 500; }
     var P = DL.S.player, sl = DL.A.skill(P, 'sleight'), ch = DL.mod(P.abil.cha), m = sl + ch;
     var r = DL.d20(0, DL.R.SPECIES[P.species] && DL.R.SPECIES[P.species].lucky), tot = r.roll + m;
     DL.out.sys('［掩饰］你装作什么都没发生：d20=' + r.roll + '，巧手 ' + DL.sgn(sl) + '，魅力 ' + DL.sgn(ch) + '，合计 ' + tot + '。' +
-      (r.roll === 20 ? '天衣无缝。' : r.roll === 1 ? '你的表情出卖了你。' : '') + '旁人要在察觉检定里掷到 ' + tot + ' 才会发现异样。');
+      (r.roll === 20 ? '天衣无缝。' : r.roll === 1 ? '你的表情出卖了你。' : '') + '旁人要在察觉检定里掷到 ' + tot + ' 才会发现异样。', { role: 'roll' });
     return tot;
   };
   DR.resolve = function (tid, unit, cf, cardRef, act, c) {
@@ -3089,20 +3293,20 @@ table.pt thead th { color: var(--muted); font-weight: 500; }
     var vars = DL.extend({}, DL.ctxVars(), env, { tgt: tname });
     DL.out.gem(DL.pick(['（口袋里的宝石微微发烫。）', '（宝石在口袋里轻轻一跳，烫得像一块刚出炉的炭。）', '（你感觉到宝石在口袋深处转了个身。）']));
     // 执行
-    var actText = DL.fill(DL.W.val(act.act, c), vars);
-    DL.out.drama(actText);
-    if (DL.SITU && !c.combat) { var sl = DL.SITU.beat(act, c, vars, tid); if (sl) DL.out.drama(sl); }   // 情境：按场合和本章局势多一句
+    var actText = DL.fill(DL.W.val(act.act, c), vars), who0 = unit ? (unit.ref || tid) : tid;
+    DL.out.drama(actText, { role: 'act', who: who0 });
+    if (DL.SITU && !c.combat) { var sl = DL.SITU.beat(act, c, vars, tid); if (sl) DL.out.drama(sl, { role: 'situ' }); }   // 情境：按场合和本章局势多一句
     DR.curDC = DR.concealRoll();          // 生效之后立刻掷掩饰；之后所有察觉、洞悉都以它为难度
     if (unit) unit.dramaActive = true;
     if (c.combat && act.cfx) { var cu = unit || (DL.S.combat && DL.S.combat.units[tid]); if (cu) act.cfx(cu, c); }
     else if (c.combat) { var cu = unit || DL.S.combat.units[tid]; if (cu) { cu.skip = 1; cu.skipText = tname + '还没从刚才的失态里回过神来，这回合什么也没做。'; } }
-    if (act.recoverFirst && act.recover) DL.out.drama(DL.fill(DL.W.val(act.recover, c), vars));
+    if (act.recoverFirst && act.recover) DL.out.drama(DL.fill(DL.W.val(act.recover, c), vars), { role: 'recover', who: who0 });
     // 群体模仿（巴兹龙人）：看见这一幕的同类各掷 d6，掷出 1 的下回合照做
     if (c.combat && unit && card.imitate) {
       var mates = DL.combat.living('enemy').filter(function (o) { return o !== unit && o.kind === unit.kind && !o.dramaNext; });
       var copy = mates.filter(function () { return DL.die(6) === 1; });
       copy.forEach(function (o) { o.dramaNext = act.id; });
-      if (copy.length) DL.out.drama('旁边的' + copy.map(function (o) { return o.name; }).join('、') + '直勾勾地盯着这一幕，爪子开始发痒。');
+      if (copy.length) DL.out.drama('旁边的' + copy.map(function (o) { return o.name; }).join('、') + '直勾勾地盯着这一幕，爪子开始发痒。', { role: 'react' });
     }
     // 反应
     var reacted = {};
@@ -3113,20 +3317,20 @@ table.pt thead th { color: var(--muted); font-weight: 500; }
         var r = act.react[rid]; if (typeof r === 'string') r = { t: r };
         if (r.cond && !r.cond(c)) return;
         reacted[rid] = true;
-        if (r.t) DL.out.drama(DL.fill(DL.W.val(r.t, c), vars));
+        if (r.t) DL.out.drama(DL.fill(DL.W.val(r.t, c), vars), { role: 'react', who: rid });
         if (r.fx) r.fx(c);
       });
     }
     if (!c.combat) DR.templateReactions(tid, card, act, c, reacted, vars);
     // 回神
-    if (act.recover && !act.recoverFirst) DL.out.drama(DL.fill(DL.W.val(act.recover, c), vars));
+    if (act.recover && !act.recoverFirst) DL.out.drama(DL.fill(DL.W.val(act.recover, c), vars), { role: 'recover', who: who0 });
     if (act.fx) act.fx(c);
     // 察觉
     var first = d.total === 0;
     var cnt = d.counts[cardRef] || 0;
     DR.perceive(tid, unit, card, cardRef, act, c, cnt, first);
     // 泰斯在场：一天内传遍全队
-    if (c.present('tas') && tid !== 'tas') { DL.setFlag('gossip_' + act.id); DL.out.sys('（泰斯全程看在眼里。不出一天，全队都会知道这件事。）'); }
+    if (c.present('tas') && tid !== 'tas') { DL.setFlag('gossip_' + act.id); DL.out.sys('（泰斯全程看在眼里。不出一天，全队都会知道这件事。）', { role: 'note', who: 'tas' }); }
     if (act.absent) Object.keys(act.absent).forEach(function (aid) { if (!c.present(aid) && aid !== tid) act.absent[aid](c); });
     // 偏离度与记账
     DL.diverge(act.special ? 3 : 1, act.sum ? DL.fill(act.sum, vars) : (tname + '做出了反常的举动'));
@@ -3135,7 +3339,7 @@ table.pt thead th { color: var(--muted); font-weight: 500; }
     var rm = DL.W.room(), at = ''; try { at = rm ? DL.W.val(rm.name) : ''; } catch (e) { at = ''; }
     d.log.push({ t: S.time, target: cardRef, act: act.id, sum: act.sum ? DL.fill(act.sum, vars) : '', dir: act.dir, ch: S.chapter, at: at, sp: act.special ? 1 : 0, wit: (c.list || []).slice(0, 8), txt: String(actText || '').slice(0, 180) });
     var left = DR.left();
-    DL.out.sys(left > 0 ? '（今天还能再用 ' + left + ' 次戏剧效果。）' : '（今天的 ' + DR.PER_DAY + ' 次戏剧效果已经用完，长休后恢复。）');
+    DL.out.sys(left > 0 ? '（今天还能再用 ' + left + ' 次戏剧效果。）' : '（今天的 ' + DR.PER_DAY + ' 次戏剧效果已经用完，长休后恢复。）', { role: 'note' });
     if (act.flag) DL.setFlag(act.flag);
     if (DL.game && DL.game.onDrama) DL.game.onDrama(cardRef, act);
   };
@@ -3157,11 +3361,11 @@ table.pt thead th { color: var(--muted); font-weight: 500; }
       var choices = tpl.filter(function (t) { return !usedTpl[t]; });
       if (!choices.length) return;
       var pick = DL.pick(choices); usedTpl[pick] = true;
-      lines.push(DL.fill(pick, DL.extend({}, vars, { by: DL.nameOf(bid) })));
+      lines.push({ t: DL.fill(pick, DL.extend({}, vars, { by: DL.nameOf(bid) })), who: bid });
       used++;
     });
-    if (!reacted.crowd && c.townsfolk && act.react && !act.react.crowd) lines.push(DL.fill(DL.pick(DL.DRAMA_TPL.crowd[act.dir]), vars));
-    if (lines.length) DL.out.drama(lines.join(''));
+    if (!reacted.crowd && c.townsfolk && act.react && !act.react.crowd) lines.push({ t: DL.fill(DL.pick(DL.DRAMA_TPL.crowd[act.dir]), vars), who: 'crowd' });
+    lines.forEach(function (l) { DL.out.drama(l.t, { role: 'react', who: l.who }); });
   };
 
   DR.perceive = function (tid, unit, card, cardRef, act, c, cnt, first) {
@@ -3182,13 +3386,13 @@ table.pt thead th { color: var(--muted); font-weight: 500; }
       if (cnt >= 2 || total >= dc) res = 'notice';
       if (total >= lockAt) res = 'lock';
       if (first && res === 'lock') res = 'notice';
-      DL.out.roll(tname + '的察觉检定（' + DL.R.SKILLS[p.skill].cn + (adv > 0 ? '，优势' : adv < 0 ? '，劣势' : '') + '）：d20=' + r.roll + DL.sgn(mod) + ' = ' + total + '，DC ' + dc + (cnt >= 2 ? '（第三次起自动察觉）' : '') + (first ? '（宝石第一次发动，不会被锁定）' : ''));
+      DL.out.roll(tname + '的察觉检定（' + DL.R.SKILLS[p.skill].cn + (adv > 0 ? '，优势' : adv < 0 ? '，劣势' : '') + '）：d20=' + r.roll + DL.sgn(mod) + ' = ' + total + '，DC ' + dc + (cnt >= 2 ? '（第三次起自动察觉）' : '') + (first ? '（宝石第一次发动，不会被锁定）' : ''), { role: 'roll' });
     } else if (p && p.none === undefined) {
       res = 'none';
     }
     var o = p && p[res];
     var label = { none: '未察觉', notice: '察觉，但未锁定', lock: '锁定了你' }[res];
-    if (p && p.skill) DL.out.sys('［察觉］' + tname + '：' + label + '（' + total + ' 对 ' + dc + '）。' + (o && o.t ? DL.fill(DL.W.val(o.t, c), DL.ctxVars()) : ''));
+    if (p && p.skill) DL.out.sys('［察觉］' + tname + '：' + label + '（' + total + ' 对 ' + dc + '）。' + (o && o.t ? DL.fill(DL.W.val(o.t, c), DL.ctxVars()) : ''), { role: 'roll', who: who });
     if (o && o.fx) o.fx(c);
     if (act.perceive && act.perceive[res]) act.perceive[res](c);
     if (res === 'lock') DL.diverge(2, tname + '察觉到了你的宝石');
@@ -3200,13 +3404,13 @@ table.pt thead th { color: var(--muted); font-weight: 500; }
         var ok = DL.check(bid, 'insight', dc, { silent: true, adv: bid === 'goldmoon' ? 1 : 0 }).ok;
         if (bid === 'goldmoon' && DL.flag('goldmoon_suspects_force') && !DL.flag('goldmoon_confronts_player') && DL.S.drama.total > 0) {
           DL.setFlag('goldmoon_confronts_player'); DL.addRel('goldmoon', 'player', -1);
-          DL.out.drama('金月的目光越过众人，落在了你身上。她什么也没说，但你知道，她开始怀疑最近才出现的那个人了。');
+          DL.out.drama('金月的目光越过众人，落在了你身上。她什么也没说，但你知道，她开始怀疑最近才出现的那个人了。', { role: 'react', who: 'goldmoon' });
           return;
         }
         if (ok) notes.push(DL.nameOf(bid));
       });
-      if (notes.length > 4) DL.out.sys('［旁观］在场的人几乎都觉得' + tname + '刚才很不对劲（' + notes.join('、') + '），但没有人联想到你。');
-      else if (notes.length) DL.out.sys('［旁观］' + notes.join('、') + '觉得' + tname + '刚才很不对劲，但没有联想到你。');
+      if (notes.length > 4) DL.out.sys('［旁观］在场的人几乎都觉得' + tname + '刚才很不对劲（' + notes.join('、') + '），但没有人联想到你。', { role: 'roll' });
+      else if (notes.length) DL.out.sys('［旁观］' + notes.join('、') + '觉得' + tname + '刚才很不对劲，但没有联想到你。', { role: 'roll' });
     }
     return res;
   };
@@ -4925,7 +5129,14 @@ table.pt thead th { color: var(--muted); font-weight: 500; }
     var nx = CH.next(id);
     if (nx && CH.LEVEL[nx]) lines.push('经验：' + S.xp + '。' + CH.name(nx) + '开始时升到 ' + CH.LEVEL[nx] + ' 级。');
     else lines.push('经验：' + S.xp + '。');
-    DL.out.text(lines.join('\n\n'), 'sys');
+    // 给界面排成章末卡片用的数据（文字照旧，放在卡片的“全部”里）；同伴态度和上一章比
+    var relNow = {}, relPrev = S.chRel || {};
+    ids.forEach(function (k) { relNow[k] = DL.rel(k, 'player'); });
+    var page = { ch: id, name: CH.name(id), next: nx ? CH.name(nx) : '', lv: nx && CH.LEVEL[nx] ? CH.LEVEL[nx] : 0, div: S.div, dDiv: Math.max(0, dDiv), tier: DL.divTierIdx(S.div), tcn: t.cn, tdesc: t.desc,
+      used: dDrama, sums: logs.map(function (e) { return { sum: e.sum, who: e.target, dir: e.dir }; }).slice(-4), events: ev.map(function (x) { return x.replace(/^· /, ''); }),
+      comps: ids.map(function (k) { return { id: k, name: DL.NPC[k].name, att: DL.attitudeOf ? DL.attitudeOf(k) : DL.attitude(relNow[k]), d: relPrev[k] == null ? 0 : relNow[k] - relPrev[k] }; }) };
+    S.chRel = relNow;
+    DL.out.text(lines.join('\n\n'), 'sys', { page: 'chend', data: page });
     if (CH.afterSummary) CH.afterSummary(id);       // 回响：书页在动（echo.js）
   };
   DLG.ch_next = {
@@ -6447,6 +6658,15 @@ table.pt thead th { color: var(--muted); font-weight: 500; }
   var DL = root.DL, CH = DL.CH, D = DL.D, SG = DL.SAGA;
   var F = function (k) { return DL.flag(k); };
   // o: { id, title, next, clues: [[flag, 一句话]], extra: [行], thanks }
+  // 卷末页的数据（界面排版用；文字总结照旧）
+  SG.pageData = function (S, next, rwN) {
+    var vol = CH.VOL(S.chapter), ov = DL.divOverall(), ev = S.echoVol && S.echoVol.vol === vol ? S.echoVol : { items: [], note: '' };
+    var ids = CH.allCompanions();
+    return { vol: vol, name: CH.VOL_NAMES[vol - 1] || '', next: next, div: S.div, tier: DL.divTierIdx(S.div), tcn: DL.divTier(S.div).cn, tdesc: DL.divTier(S.div).desc,
+      vols: ov.vols, gaidao: ov.gaidao, items: ev.items || [], note: ev.note || '', rw: rwN || 0, drama: S.drama.total,
+      comps: ids.map(function (k) { var g = CH.gone(k); return { id: k, name: DL.NPC[k].name, att: g ? (DL.flag(k + '_died') || DL.flag('gone_' + k) ? '不在了' : '已离开') : (DL.attitudeOf ? DL.attitudeOf(k) : DL.attitude(DL.rel(k, 'player'))), gone: !!g }; }),
+      days: DL.dayOf(S.time), level: S.player.level };
+  };
   SG.volumeSummary = function (o) {
     var S = DL.S, t = DL.divTier(S.div);
     DL.out.chapter(o.title + ' · 完', o.next ? '下一卷：' + o.next : '');
@@ -6468,7 +6688,7 @@ table.pt thead th { color: var(--muted); font-weight: 500; }
     lines.push('同伴：' + ids.map(function (k) { return DL.NPC[k].name + (CH.gone(k) ? '（' + (F(k + '_died') || F('gone_' + k) ? '不在了' : '已离开') + '）' : ' ' + (DL.attitudeOf ? DL.attitudeOf(k) : DL.attitude(DL.rel(k, 'player')))); }).join('　'));
     if (DL.COLLECT) lines = lines.concat(DL.COLLECT.summaryLines());
     lines.push('共计：' + DL.cnNum(DL.dayOf(S.time)) + '个游戏日，去过 ' + S.stats.rooms + ' 个地方，打倒了 ' + S.stats.kills + ' 个敌人，经验 ' + S.xp + '，' + S.player.level + ' 级。');
-    DL.out.text(lines.join('\n\n'), 'sys');
+    DL.out.text(lines.join('\n\n'), 'sys', { page: 'vol', data: SG.pageData(S, o.next || '', rw.length) });
     var nx = CH.next(o.id), ready = nx && CH.ready(nx) && !o.noNext;
     DL.out.text(o.thanks || ('可以输入' + DL.tok.cmd('收藏') + '、' + DL.tok.cmd('偏离度') + '、' + DL.tok.cmd('队伍') + '回顾这一路。' + (ready ? '准备好了，就接着往下走。' : '')), 'hint');
     S.chEnded = o.id;
@@ -12994,8 +13214,9 @@ table.pt thead th { color: var(--muted); font-weight: 500; }
     var bonds = ids.filter(function (k) { return F('bond_' + k); });
     if (bonds.length) lines.push('知己：' + bonds.map(function (k) { return DL.NPC[k].name + '（' + DL.BOND.label(k) + '）'; }).join('、') + '。');
     if (DL.COLLECT) lines = lines.concat(DL.COLLECT.summaryLines());
+    var page = DL.SAGA.pageData ? DL.SAGA.pageData(S, '第二卷 · 冬夜', rw.length) : null;
     lines.push('共计：' + DL.cnNum(DL.dayOf(S.time)) + '个游戏日，去过 ' + S.stats.rooms + ' 个地方，打倒了 ' + S.stats.kills + ' 个敌人，经验 ' + S.xp + '，' + S.player.level + ' 级。');
-    DL.out.text(lines.join('\n\n'), 'sys');
+    DL.out.text(lines.join('\n\n'), 'sys', page ? { page: 'vol', data: page } : null);
     var nx = CH.ready(CH.next('v1end'));
     DL.out.text('谢谢你玩到这里。可以输入' + DL.tok.cmd('收藏') + '、' + DL.tok.cmd('偏离度') + '、' + DL.tok.cmd('队伍') + '回顾这一路，或者' + DL.tok.cmd('重新开始') + '，换一种职业、换一种选择，看看故事会被你推到哪里去。' + (nx ? '也可以接着往下走：第二卷《冬夜》，' + (CH.next('v1end') === 'd1' ? '从山谷里的冬天开始。' : '从塔西斯开始。') : '第二卷《冬夜》正在制作中，到时可以从这里接着玩。'), 'hint');
     S.mode = 'ended';
@@ -48717,7 +48938,8 @@ table.pt thead th { color: var(--muted); font-weight: 500; }
       if (c.mode === 'self' && v.dir !== '荒唐') DL.addRel(c.who, 'player', 1);
     }
     s.lastCh = S.chapter; s.n = (s.n || 0) + 1;
-    DL.out.narr(t);
+    var at = c.kind === 'plot' ? c.p.at : c.e.at, about = c.kind === 'plot' ? null : c.e.target;
+    DL.out.recall(t, { who: c.who, about: about, at: at || '', kind: c.kind === 'plot' ? 'plot' : c.mode });
     return true;
   };
   DL.CAMP.push({ id: 'echo_recall', prio: 32, when: function (S) { return st().lastCh !== S.chapter && !!E.candidate(); }, run: function (S) { delete S.fired.camp_echo_recall; E.recall(); } });
@@ -48813,6 +49035,8 @@ table.pt thead th { color: var(--muted); font-weight: 500; }
     { dlg: 'b7_gifts', who: ['mina'], lines: { mina: '米娜看着你：“{atn}——”是那一回，{sum}，“那是我这一路上，最像我自己的时候。”' } }
   ];
   E.missing = [];
+  E.MARK = '\uE000';
+  E.unmark = function (t) { return String(t || '').replace(/\uE000[^\uE001]*\uE001[^\uE002]*\uE002/g, ''); };
   E.best = function (ids) {
     var S = DL.S, log = (S.drama && S.drama.log) || [], best = null;
     for (var i = log.length - 1; i >= 0; i--) {
@@ -48836,7 +49060,8 @@ table.pt thead th { color: var(--muted); font-weight: 500; }
     d.text = function (S0, arg) {
       var t = orig ? W.val(orig, arg) : '';
       var e = DL.S && E.best(sc.who), l = e ? sceneText(sc, e) : '';
-      if (l) { st().sc[sc.dlg] = e.act; return t ? t + '\n' + l : l; }
+      // 回响那一句前面加一个看不见的记号（\uE000 + 当事人 + \uE001 + 地点 + \uE002），界面据此单独排成“回响”的样子；文字本身不变
+      if (l) { st().sc[sc.dlg] = e.act; l = E.MARK + e.target + '\uE001' + (e.at || '') + '\uE002' + l; return t ? t + '\n' + l : l; }
       return t;
     };
     if (sc.opt && d.options && d.options[sc.opt.from]) {
@@ -50298,15 +50523,22 @@ table.pt thead th { color: var(--muted); font-weight: 500; }
   };
   // 发动的那一刻：一行“舞台灯”；第一次见到的那一幕，告诉你收藏到了第几种
   var cardN = null;
+  UX.stageN = 0;
   function cardTotal() { if (cardN == null) { cardN = 0; Object.keys(DL.CARDS).forEach(function (k) { cardN += (DL.CARDS[k].actions || []).length; }); } return cardN; }
   var _resolve = DR.resolve;
   DR.resolve = function (tid, unit, cf, cardRef, act) {
     var S = DL.S, isNew = !(S.drama.seen && S.drama.seen[act.id]);
-    DL.out.text('宝石 · ' + (act.dir || '') + ' · ' + (unit ? unit.name : DL.nameOf(tid)), 'dstage');
-    if (UX.sfx) UX.sfx('gem');
-    var r = _resolve.apply(this, arguments);
-    PT.bump('drama');
-    if (isNew) DL.out.text('新的一幕 · 戏剧效果收藏 ' + Object.keys(S.drama.seen).length + ' / ' + cardTotal() + '（输入“' + DL.tok.cmd('收藏') + '”查看）', 'dcount');
+    // 这一幕的所有输出合成一张舞台卡（look.js 按 blk.stg 排版）
+    DL.io.stage = { id: 'st' + (++UX.stageN), dir: act.dir || '', who: unit ? (unit.ref || tid) : tid };
+    var r;
+    try {
+      DL.out.text('宝石 · ' + (act.dir || '') + ' · ' + (unit ? unit.name : DL.nameOf(tid)), 'dstage', { who: DL.io.stage.who, special: act.special ? 1 : 0 });
+      if (UX.sfx) UX.sfx('gem');
+      r = _resolve.apply(this, arguments);
+      PT.bump('drama');
+      if (isNew) DL.out.text('新的一幕 · 戏剧效果收藏 ' + Object.keys(S.drama.seen).length + ' / ' + cardTotal() + '（输入“' + DL.tok.cmd('收藏') + '”查看）', 'dcount', { role: 'note' });
+      DL.out.text('', 'dend');
+    } finally { DL.io.stage = null; }
     return r;
   };
   // 宝石第一次拒绝你：把它的规矩讲清楚
@@ -50710,6 +50942,15 @@ table.pt thead th { color: var(--muted); font-weight: 500; }
   // 更新说明、试玩记录
   // =====================================================================
   UX.NOTES = [
+    ['1.5.1 · 看起来', [
+      '字体自己带了：书页用的宋体和标题字体都按游戏里用到的字切了一份，连不上谷歌字体的地方也是同一个样子。',
+      '戏剧效果排成一张舞台卡：动作放大，在场的人排成一列、前面是头像，掷骰收成一行（点一下看全）；温情是金色，荒唐是紫色，坦白是青色。',
+      '回响有了自己的样子：有人提起旧事、名场面里多出来的那一句，会标上“回响”和当时的地点。',
+      '同伴说话前有头像；谈心时放一张半身像，章间夜里火堆边坐着一排人。',
+      '插图可以点开全屏看，双击或双指放大。每一卷的开头是一整屏的书封。标题画面换成了旧书店的那张图。',
+      '里世界换了一套偏紫的颜色；章间夜不管选哪个主题都是夜里，底下透着火光。顶栏跟着时辰换色调，旁边是三个月亮的盈亏——第八到十卷天上只有一个月亮，黑月只有黑袍法师看得见。',
+      '章末是一张卡片：这一卷的偏离度、本章做过的事、同伴的态度比上一章是近了还是远了。卷末是一页：各卷偏离度画成一条河（改道的那一卷分了岔），你让他们做过的三件事，阿斯提纳斯的批注，一键做成分享卡。'
+    ]],
     ['1.5 · 你做过的事会回来', [
       '回响：你让他们做过的事，他们记得。营地里、章间夜里，会有人提起——当事人自己说，或者旁边看见的人说；剧情战里你是怎么收的场，也有人记得。',
       '名场面：每卷两三个原著里的场面（婚礼、葬礼、守夜、告别……），如果你之前对场面里的人用过戏剧效果，台词里会多一句，有几处还会多一个选项。只改说法，不改结局。',
@@ -50853,7 +51094,7 @@ table.pt thead th { color: var(--muted); font-weight: 500; }
   var UI = DL.ui, G = DL.game, CH = DL.CH, W = DL.W;
   var SH = DL.SHARE = {};
   SH.URL = (DL.CONFIG && DL.CONFIG.shareUrl) || 'mpursuer.github.io/dragonlance-mud';
-  var SERIF = '"Noto Serif SC","Source Han Serif SC","Songti SC","STSong","SimSun",serif';
+  var SERIF = '"DL Serif","Noto Serif SC","Source Han Serif SC","Songti SC","STSong","SimSun",serif';
   var SANS = '"Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif';
   function esc(s) { return DL.esc(String(s == null ? '' : s)); }
   function strip(s) { return DL.tok.strip(String(s || '')); }
@@ -50949,13 +51190,14 @@ table.pt thead th { color: var(--muted); font-weight: 500; }
     return cv;
   };
   SH.make = function (spec) {
-    return Promise.all([loadImg(spec.img), gemImg ? Promise.resolve(gemImg) : loadImg(gemSrc())]).then(function (r) {
+    var fl = doc.fonts && doc.fonts.load ? Promise.all([doc.fonts.load('60px "DL Serif"', spec.title || '龙'), doc.fonts.load('30px "DL Serif"', '龙枪')]).catch(function () { }) : Promise.resolve();
+    return fl.then(function () { return Promise.all([loadImg(spec.img), gemImg ? Promise.resolve(gemImg) : loadImg(gemSrc())]).then(function (r) {
       gemImg = r[1];
       var cv = SH.draw(spec, r[0], r[1]), url = null;
       try { url = cv.toDataURL('image/png'); } catch (e) { url = null; }   // 本地文件的插图会“弄脏”画布：不带插图再画一次
       if (!url && r[0]) { cv = SH.draw(spec, null, r[1]); try { url = cv.toDataURL('image/png'); } catch (e2) { url = null; } }
       return { canvas: cv, url: url };
-    });
+    }); });
   };
   SH.textOf = function (spec) { return [spec.title].concat(spec.list || []).concat([spec.note || '', '——龙枪MUD ' + SH.URL]).filter(Boolean).join('\n'); };
   var current = null;
@@ -51080,6 +51322,324 @@ table.pt thead th { color: var(--muted); font-weight: 500; }
     if (inApp && ts && !ts.querySelector('.wx-tip')) {
       ts.insertAdjacentHTML('afterbegin', '<div class="wx-tip" role="note">在微信、QQ 里打开时，存档可能会被清掉。点右上角的“…”，选“在浏览器打开”，再接着玩。</div>');
     }
+    return r;
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* 龙枪MUD · 视觉层（1.5.1，只在浏览器里）
+ * 不改玩法，只改“看起来”：
+ *   一 戏剧效果的舞台卡：一次戏剧效果的全部输出排成一张卡——动作放大、反应排成带头像的一列、骰子收成一行（点开看全）、
+ *      温情 / 荒唐 / 坦白三种颜色（和宝石的档位颜色是同一套：金、紫、青）。
+ *   二 回响：营地里有人提起旧事、名场面里多出来的那一句，单独排成“回忆”的样子，带地点。
+ *   三 人物头像：同伴说话前放头像；谈心、章间夜放半身像。
+ *   四 插图：点开全屏看（双指或双击放大）；每卷开场做成整屏“书封”；标题画面用第一卷的开场图做背景，收起侧栏和输入框。
+ *   五 场合：里世界一套偏紫的配色和暗角；章间夜暗底、底部透出营火的光；地点栏按时辰换色调；三个月亮的盈亏
+ *      （第八到十卷天上只有一个孤零零的月亮；黑月只有黑袍法师看得见）。
+ *   六 章末卡片、卷末一页：引擎给的数据（blk.page）排成卡片和书页，原来的文字总结收在“全部”里。 */
+(function (root) {
+  'use strict';
+  var DL = root.DL, doc = root.document;
+  if (!doc || !DL || !DL.ui) return;
+  var UI = DL.ui, UX = DL.UX || {}, CH = DL.CH, W = DL.W;
+  var LK = DL.LOOK = {};
+  function esc(s) { return DL.esc(String(s == null ? '' : s)); }
+  function $(id) { return doc.getElementById(id); }
+  function logEl() { return $('log'); }
+  var DIRK = { 温情: 'w', 荒唐: 'h', 坦白: 't' };
+
+  // ---------- 头像 ----------
+  function pt(id) { return UX.pt ? UX.pt(id) : null; }
+  LK.av = function (id, size, cls) {
+    if (!id) return '';
+    size = size || 30; cls = cls || '';
+    if (id === 'crowd') return '<span class="av av-crowd ' + cls + '" style="--s:' + size + 'px" aria-hidden="true">众</span>';
+    if (id === 'player') return '<span class="av av-me ' + cls + '" style="--s:' + size + 'px" aria-hidden="true">你</span>';
+    var r = pt(id);
+    if (r) return '<img class="av ' + cls + '" style="--s:' + size + 'px" src="' + esc(r.p.face) + '" alt="" width="' + size + '" height="' + size + '" decoding="async">';
+    if (DL.COMP && DL.COMP[id] && UI.emb) return '<span class="av av-emb ' + cls + '" style="--s:' + size + 'px" aria-hidden="true">' + UI.emb(id) + '</span>';
+    return '';
+  };
+
+  // ---------- 名场面里那一句回响：从文字里拆出来，单独成一块 ----------
+  var MARK = /\n?([^]*)([^]*)([^\n]*)/g;
+  var _emit = DL.io.emit;
+  DL.io.emit = function (blk) {
+    if (blk && typeof blk.text === 'string' && blk.text.indexOf('') >= 0) {
+      var parts = [], clean = blk.text.replace(MARK, function (m, who, at, t) { parts.push({ who: who, at: at, t: t }); return ''; });
+      var b0 = {}; for (var k in blk) b0[k] = blk[k]; b0.text = clean;
+      if (clean.trim()) _emit.call(DL.io, b0);
+      parts.forEach(function (p) { _emit.call(DL.io, { cls: 'recall', text: p.t, about: p.who, at: p.at, scene: true }); });
+      return;
+    }
+    return _emit.apply(DL.io, arguments);
+  };
+
+  // ---------- 加工每一块 ----------
+  var _dec = UI.decorate;
+  UI.decorate = function (el, blk) {
+    var r = _dec ? _dec(el, blk) : undefined;
+    if (r === false) return false;
+    try {
+      if (blk.stg) stage(el, blk);
+      else if (blk.cls === 'say' && blk.who) sayAv(el, blk);
+      if (blk.cls === 'recall') recall(el, blk);
+      if (blk.cls === 'illus') illus(el, blk);
+      if (blk.cls === 'bust') return bust(el, blk);
+      if (blk.cls === 'busts') return busts(el, blk);
+      if (blk.cls === 'sys' && blk.page === 'chend' && blk.data) chEnd(el, blk);
+      if (blk.cls === 'sys' && blk.page === 'vol' && blk.data) volPage(el, blk);
+    } catch (e) { if (root.console) console.warn('look', e); }
+    return r;
+  };
+
+  // 一、舞台卡
+  function stage(el, blk) {
+    var role = blk.role || 'note', dk = DIRK[blk.sdir] || 'h';
+    el.classList.add('stg', 'stg-' + role, 'sd-' + dk);
+    if (role === 'head') {
+      el.innerHTML = '<span class="sh-mark" aria-hidden="true"></span><span class="sh-t">' + esc(blk.text) + '</span>' + (blk.special ? '<span class="sh-sp">名场面</span>' : '');
+      return;
+    }
+    if (role === 'end') { el.innerHTML = ''; el.setAttribute('aria-hidden', 'true'); return; }
+    if (role === 'act' || role === 'react' || role === 'recover') {
+      var a = LK.av(blk.who, role === 'act' ? 52 : 30);
+      if (a) { el.classList.add('has-av'); el.innerHTML = a + '<div class="tx">' + el.innerHTML + '</div>'; }
+    }
+    if (role === 'roll') { el.setAttribute('role', 'button'); el.setAttribute('tabindex', '0'); el.setAttribute('aria-expanded', 'false'); el.title = '点开看掷骰'; }
+  }
+  doc.addEventListener('click', function (e) {
+    var r = e.target.closest && e.target.closest('.stg-roll');
+    if (r && !e.target.closest('button, a')) { var o = r.classList.toggle('open'); r.setAttribute('aria-expanded', o ? 'true' : 'false'); e.stopPropagation(); }
+  }, true);
+  doc.addEventListener('keydown', function (e) {
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('stg-roll')) { e.preventDefault(); e.target.click(); }
+  });
+
+  // 三、说话的人
+  function sayAv(el, blk) {
+    var a = LK.av(blk.who, 34);
+    if (!a) return;
+    el.classList.add('has-av');
+    el.innerHTML = a + '<div class="tx">' + el.innerHTML + '</div>';
+  }
+  // 二、回响
+  function recall(el, blk) {
+    var who = blk.scene ? blk.about : blk.who, a = LK.av(who, 34);
+    el.innerHTML = '<div class="rc-tag">回响' + (blk.at ? ' · ' + esc(blk.at) : '') + '</div>' + (a ? '<div class="rc-row">' + a + '<div class="tx">' + el.innerHTML + '</div></div>' : '<div class="tx">' + el.innerHTML + '</div>');
+    if (blk.scene) el.classList.add('scene');
+  }
+  // 谈心：半身像
+  function bust(el, blk) {
+    var id = String(blk.text || '').trim(), r = pt(id);
+    if (!r) return false;
+    el.innerHTML = '<figure class="bust"><button type="button" class="act-pt" data-pt="' + esc(r.key) + '" data-ptn="' + esc(DL.nameOf(id)) + '" aria-label="看' + esc(DL.nameOf(id)) + '的肖像"><img src="' + esc(r.p.bust) + '" alt="" width="480" height="360" decoding="async"></button><figcaption>' + esc(DL.nameOf(id)) + '</figcaption></figure>';
+    return undefined;
+  }
+  // 章间夜：火堆边上的一排人
+  function busts(el, blk) {
+    var ids = String(blk.text || '').split(',').filter(Boolean);
+    var h = ids.map(function (id) { var r = pt(id); return r ? '<figure><img src="' + esc(r.p.bust) + '" alt="" width="480" height="360" decoding="async"><figcaption>' + esc(DL.nameOf(id)) + '</figcaption></figure>' : ''; }).join('');
+    if (!h) return false;
+    el.innerHTML = '<div class="ring">' + h + '</div><div class="fire" aria-hidden="true"></div>';
+    return undefined;
+  }
+  // 谈心开始时放一张半身像（同一个人连着说话只放一次）
+  var lastBust = { id: null, n: -99 };
+  if (DL.BOND && DL.BOND.play) {
+    var _play = DL.BOND.play;
+    DL.BOND.play = function (id) {
+      if (id && pt(id) && (lastBust.id !== id || DL.io.count - lastBust.n > 40)) { DL.out.text(id, 'bust'); lastBust = { id: id, n: DL.io.count }; }
+      return _play.apply(this, arguments);
+    };
+  }
+  if (DL.NIGHT && DL.NIGHT.begin) {
+    var _nb = DL.NIGHT.begin;
+    DL.NIGHT.begin = function (S) {
+      var r = _nb.apply(this, arguments);
+      try {
+        var ids = Object.keys(DL.COMP).filter(function (k) { return S.npcs[k] && S.npcs[k].loc === 'ch_night' && pt(k); });
+        if (ids.length) DL.out.text(ids.slice(0, 6).join(','), 'busts');
+      } catch (e) { /* 只是装饰 */ }
+      return r;
+    };
+  }
+
+  // ---------- 四、插图 ----------
+  function illus(el, blk) {
+    var img = el.querySelector('.ill-frame img');
+    if (img) { img.classList.add('zoomable'); img.setAttribute('tabindex', '0'); img.setAttribute('role', 'button'); img.setAttribute('aria-label', '全屏看这张插图'); }
+    if (!el.classList.contains('open') || !img) return;
+    // 卷首书封：把刚出来的章节标题收进来
+    var id = String(blk.text || '').trim(), it = (DL.ILLUS && DL.ILLUS[id]) || {}, lg = logEl(), prev = lg && lg.lastElementChild, chap = '';
+    if (prev && prev.classList.contains('b-chapter')) { var ct = prev.querySelector('.ct'); chap = ct ? ct.textContent : ''; prev.remove(); }
+    var vn = CH.VOL_NAMES[(it.vol || 1) - 1] || '';
+    if (vn && chap.indexOf(vn + ' · ') === 0) chap = chap.slice(vn.length + 3);     // 卷名已经写在大字里了
+    el.classList.add('cover');
+    var fig = el.querySelector('figure');
+    var cap = '<div class="cv-txt"><div class="cv-vol">第' + DL.cnNum(it.vol || 1) + '卷</div><div class="cv-name">' + esc(CH.VOL_NAMES[(it.vol || 1) - 1] || '') + '</div>' +
+      (chap ? '<div class="cv-ch">' + esc(chap) + '</div>' : '') + (it.title && chap.indexOf(it.title) < 0 ? '<div class="cv-it">' + esc(it.title) + '</div>' : '') + '</div>';
+    fig.querySelector('.ill-frame').insertAdjacentHTML('beforeend', cap);
+    var fc = fig.querySelector('figcaption'); if (fc) fc.remove();
+  }
+  // 全屏看图
+  var lb = null, zoom = 1, pinch = null;
+  LK.openImage = function (src, w, h, cap) {
+    LK.closeImage();
+    lb = doc.createElement('div');
+    lb.className = 'lb'; lb.setAttribute('role', 'dialog'); lb.setAttribute('aria-modal', 'true'); lb.setAttribute('aria-label', '插图');
+    lb.innerHTML = '<div class="lb-sc"><img src="' + esc(src) + '" alt="' + esc(cap || '') + '" width="' + (w || 1400) + '" height="' + (h || 609) + '"></div>' +
+      '<button type="button" class="lb-x btn" aria-label="关闭">关闭</button>' + (cap ? '<div class="lb-cap">' + esc(cap) + '</div>' : '') +
+      '<div class="lb-tip">双击或双指放大' + (root.innerWidth < root.innerHeight ? '；横过来看更清楚' : '') + '</div>';
+    doc.body.appendChild(lb);
+    zoom = 1;
+    var sc = lb.querySelector('.lb-sc'), im = sc.querySelector('img');
+    function setZoom(z, cx, cy) {
+      var old = zoom; zoom = Math.max(1, Math.min(4, z));
+      var rx = (sc.scrollLeft + (cx == null ? sc.clientWidth / 2 : cx)) / old, ry = (sc.scrollTop + (cy == null ? sc.clientHeight / 2 : cy)) / old;
+      im.style.width = zoom === 1 ? '' : (zoom * 100) + 'vw'; im.style.maxHeight = zoom === 1 ? '' : 'none';
+      lb.classList.toggle('zoomed', zoom > 1);
+      sc.scrollLeft = rx * zoom - (cx == null ? sc.clientWidth / 2 : cx); sc.scrollTop = ry * zoom - (cy == null ? sc.clientHeight / 2 : cy);
+    }
+    im.addEventListener('dblclick', function (e) { setZoom(zoom > 1 ? 1 : 2.5, e.clientX, e.clientY); });
+    sc.addEventListener('touchstart', function (e) { if (e.touches.length === 2) { pinch = { d: dist(e.touches), z: zoom }; e.preventDefault(); } }, { passive: false });
+    sc.addEventListener('touchmove', function (e) { if (pinch && e.touches.length === 2) { e.preventDefault(); var m = mid(e.touches); setZoom(pinch.z * dist(e.touches) / pinch.d, m.x, m.y); } }, { passive: false });
+    sc.addEventListener('touchend', function (e) { if (e.touches.length < 2) pinch = null; });
+    lb.addEventListener('click', function (e) { if (e.target.classList.contains('lb-x') || (e.target === sc && zoom === 1)) LK.closeImage(); });
+    lb.querySelector('.lb-x').focus();
+  };
+  function dist(t) { var dx = t[0].clientX - t[1].clientX, dy = t[0].clientY - t[1].clientY; return Math.sqrt(dx * dx + dy * dy) || 1; }
+  function mid(t) { return { x: (t[0].clientX + t[1].clientX) / 2, y: (t[0].clientY + t[1].clientY) / 2 }; }
+  LK.closeImage = function () { if (lb) { lb.remove(); lb = null; } };
+  doc.addEventListener('keydown', function (e) { if (lb && e.key === 'Escape') { e.stopPropagation(); LK.closeImage(); } }, true);
+  function openFrom(img) {
+    var fig = img.closest('figure'), cap = fig ? (fig.querySelector('figcaption') || fig.querySelector('.cv-it')) : null;
+    var t = cap ? cap.textContent.replace('做成分享卡', '').trim() : '';
+    LK.openImage(img.currentSrc || img.src, img.naturalWidth, img.naturalHeight, t);
+  }
+  doc.addEventListener('click', function (e) {
+    var im = e.target.closest && e.target.closest('img.zoomable');
+    // 正在逐字显示、或者停在“还有下文”的时候，点图片照旧是“跳过 / 下一屏”，不打开全屏
+    if (im && !doc.querySelector('#log .typing') && !doc.querySelector('#log .pager')) { e.preventDefault(); e.stopPropagation(); openFrom(im); }
+  }, true);
+  doc.addEventListener('keydown', function (e) { if ((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('zoomable')) { e.preventDefault(); openFrom(e.target); } });
+
+  // ---------- 六、章末卡片、卷末一页 ----------
+  var TIERS = ['微澜', '涟漪', '暗流', '改道'];
+  function meter(div, tier) {
+    return '<div class="cc-meter" role="img" aria-label="这一卷的历史偏离度 ' + div + '，' + TIERS[tier] + '"><i style="width:' + Math.max(2, div) + '%"></i>' +
+      [20, 50, 80].map(function (x) { return '<b style="left:' + x + '%"></b>'; }).join('') + '</div><div class="cc-ticks">' + TIERS.map(function (t, i) { return '<span' + (i === tier ? ' class="cur"' : '') + '>' + t + '</span>'; }).join('') + '</div>';
+  }
+  function compChips(list, withD) {
+    return '<div class="cc-comps">' + list.map(function (c) {
+      var d = withD && c.d ? '<em class="' + (c.d > 0 ? 'up' : 'dn') + '" aria-label="' + (c.d > 0 ? '更亲近了' : '更疏远了') + '">' + (c.d > 0 ? '↑' : '↓') + '</em>' : '';
+      return '<span class="cc-c' + (c.gone ? ' gone' : '') + '">' + LK.av(c.id, 22) + '<span>' + esc(c.name) + '</span><small>' + esc(c.att) + '</small>' + d + '</span>';
+    }).join('') + '</div>';
+  }
+  function fold(el, title) {
+    var inner = el.innerHTML;
+    return '<details class="cc-all"><summary>' + esc(title) + '</summary><div class="cc-raw">' + inner + '</div></details>';
+  }
+  function chEnd(el, blk) {
+    var d = blk.data;
+    var h = '<div class="cc">' +
+      '<div class="cc-row"><span class="cc-k">这一卷的历史偏离度</span><span class="cc-v">' + d.div + (d.dDiv ? '<small> 本章 +' + d.dDiv + '</small>' : '') + '</span></div>' + meter(d.div, d.tier) +
+      (d.used ? '<div class="cc-k">本章的戏剧效果 · ' + d.used + ' 次</div><ul class="cc-sums">' + d.sums.map(function (s) { return '<li class="sd-' + (DIRK[s.dir] || 'h') + '">' + LK.av(s.who, 22) + '<span>' + esc(s.sum) + '</span></li>'; }).join('') + '</ul>' : '') +
+      (d.events && d.events.length ? '<div class="cc-k">这一章里发生的事</div><ul class="cc-ev">' + d.events.map(function (x) { return '<li>' + esc(DL.tok.strip(x)) + '</li>'; }).join('') + '</ul>' : '') +
+      '<div class="cc-k">同伴</div>' + compChips(d.comps, true) +
+      (d.lv ? '<div class="cc-lv">下一章开始时升到 ' + d.lv + ' 级</div>' : '') +
+      fold(el, '全部') + '</div>';
+    el.classList.add('b-page', 'chend');
+    el.innerHTML = h;
+  }
+  // 偏离度的河：每一卷一段，偏得越多，弯得越厉害；改道的那一卷，河分了岔
+  function river(vols, cur) {
+    var n = Math.max(vols.length, 1), Wd = 640, Hh = 90, step = Wd / n, y0 = Hh / 2, d = 'M0 ' + y0, forks = '', labels = '';
+    vols.forEach(function (v, i) {
+      var x0 = i * step, amp = 4 + v.div * 0.32, x1 = x0 + step, s = i % 2 ? 1 : -1;
+      d += ' C' + (x0 + step * 0.3).toFixed(1) + ' ' + (y0 + s * amp).toFixed(1) + ' ' + (x0 + step * 0.7).toFixed(1) + ' ' + (y0 - s * amp).toFixed(1) + ' ' + x1.toFixed(1) + ' ' + y0;
+      if (v.div >= 80) forks += '<path d="M' + (x0 + step * 0.5).toFixed(1) + ' ' + y0 + ' Q' + (x0 + step * 0.75).toFixed(1) + ' ' + (y0 + 34) + ' ' + (x1).toFixed(1) + ' ' + (Hh - 4) + '" class="rv-fork"/>';
+      labels += '<text x="' + (x0 + step / 2).toFixed(1) + '" y="' + (Hh - 2) + '" class="rv-l' + (v.vol === cur ? ' cur' : '') + '">' + (n <= 4 ? '第' + DL.cnNum(v.vol) + '卷' : DL.cnNum(v.vol)) + '</text>';
+    });
+    return '<svg class="rv" viewBox="0 0 ' + Wd + ' ' + (Hh + 4) + '" role="img" aria-label="各卷的历史偏离度：' + vols.map(function (v) { return '第' + DL.cnNum(v.vol) + '卷 ' + v.div; }).join('，') + '"><path d="' + d + '" class="rv-p"/>' + forks + labels + '</svg>';
+  }
+  function volPage(el, blk) {
+    var d = blk.data;
+    var h = '<div class="vp">' +
+      '<div class="vp-river">' + river(d.vols && d.vols.length ? d.vols : [{ vol: d.vol, div: d.div }], d.vol) + '</div>' +
+      '<div class="vp-tier"><b>' + esc(d.tcn) + '</b><span>' + d.div + '</span><small>' + esc(d.tdesc) + (d.gaidao ? ' · 到现在，有 ' + d.gaidao + ' 卷改道了' : '') + '</small></div>' +
+      '<h3 class="vp-h">这一卷，你让他们做过的事</h3>' +
+      (d.items.length ? '<ul class="vp-three">' + d.items.map(function (x) { return '<li class="sd-' + (DIRK[x.dir] || 'h') + '">' + LK.av(x.target, 40) + '<div><span>' + esc(x.sum) + '</span>' + (x.at ? '<small>' + esc(x.at) + '</small>' : '') + '</div></li>'; }).join('') + '</ul>'
+        : '<p class="vp-empty">这一卷，你一次也没有动用宝石。</p>') +
+      (d.note ? '<aside class="vp-note"><span>阿斯提纳斯在页边写：</span>“' + esc(d.note) + '”</aside>' : '') +
+      '<h3 class="vp-h">同伴</h3>' + compChips(d.comps, false) +
+      '<div class="vp-btns"><button type="button" class="btn" data-lk="vol-share">把这一卷做成一张图</button>' + (DL.FATE ? '<button type="button" class="btn ghost" data-sh="fate">命运之书</button>' : '') + '</div>' +
+      fold(el, '这一卷的全部统计') + '</div>';
+    el.classList.add('b-page', 'volend');
+    el.innerHTML = h;
+  }
+  doc.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-lk]'); if (!b) return;
+    e.preventDefault(); e.stopPropagation();
+    if (b.getAttribute('data-lk') === 'vol-share' && DL.SHARE) DL.SHARE.volume();
+  }, true);
+
+  // ---------- 五、场合：梦、夜、时辰、月亮 ----------
+  function tod(S) { var h = Math.floor((S.time % 1440) / 60); return h >= 5 && h < 8 ? 'dawn' : h >= 8 && h < 17 ? 'day' : h >= 17 && h < 20 ? 'dusk' : 'night'; }
+  // 月相的弯：p 是 0（新月）到 1（下一个新月），0.5 是满月
+  function moonPath(p, r) {
+    var rx = Math.abs(Math.cos(2 * Math.PI * p)) * r, wax = p < 0.5, gib = (p > 0.25 && p < 0.75);
+    var a1 = 'M0 ' + (-r) + ' A' + r + ' ' + r + ' 0 0 ' + (wax ? 1 : 0) + ' 0 ' + r;
+    var sweep = wax ? (gib ? 1 : 0) : (gib ? 0 : 1);
+    return a1 + ' A' + rx.toFixed(2) + ' ' + r + ' 0 0 ' + sweep + ' 0 ' + (-r) + 'Z';
+  }
+  function moonSVG(p, cls, label, hidden) {
+    var r = 6;
+    return '<svg class="mn ' + cls + (hidden ? ' unseen' : '') + '" viewBox="-8 -8 16 16" width="16" height="16" role="img" aria-label="' + esc(label) + '"><title>' + esc(label) + '</title><circle r="' + r + '" class="mn-d"/>' + (hidden ? '' : '<path d="' + moonPath(p, r) + '" class="mn-l"/>') + '<circle r="' + r + '" class="mn-o"/></svg>';
+  }
+  LK.moons = function () {
+    var S = DL.S, FUN = DL.FUN; if (!S || !S.player || !FUN || !FUN.MOONS) return '';
+    var v = CH.VOL(S.chapter);
+    if (v >= 8 && v <= 10 && !DL.flag('n7_moons')) {
+      var p1 = ((DL.dayOf(S.time) + 3) % 30) / 30;
+      return '<span class="moons one" title="天上只有一个孤零零的月亮">' + moonSVG(p1, 'lone', '天上只有一个孤零零的月亮，星星都不认得') + '</span>';
+    }
+    var day = DL.dayOf(S.time), P = S.player;
+    return '<span class="moons">' + FUN.MOONS.map(function (m) {
+      var ph = FUN.phase(m, day), p = ((day + m.off) % m.p) / m.p, unseen = m.id === 'nuitari' && !(P && P.robe === 'black');
+      return moonSVG(p, m.id, m.color + '（' + m.cn + '）：' + (unseen ? '看不见——只有黑袍法师看得见黑月' : ph.cn + (ph.full ? '，高位' : ph.newm ? '，低位' : '')), unseen);
+    }).join('') + '</span>';
+  };
+  function atmosphere() {
+    var S = DL.S, app = $('app'); if (!app) return;
+    var mode = !S ? 'title' : S.mode || 'title';
+    app.setAttribute('data-mode', mode);
+    doc.body.setAttribute('data-mode', mode);
+    var play = S && S.player && mode === 'play';
+    app.toggleAttribute('data-dream', !!(play && S.dream));
+    app.toggleAttribute('data-night', !!(play && S.room === 'ch_night'));
+    if (play) app.setAttribute('data-tod', tod(S)); else app.removeAttribute('data-tod');
+    // 月亮：电脑上放在时钟左边，手机上放在状态条的最右边
+    var mhtml = play && !S.combat ? LK.moons() : '';
+    var clk = $('clock'), slot = $('moonSlot');
+    if (clk && !slot) { clk.insertAdjacentHTML('beforebegin', '<span id="moonSlot" class="moon-slot"></span>'); slot = $('moonSlot'); }
+    if (slot) slot.innerHTML = mhtml;
+    var sb = $('statusBar');
+    if (sb && !sb.hidden && mhtml && !sb.querySelector('.moons')) sb.insertAdjacentHTML('beforeend', '<span class="sb-moons">' + mhtml + '</span>');
+  }
+  var _refresh = UI.refresh;
+  UI.refresh = function () { var r = _refresh.apply(this, arguments); try { atmosphere(); } catch (e) { /* 只是装饰 */ } return r; };
+
+  // ---------- 四之二：标题画面的背景 ----------
+  var _title = UI.title;
+  UI.title = function () {
+    var r = _title.apply(this, arguments);
+    try {
+      var ts = doc.querySelector('.title-screen'), o = DL.ILLUS_READY && DL.ILLUS_READY.open_v01;
+      if (ts && o) { var abs = o.src; try { abs = new URL(o.src, doc.baseURI).href; } catch (e) { /* 老浏览器 */ } ts.classList.add('has-art'); ts.style.setProperty('--title-art', 'url("' + abs.replace(/"/g, '%22') + '")'); }
+      atmosphere();
+    } catch (e) { /* 只是装饰 */ }
     return r;
   };
 })(typeof window !== 'undefined' ? window : globalThis);

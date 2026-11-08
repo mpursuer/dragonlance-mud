@@ -1166,7 +1166,7 @@ img.zoomable { cursor: zoom-in; }
 (function (root) {
   'use strict';
   var DL = root.DL;
-  DL.VERSION = '1.6.0';
+  DL.VERSION = '1.6.1';
   DL.SAVE_VERSION = 1;
 
   DL.newState = function () {
@@ -3196,21 +3196,33 @@ img.zoomable { cursor: zoom-in; }
   var DR = DL.drama = {};
   var DIRS = ['温情', '荒唐', '坦白'];
 
-  // 每个游戏日（两次长休之间）可以发动的次数
+  // 每个游戏日（两次长休之间）可以发动的次数；第二卷起，新的一章开头也会回满（d.fresh：回满的时间和那时记到第几条）
   DR.PER_DAY = (DL.CONFIG && DL.CONFIG.dramaPerDay) || 5;
   DR.usedToday = function () {
-    var d = DL.S.drama, since = DL.S.lastLongRest;
+    var d = DL.S.drama, since = DL.S.lastLongRest, fr = d.fresh, from = 0;
+    if (fr && fr.t >= since) { since = fr.t; from = fr.n; }
     if (d.spentAt != null && d.spentAt >= since) return DR.PER_DAY;     // 宝石的力量被一次用尽（宝石之火）
     var n = 0;
-    (d.log || []).forEach(function (e) { if (e.t != null && e.t >= since) n++; });
+    (d.log || []).forEach(function (e, i) { if (i >= from && e.t != null && e.t >= since) n++; });
     return n;
+  };
+  // 新的一章开头：宝石回满（只回戏剧效果，不算睡过觉）
+  DR.refill = function () {
+    var S = DL.S, d = S.drama; if (!d) return;
+    d.fresh = { t: S.time, n: (d.log || []).length };
+    d.spentAt = null;
+  };
+  // 用完了以后，什么时候回来
+  DR.when = function () {
+    var CH = DL.CH, S = DL.S, nx = CH && S && CH.next && CH.next(S.chapter);
+    return nx && CH.VOL(nx) >= 2 ? '长休或下一章开头恢复' : '长休后恢复';
   };
   DR.left = function () { return Math.max(0, DR.PER_DAY - DR.usedToday()); };
   DR.available = function () { return DR.left() > 0; };
   DR.status = function () {
     var l = DR.left();
     if (l > 0) return '今天还能用 ' + l + ' 次（每天 ' + DR.PER_DAY + ' 次）';
-    return '今天的 ' + DR.PER_DAY + ' 次已经用完（长休后恢复）';
+    return '今天的 ' + DR.PER_DAY + ' 次已经用完（' + DR.when() + '）';
   };
 
   // 场景上下文，供动作的触发条件使用
@@ -3382,7 +3394,7 @@ img.zoomable { cursor: zoom-in; }
     var rm = DL.W.room(), at = ''; try { at = rm ? DL.W.val(rm.name) : ''; } catch (e) { at = ''; }
     d.log.push({ t: S.time, target: cardRef, act: act.id, sum: act.sum ? DL.fill(act.sum, vars) : '', dir: act.dir, ch: S.chapter, at: at, sp: act.special ? 1 : 0, wit: (c.list || []).slice(0, 8), txt: String(actText || '').slice(0, 180) });
     var left = DR.left();
-    DL.out.sys(left > 0 ? '（今天还能再用 ' + left + ' 次戏剧效果。）' : '（今天的 ' + DR.PER_DAY + ' 次戏剧效果已经用完，长休后恢复。）', { role: 'note' });
+    DL.out.sys(left > 0 ? '（今天还能再用 ' + left + ' 次戏剧效果。）' : '（今天的 ' + DR.PER_DAY + ' 次戏剧效果已经用完，' + DR.when() + '。）', { role: 'note' });
     if (act.flag) DL.setFlag(act.flag);
     if (DL.game && DL.game.onDrama) DL.game.onDrama(cardRef, act);
   };
@@ -4612,7 +4624,7 @@ img.zoomable { cursor: zoom-in; }
   };
   G.help = function (topic) {
     if (/戏剧/.test(topic)) {
-      DL.out.text('戏剧效果：每个游戏日 ' + DL.drama.PER_DAY + ' 次（长休后恢复），让一个生物做出一个违反人设的动作。\n用法：戏剧效果 目标 [温情 / 荒唐 / 坦白]。不指定方向时，由宝石随机挑选。\n生效后你会掷一次掩饰检定（d20 + 巧手 + 魅力），掷出的数就是目标和旁观者察觉的难度。被目标“锁定”的话，会有专属的后果。对同一个人用得越多，越容易被发现。长休后恢复。', 'sys');
+      DL.out.text('戏剧效果：每个游戏日 ' + DL.drama.PER_DAY + ' 次（长休后恢复；第二卷起，每一章开头也会回满），让一个生物做出一个违反人设的动作。\n用法：戏剧效果 目标 [温情 / 荒唐 / 坦白]。不指定方向时，由宝石随机挑选。\n生效后你会掷一次掩饰检定（d20 + 巧手 + 魅力），掷出的数就是目标和旁观者察觉的难度。被目标“锁定”的话，会有专属的后果。对同一个人用得越多，越容易被发现。长休后恢复。', 'sys');
       return;
     }
     DL.out.text([
@@ -5204,6 +5216,7 @@ img.zoomable { cursor: zoom-in; }
       P.hp = P.hpMax; DL.LV.resetUses(P); P.mageArmor = false;
       Object.keys(DL.COMP).forEach(function (k) { var s = S.npcs[k]; if (s) { s.hp = DL.compHpMax(k); s.uses = DL.clone(DL.COMP[k].uses || {}); } });
       if (DL.st && DL.st.del) DL.st.del('raistlin', '力竭');
+      if (DL.drama && DL.drama.refill) DL.drama.refill();     // 宝石也歇过来了
     }
     var lv = CH.LEVEL[id];
     if (lv && P.level < lv) DL.LV.levelTo(lv, id);
@@ -19409,6 +19422,7 @@ img.zoomable { cursor: zoom-in; }
   DRA.left = function () {
     var S = DL.S, base = _left.apply(this, arguments), g = S && S.dreams && S.dreams.gem;
     if (!g || g.at !== S.lastLongRest) return base;
+    if (S.drama.fresh && S.drama.fresh.t >= S.lastLongRest) return base;     // 新的一章开头已经回满了
     if (S.drama.spentAt != null && S.drama.spentAt >= S.lastLongRest) return base;
     return Math.max(0, base + g.d);
   };
@@ -49628,6 +49642,7 @@ img.zoomable { cursor: zoom-in; }
   'use strict';
   var DL = root.DL, CH = DL.CH, W = DL.W;
   var F = function (k) { return !!(DL.S && DL.S.flags && DL.S.flags[k]); };
+  var told = function (m) { return !!(DL.SAGA && DL.SAGA.delivered && DL.SAGA.delivered(m)); };     // 你带的话送到了没有
   var FW = DL.FW = {};
 
   // name：卡片和页面上用的短名字；pt：分享卡用哪一张肖像；seat：空位上说话的人（按顺序找第一个在场的）
@@ -49635,23 +49650,25 @@ img.zoomable { cursor: zoom-in; }
     { id: 'sturm', who: 'sturm', name: '史东', vol: 2, ch: 'w9', pt: 'sturm',
       dead: function () { return F('sturm_died'); }, saved: function () { return F('sturm_lives'); },
       here: function () { return F('w9_with_sturm'); },
+      knows: function (k) { return ['laurana', 'flint', 'tas', 'gilthanas', 'elistan'].indexOf(k) >= 0 || F('tanis_knows_sturm') || told('sturm_news'); },
       book: '黎明，史东·布莱特布雷德一个人站在法王之塔的城垛上。蓝龙俯冲下来，长枪刺穿了他的胸口。',
       now: function (h) { return h ? '你扶住了他。他抓着你的手，抓得很紧。' : '你不在城垛上。'; },
       last: '你在这里。你说过你会在这里。',
       savedNow: '太阳升起来的时候，他还站着。',
-      seat: [['tanis', '（他看着火堆对面空出来的那块石头）……他坐着的时候，背也是直的。从来没有靠过东西。'],
-        ['caramon', '（他往火里添了一根柴，添多了）……史东不喜欢火太大。他说，会被人看见。（他没有把那根柴拿出来）'],
+      seat: [['tanis', '（他看着那个空出来的位置）……他坐着的时候，背也是直的。从来没有靠过东西。'],
+        ['caramon', '（他摆碗的时候，多摆了一只。他看着那只碗，没有收回去）……习惯了。'],
         ['tas', '（他抱着膝盖）史东总说我讲的故事都是瞎编的。（他吸了吸鼻子）……有一半是真的。'],
-        ['laurana', '（她看着火，很久没有说话）……他教过我怎么握剑。'],
+        ['laurana', '（她很久没有说话）……他教过我怎么握剑。'],
         ['flint', '（他哼了一声，别过脸去）……那个死脑筋的骑士。']] },
     { id: 'flint', who: 'flint', name: '佛林特', vol: 3, ch: 's6', pt: 'flint',
       dead: function () { return F('flint_died'); }, here: function () { return true; },
+      knows: function (k) { return k === 'tas' || told('flint_last'); },
       book: '佛林特·火炉坐在水池边，再也没有站起来。',
       now: function () { return '你在他身边坐了下来。他把一个刻了一冬天的木雕放在你手里，让你带给坦尼斯。'; },
       last: '给那个半精灵。我刻了一个冬天。',
       seat: [['tas', '（他把一块木头放在那个空位上）佛林特的位置。他会骂我乱放东西的。（他等了一会儿）……他不骂了。'],
         ['tanis', '（他手里握着那个木雕，握得很紧）……他说，打完仗，在最后家园旅店里亲手给我。'],
-        ['caramon', '……没有人骂泰斯了。（他揉了揉眼睛）火边太安静了。'],
+        ['caramon', '……没有人骂泰斯了。（他揉了揉眼睛）太安静了。'],
         ['laurana', '（她把斗篷往那个空位那边拉了拉，像是怕谁冷）……']] },
     { id: 'elistan', who: 'elistan', name: '伊力斯坦', vol: 6, ch: 'q4', pt: 'elistan',
       dead: function () { return F('q4_elistan_dead'); }, here: function () { return F('q4_elistan_end'); },
@@ -49673,7 +49690,7 @@ img.zoomable { cursor: zoom-in; }
       book: '塔克西丝骑士团打垮了一队索兰尼亚骑士。坦宁和史东·马哲理战死，帕林被俘。',
       now: function () { return F('f3_warned') ? '你提醒过坦宁。他拍了拍剑，说：骑士不只是看看的。' : '你在山坡上。太阳出来的时候，帕林跪在他们两个中间。'; },
       last: '帕林，站后面！',
-      seat: [['palin', '（他看着火，声音很平）坦宁打呼噜，很响。我以前特别讨厌。（停了一下）……今天晚上太安静了。'],
+      seat: [['palin', '（他的声音很平）坦宁打呼噜，很响。我以前特别讨厌。（停了一下）……今天晚上太安静了。'],
         ['steel', '（他什么也没说。过了很久，他把自己的斗篷递给了帕林）夜里冷。']] },
     { id: 'tanis', who: 'tanis', name: '坦尼斯', vol: 7, ch: 'f5', pt: 'tanis_old',
       dead: function () { return F('f5_tanis_dead'); }, here: function () { return F('f5_last_words'); },
@@ -49724,7 +49741,7 @@ img.zoomable { cursor: zoom-in; }
       book: '泰斯按下了装置，回到了混沌的脚底下。他最后提醒杰拉德：把墓门的锁修好。',
       now: function (h) { return h ? '你陪他走到了那只脚底下。他回过头来，对你笑了。' : '他一个人按下了装置。'; },
       last: '告诉他们，我不怕。好吧，有一点点怕。',
-      seat: [['gerard', '……我会把墓门的锁修好的。（他看着火）那个坎德人。他说的最后一件事，是让我修锁。'],
+      seat: [['gerard', '……我会把墓门的锁修好的。（他低着头）那个坎德人。他说的最后一件事，是让我修锁。'],
         ['odila', '（她抱着膝盖）他去过月亮了。（她的声音有点抖）他见人就说。'],
         ['mirror', '（他把脸转向那个空出来的地方）……他身上一直有一股好闻的味道。偷来的东西的味道。']] },
     { id: 'nightshade', who: 'nightshade', name: '夜影', vol: 13, ch: 'b6', pt: 'nightshade',
@@ -49818,24 +49835,44 @@ img.zoomable { cursor: zoom-in; }
     return best;
   };
   function nightIds(S) { return Object.keys(DL.COMP).filter(function (k) { var s = S.npcs[k]; return s && s.loc === 'ch_night'; }); }
+  // 说话的人得在场，也得已经知道（第二、三卷两路人分开走，消息要你带过去）
+  function seatSay(e, ids) { return (e.seat || []).filter(function (x) { return ids.indexOf(x[0]) >= 0 && (!e.knows || e.knows(x[0])); }); }
+  // 空出一个位置，第一个在场的人说一句；说了就不再等
+  function seatOut(id, ids, lead, pre) {
+    var e = FW.BY[id], say = seatSay(e, ids);
+    if (!say.length) return false;
+    delete st().seat[id];
+    if (pre) pre();
+    DL.out.text(lead, 'narr', { seat: { ids: ids.slice(0, 5), gone: e.who, name: e.name } });
+    var first = say.filter(function (x) { return x[1]; })[0];
+    if (first) DL.out.say(first[0], first[1]);
+    if (ids.indexOf('atta') >= 0 && say.some(function (x) { return x[0] === 'atta'; })) DL.out.narr('阿塔趴在那个空出来的地方，下巴搁在爪子上，谁叫也不起来。');
+    return true;
+  }
   if (DL.NIGHT && DL.NIGHT.begin) {
     var _nb = DL.NIGHT.begin;
     DL.NIGHT.begin = function (S) {
       var r = _nb.apply(this, arguments);
       try {
         var id = FW.seatPending(); if (!id || !S.night) return r;
-        var e = FW.BY[id], ids = nightIds(S).filter(function (k) { return k !== e.who; });
-        var say = (e.seat || []).filter(function (x) { return ids.indexOf(x[0]) >= 0; });
-        if (!say.length) return r;
-        delete st().seat[id];
-        S.night.seatDone = true;
-        DL.out.text('火堆边，你们不知不觉空出了一个位置。没有人坐过去。', 'narr', { seat: { ids: ids.slice(0, 5), gone: e.who, name: e.name } });
-        var first = say.filter(function (x) { return x[1]; })[0];
-        if (first) DL.out.say(first[0], first[1]);
-        if (ids.indexOf('atta') >= 0 && say.some(function (x) { return x[0] === 'atta'; })) DL.out.narr('阿塔趴在那个空出来的地方，下巴搁在爪子上，谁叫也不起来。');
+        var who = FW.BY[id].who, ids = nightIds(S).filter(function (k) { return k !== who; });
+        if (seatOut(id, ids, '火堆边，你们不知不觉空出了一个位置。没有人坐过去。')) S.night.seatDone = true;
       } catch (x) { /* 只是一句话 */ }
       return r;
     };
+  }
+  // 平常在营地、旅店里睡下（第二、三卷没有章间夜，史东和佛林特走了以后就靠这里）：睡下之前，也空出一个位置
+  if (DL.REST_HOOKS && DL.sysHook) {
+    DL.REST_HOOKS.unshift(DL.sysHook(function (S, phase) {
+      if (phase !== 'before' || S.night || S.dream) return true;
+      try {
+        var rm = DL.W.room(); if (!rm || !rm.camp) return true;     // 不跳过 noCampTalk：第二、三卷能睡的地方大多不聊天，空位只是一句话
+        var id = FW.seatPending(); if (!id) return true;
+        var who = FW.BY[id].who, ids = Object.keys(DL.COMP).filter(function (k) { return k !== who && DL.W.present(k); });
+        seatOut(id, ids, '那天晚上围坐下来的时候，你们不知不觉空出了一个位置。没有人坐过去。', function () { DL.out.sep(); });
+      } catch (x) { /* 只是一句话 */ }
+      return true;
+    }));
   }
 
   // ---------- 三、卷末页：这一卷走了的人 ----------
@@ -51106,7 +51143,7 @@ img.zoomable { cursor: zoom-in; }
     if (!DR.cardFor(unit ? unit.ref : id, unit)) return out;
     var rm = W.room(), nd = rm && rm.noDrama ? strip(DL.W.val(rm.noDrama)) : null;
     if (nd) { var last = nd.split(/[。！]/).filter(function (x) { return x.trim(); }).pop() || '宝石在这里不肯动'; out.push({ label: '戏剧效果', dis: true, why: last.length > 20 ? '宝石在这里不肯动' : last }); return out; }
-    if (!DR.available()) { out.push({ label: '戏剧效果', dis: true, why: '今天的 ' + DR.PER_DAY + ' 次用完了，长休后恢复' }); return out; }
+    if (!DR.available()) { out.push({ label: '戏剧效果', dis: true, why: '今天的 ' + DR.PER_DAY + ' 次用完了，' + DR.when() }); return out; }
     var somber = false; try { somber = !DL.S.combat && DR.ctx(id).tag('somber'); } catch (e) { somber = false; }
     out.push({ sec: '戏剧效果 · 今天还剩 ' + DR.left() + ' 次' });
     ['温情', '荒唐', '坦白'].forEach(function (d) {
@@ -51567,10 +51604,14 @@ img.zoomable { cursor: zoom-in; }
   // 更新说明、试玩记录
   // =====================================================================
   UX.NOTES = [
+    ['1.6.1 · 规则', [
+      '第二卷起，每一章开头，宝石也会回满：戏剧效果重新有 5 次（和生命、职业次数一样，章与章之间隔着一夜）。第六、七、十一、十三卷没有能睡的地方，以前跳过章间夜就一直用不回来，现在不会了。',
+      '史东、佛林特走了以后的空位：第二、三卷没有章间夜，以前等不到；现在他走后第一次在营地或旅店睡下，就会空出来。不在场的人要等你把消息（或者佛林特的木雕）带到，才会说起他。'
+    ]],
     ['1.6 · 他们走的时候', [
       '标题画面、网站简介和分享卡都换成了一句话：你读过他们的结局。这一次，你在场。序章里，回家的地铁上你会从后往前翻那本书，瞥见一行字。第一次在火边过夜，会提醒你书上写着身边这几个人的名字。',
       '宝石有了温度：书上有人要走的那一章，宝石会凉下来，侧栏写着“它是凉的”，翻书时那一页的页角是折着的——不说是谁。在一起的那一刻、送出礼物以后、救下了本来要死的人，它是温的。',
-      '有人走了以后的第一个章间夜，火堆边会空出一个位置，一位同伴说一句关于他的话。卷末页多了“这一卷走了的人”，写他最后对你说的话。',
+      '有人走了以后的第一个夜晚（章间夜，或者在营地、旅店里睡下的那一晚），会空出一个位置，一位同伴说一句关于他的话。卷末页多了“这一卷走了的人”，写他最后对你说的话。',
       '命运之书多了一页“他们走的时候”：每个人一行“书上”、一行“这一次”，都能做成一张分享卡。',
       '九位同伴，各有一个晚上会自己来求你用那块石头——对他自己用：史东想大笑一次，佛林特想说出那句话，雷斯林想谢谢哥哥……用了，他走的那一刻会想起来。要入梦的那一夜，他们不来打扰。',
       '隔了很多年再见（第七卷的卡拉蒙和蒂卡、第八卷的帕林），年轻的和老了的两张半身像并排放；你还会翻出手机里那张旧照片。',

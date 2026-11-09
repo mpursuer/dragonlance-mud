@@ -1202,7 +1202,7 @@ img.zoomable { cursor: zoom-in; }
 (function (root) {
   'use strict';
   var DL = root.DL;
-  DL.VERSION = '1.8.0';
+  DL.VERSION = '1.8.1';
   DL.SAVE_VERSION = 1;
 
   DL.newState = function () {
@@ -2340,7 +2340,12 @@ img.zoomable { cursor: zoom-in; }
     if (r === 1) u.ds.f += 2; else if (r >= 10) u.ds.s++; else u.ds.f++;
     DL.out.combat('你倒在地上，意识模糊……（死亡豁免 d20=' + r + '，成功 ' + u.ds.s + ' / 失败 ' + u.ds.f + '）');
     if (u.ds.s >= 3) { u.stable = true; DL.out.combat('你的呼吸稳了下来，暂时没有生命危险。'); }
-    if (u.ds.f >= 3) { u.dead = true; }
+    if (u.ds.f >= 3) {
+      // “输了剧情照走”的仗（有 onLose、没写 lethal）：全队倒下都不会死，你一个人先倒下也不该死——昏过去，仗交给同伴打完
+      var enc = DL.S.combat && DL.ENC[DL.S.combat.id];
+      if (enc && enc.onLose && !enc.lethal) { u.stable = true; u.ds = null; DL.out.combat('你的意识沉了下去——可你的心还在跳。（你昏了过去，这一仗剩下的交给同伴们。）'); }
+      else u.dead = true;
+    }
     return false;
   };
 
@@ -11338,6 +11343,7 @@ img.zoomable { cursor: zoom-in; }
       DL.out.hint('（那辆盖着油布的车也许值得“搜索”一下。）');
       EVT.armyAhead();
     },
+    lethal: true,     // 输了就是结局，倒下也会真的死
     onLose: function () { DL.game.gameOver('龙人的剑落了下来。在克莱恩的这一段旅程，到此为止。'); }
   };
   EVT.armyAhead = function () {
@@ -11650,6 +11656,7 @@ img.zoomable { cursor: zoom-in; }
       DL.out.say('tanis', '它们是冲着那根杖来的。往林子深处走，快。');
       DL.journal('那队龙人追上了我们。我在原著里没读到过这一场仗——是我改了第二章，它才找上门来的。');
     },
+    lethal: true,
     onLose: function () { DL.game.gameOver('龙人的爪子把你按进了黑色的落叶里。'); }
   };
 
@@ -53449,6 +53456,9 @@ img.zoomable { cursor: zoom-in; }
   // 更新说明、试玩记录
   // =====================================================================
   UX.NOTES = [
+    ['1.8.1 · 修正', [
+      '“输了剧情照走”的仗（比如第二卷冰墙城堡对菲尔-萨斯）：以前全队倒下不会死，你一个人先倒下、同伴还站着的时候，死亡豁免失败三次反而会死。现在这种仗里你只会昏过去，仗交给同伴打完；第一卷那两场写明输了就结束的仗照旧。'
+    ]],
     ['1.8 · 你做过的事', [
       '宝石的脾气：温情、荒唐、坦白里，哪个方向用得最多（至少 4 次，超过一半），宝石就有了那个脾气——温柔的、爱闹的、说真话的，写在侧栏宝石下面。有了脾气，十二个名场面里会多出一个只有它才做得到的选项，这一下必定成功。',
       '你帮过的人，在最后一仗来了：从笼子里放出来的人、赛斯顿、伊力斯坦、费资本、没冲下去的亚兰和布莱恩、红披风、尼姆许、克丽珊娜……每卷的高潮战里，他们会出来帮你一次（【援手】）。卷末会说一句是谁来了。',

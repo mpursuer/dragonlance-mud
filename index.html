@@ -751,6 +751,13 @@ img.zoomable { cursor: zoom-in; }
 .dice-card.fail .dc-res { color: var(--blood); }
 .gemtext .t5 { font-size: 12px; margin-top: 3px; font-family: var(--font-ui); color: var(--gem); letter-spacing: 0.08em; }
 
+/* ===== 1.8 · 宝石的脾气 ===== */
+.gemtext .t6 { font-size: 12px; margin-top: 3px; font-family: var(--font-ui); letter-spacing: 0.04em; }
+.gemtext .t6.m-温情 { color: var(--sd-w); }
+.gemtext .t6.m-荒唐 { color: var(--sd-h); }
+.gemtext .t6.m-坦白 { color: var(--sd-t); }
+.who .tw { font-family: var(--font-display); font-size: 13px; color: var(--ember); letter-spacing: 0.06em; margin: -2px 0 4px; }
+
 </style>
 </head>
 <body>
@@ -1195,7 +1202,7 @@ img.zoomable { cursor: zoom-in; }
 (function (root) {
   'use strict';
   var DL = root.DL;
-  DL.VERSION = '1.7.0';
+  DL.VERSION = '1.8.0';
   DL.SAVE_VERSION = 1;
 
   DL.newState = function () {
@@ -4674,7 +4681,7 @@ img.zoomable { cursor: zoom-in; }
       '旧书：翻书（看现在这个版本的书页，标 ※ 的是被你改写过的地方）、翻书 第三章、往后翻（偷看下一章原来的样子）。预言：把书里的事说给身边的人听。',
       '手机：拍照（在名场面拍照，或者“拍照 人物”）、相册。没电了？雷斯林好像一直在偷偷看你的手机（问 雷斯林 关于 小石板）；之后可以“充电”。月亮：看三个月亮的盈亏（法师在自己的月亮满月时更强）。',
       '消遣（旅店、营地）：掰手腕 人物、拼酒 人物、猜谜、讲故事、赌骰子 钢币数（出千 需要灌铅骰子）。',
-      '收集：收集（一览）、图鉴、称号、收藏、见闻。搜索时留意旧地图的碎片。',
+      '收集：收集（一览）、图鉴、称号（戴称号 名字、摘下称号）、收藏、见闻、人物志（人物志 名字、人物志 地方、人物志 神）。搜索时留意旧地图的碎片。',
       '系统：提示（不知道下一步做什么时）、状态、队伍、日志、地图、时间、偏离度、收藏、短休、长休、准备（法师）、存档、读档、删除存档、导出、设置、重新开始。'
     ].join('\n'), 'sys');
   };
@@ -51020,6 +51027,7 @@ img.zoomable { cursor: zoom-in; }
     var h = I.helper(sk);
     if (h) { var v = DL.die(4); o2.bonus = (o2.bonus || 0) + v; s.help = s.help || {}; s.help[h] = S.time; info.help = { who: h, v: v }; }
     var r = _check.call(this, who, sk, dc, o2);
+    if (s.force) { info.force = s.force; s.force = null; r.ok = true; }     // 宝石的脾气：这一下必定成功
     if (!r.ok && s.n > 0 && I.auto()) {
       s.n--; s.used++;
       info.first = { roll: r.roll, total: r.total };
@@ -51028,7 +51036,7 @@ img.zoomable { cursor: zoom-in; }
     var label = opts.label || cnOf(sk);
     if (info.help) DL.out.narr(DL.nameOf(info.help.who) + (HELP[sk] || '在旁边帮了你一把') + '。');
     var line = '你的' + label + '检定：d20=' + r.roll + (o2.adv > 0 ? '（优势）' : o2.adv < 0 ? '（劣势）' : '') + DL.sgn(r.mod) + ' = ' + r.total + '，DC ' + dc + '，' + (r.ok ? '成功' : '失败');
-    DL.out.text(line, 'dice', { dice: { label: label, dc: dc, roll: r.roll, mod: r.mod, total: r.total, ok: r.ok, adv: o2.adv || 0, advWhy: info.adv, help: info.help, first: info.first, left: s.n } });
+    DL.out.text(line, 'dice', { dice: { label: label, dc: dc, roll: r.roll, mod: r.mod, total: r.total, ok: r.ok, adv: o2.adv || 0, advWhy: info.adv, help: info.help, first: info.first, left: s.n, force: info.force || null } });
     r.dice = info;
     return r;
   };
@@ -51293,7 +51301,8 @@ img.zoomable { cursor: zoom-in; }
       foot(id).forEach(function (t) { DL.out.narr(t); });
     });
     DL.out.narr('店主把十三本书一本一本地合上。每合上一本，就有一个人朝你挥一挥手，回到了书页里。');
-    DL.out.say('v3_owner', '（他把最后一本放在最上面）他们都记得你。……这就够了。');
+    var tw = DL.FAME && DL.FAME.worn();
+    DL.out.say('v3_owner', '（他把最后一本放在最上面）他们都记得你' + (tw ? '——' + tw.name : '') + '。……这就够了。');
     DL.out.narr('灯灭了。');
     S.flags.v13_party = (S.flags.v13_party || 0) + 1;
     DL.journal('打烊以后，他们一个一个地从书里抬起头来，跟我说了一句话。');
@@ -51306,6 +51315,639 @@ img.zoomable { cursor: zoom-in; }
     } catch (e) { /* 照旧出总结页 */ }
     return _vs.apply(this, arguments);
   };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* 龙枪MUD · 1.8 宝石的脾气（参考质量效应的楷模/叛逆）
+ * 戏剧效果有温情、荒唐、坦白三个方向。以前用多少次都不会留下什么；现在宝石会跟着你学：
+ *   某个方向用了至少 4 次、占全部的一半以上（总共至少 6 次），宝石就有了脾气——温柔的、爱闹的、说真话的。
+ *   换了作风，脾气也会跟着换（另一个方向变成最多、过了一半）；三个方向差不多时，它就没有脾气。
+ *   有了脾气，侧栏宝石下面写出来；第一次有、换了的时候，宝石在口袋里动一下。
+ *   名场面里多出“只有它才做得到”的选项（每种脾气 4 个，分在第一到十一卷）：像质量效应的魅力和威吓，这一下必定成功，
+ *   最后走的是旁边原来那个选项的“成了”的那一支。所以原著的大事照旧。 */
+(function (root) {
+  'use strict';
+  var DL = root.DL, D = DL.D, W = DL.W;
+  var GM = DL.GEMMOOD = {};
+  GM.DIRS = ['温情', '荒唐', '坦白'];
+  GM.NAME = { 温情: '温柔', 荒唐: '爱闹', 坦白: '说真话' };
+  GM.MIN_TOTAL = 6; GM.MIN_TOP = 4; GM.SHARE = 0.5;
+  GM.counts = function (S) {
+    S = S || DL.S; var c = { 温情: 0, 荒唐: 0, 坦白: 0 };
+    ((S.drama && S.drama.log) || []).forEach(function (e) { if (c[e.dir] != null) c[e.dir]++; });
+    return c;
+  };
+  // 算出来的脾气（不看以前是什么）
+  GM.calc = function (S) {
+    var c = GM.counts(S), tot = c.温情 + c.荒唐 + c.坦白, top = null;
+    GM.DIRS.forEach(function (d) { if (!top || c[d] > c[top]) top = d; });
+    if (tot < GM.MIN_TOTAL || c[top] < GM.MIN_TOP || c[top] / tot <= GM.SHARE) return null;
+    return top;
+  };
+  // 现在的脾气：已经有了的，要另一个方向过了一半才换；没过一半的时候，它照旧是原来那个
+  GM.mood = function (S) {
+    S = S || DL.S; if (!S || !S.drama) return null;
+    var now = GM.calc(S), was = S.gemMood && S.gemMood.dir;
+    if (now) return now;
+    if (was) { var c = GM.counts(S), tot = c.温情 + c.荒唐 + c.坦白; if (tot && c[was] / tot >= 0.4) return was; }
+    return null;
+  };
+  GM.label = function (d) { return d ? GM.NAME[d] + '的宝石' : ''; };
+  var SAY = {
+    温情: '口袋里的宝石暖烘烘的。你用它让人变得温柔的次数，比别的都多——它好像也学会了。',
+    荒唐: '口袋里的宝石一跳一跳的，像在憋着笑。你用它干的荒唐事太多了，它好像也学坏了。',
+    坦白: '口袋里的宝石凉凉的，很清醒。你用它逼出来的真话太多了，它好像也只想听真话了。'
+  };
+  GM.check = function () {
+    var S = DL.S; if (!S || !S.drama || S.mode !== 'play') return;
+    var m = GM.mood(S), was = S.gemMood ? S.gemMood.dir : null;
+    if (m === was) return;
+    S.gemMood = { dir: m, at: S.time, n: ((S.gemMood && S.gemMood.n) || 0) + 1 };
+    if (!m) { DL.out.sys('（口袋里的宝石安静了下来。它好像拿不定主意，自己该是个什么脾气。）'); return; }
+    DL.out.narr(SAY[m]);
+    DL.out.sys('（宝石的脾气：' + GM.NAME[m] + '。' + (was ? '' : '有了脾气，有些场面里会多出一个只有它才做得到的选项。') + '）');
+    var h = S.gemMoodHist = S.gemMoodHist || []; if (h.indexOf(m) < 0) h.push(m);
+  };
+  var G = DL.game, _in = G.input;
+  G.input = function () {
+    var r = _in.apply(this, arguments);
+    try { GM.check(); } catch (e) { /* 只是一句话 */ }
+    return r;
+  };
+
+  // ---------- 只有它才做得到的选项 ----------
+  var OPTS = [
+    // 温情
+    ['hed_confront', 1, '温情', '握紧宝石，看着赫德里克', '宝石在你手心里暖了一下。赫德里克举着手杖的手停在了半空——他看着金月，看了很久，好像看见了一个很久以前的人。'],
+    ['t1_tika_door', 3, '温情', '握着宝石，只是看着卡拉蒙', '你什么也没说。宝石在你手心里暖了一下。卡拉蒙忽然捂住了脸，肩膀一抽一抽的。'],
+    ['x5_prisoners', 0, '温情', '握着宝石，站到俘虏前面', '宝石暖了一下。举着斧头的那个矮人，忽然想起了自己家里的人。'],
+    ['a2_girl', 0, '温情', '握着宝石，拉住她的手', '宝石暖了一下。那个女孩的手，在你手里慢慢地松开了。'],
+    // 荒唐
+    ['toede_plaza', 0, '荒唐', '握紧宝石，朝托德一指南边', '宝石在你手心里跳了一下。托德忽然觉得，自己这辈子从来没有这么想去南边的林子。'],
+    ['w7_armor', 1, '荒唐', '握着宝石，给两个醉鬼倒酒', '宝石跳了一下。两个醉鬼突然站起来，搂着肩膀唱起了一首谁也没听过的歌。'],
+    ['x3_queen', 0, '荒唐', '握着宝石，开口胡说', '宝石在口袋里跳得像只青蛙。你张开嘴，说出来的话连你自己都没想到。'],
+    ['g3_gate', 0, '荒唐', '握着宝石，对军士眨一眨眼', '宝石跳了一下。军士忽然打了一个很响的喷嚏，接着又是一个，再接着又是一个。'],
+    // 坦白
+    ['w8_trial', 0, '坦白', '握着宝石，看着德瑞克', '宝石凉了一下。德瑞克张开嘴想反驳，说出来的却是：“……他一直比我勇敢。”他自己也愣住了。'],
+    ['s2_lords', 0, '坦白', '握着宝石，等他们开口', '宝石凉了一下。一个领主脱口而出：“……我们就是怕了。”他赶紧捂住了嘴，可大厅里所有人都听见了。'],
+    ['t7_friends', 0, '坦白', '握着宝石，看着菲拉格斯的眼睛', '宝石凉了一下。菲拉格斯看着你的眼睛，看见了你说的每一个字都是真的。'],
+    ['l4_trial', 0, '坦白', '握着宝石，等老骑士开口', '宝石凉了一下。老骑士张开嘴，先说出来的是：“……斥候报告过。我压下来了。”']
+  ];
+  GM.OPTS = OPTS;
+  OPTS.forEach(function (a) {
+    var node = DL.DLG[a[0]], target = node && node.options[a[1]];
+    if (!target) return;
+    node.options.push({
+      label: function () { return '［' + GM.label(a[2]) + '］' + a[3]; },
+      checkLabel: '宝石的脾气 · 必成',
+      moodTag: a[2],
+      cond: function (S, arg) { return GM.mood(S) === a[2] && (!target.cond || target.cond(S, arg)); },
+      go: function (S, arg) {
+        DL.out.narr(a[4]);
+        if (DL.INSP) DL.INSP.st().force = GM.label(a[2]);
+        var used = S.gemMoodUsed = S.gemMoodUsed || {}; used[a[0]] = a[2];
+        return target.go(S, arg);
+      }
+    });
+  });
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* 龙枪MUD · 1.8 你帮过的人，在最后一仗来了（参考龙腾世纪的盟约）
+ * 每一卷的高潮战里，这一卷（或前面）你帮过的人会出来帮你一次：从笼子里放出来的人、沟矮人赛斯顿、伊力斯坦、费资本、
+ * 没有冲下去送死的亚兰和布莱恩、红披风、尼姆许、被你救下的山丘矮人、克丽珊娜、史钢、结界边上那一家人、
+ * 老金龙的影子、槽子酒馆的年轻佣兵、磨坊家的女儿……
+ * 他们是战场上多出来的“互动”（【援手】），每人每场一次。大局照原著走：他们不结束战斗，只是来帮你。
+ * 用过的会记下来，卷末总结前说一句“最后一仗里，来帮你的人”。 */
+(function (root) {
+  'use strict';
+  var DL = root.DL, C = DL.combat, CH = DL.CH, SG = DL.SAGA;
+  if (!C) return;
+  var AL = DL.ALLIES = {};
+  var F = function (k) { return DL.flag(k); };
+  function alive(u) { return !!(u && u.hp > 0 && !u.fled && !u.out); }
+  function foes(f) { return C.living('enemy').filter(function (u) { return !u.noFight && (!f || f(u)); }); }
+  function small(u) { return !u.big && u.kind !== 'dragon' && !u.air; }
+  function me() { var cb = DL.S.combat; return cb ? cb.units.player : null; }
+  var FX = {
+    zap: function (verb) { var t = foes()[0]; if (!t) return; var d = DL.roll('2d6').total; DL.out.combat(t.name + verb + '（' + d + ' 点）。'); C.damage(t, d, '穿刺', me()); },
+    topple: function () { foes(small).slice(0, 2).forEach(function (u) { u.cond.prone = true; DL.out.combat(u.name + '被撞倒在地。'); }); },
+    stun: function () { var t = foes(small)[0] || foes()[0]; if (!t) return; t.skip = Math.max(t.skip || 0, 1); t.skipText = t.name + '一时什么也看不见，乱挥了一阵。'; DL.out.combat(t.name + '这一回合什么也干不成了。'); },
+    shield: function (cb) { cb.shieldwall = cb.round; DL.out.combat('（这一轮敌人的攻击具有劣势）'); },
+    heal: function () {
+      var cb = DL.S.combat, low = null;
+      Object.keys(cb.units).forEach(function (k) { var u = cb.units[k]; if (u.side === 'party' && u.hp > 0 && (!low || u.hp / u.maxHp < low.hp / low.maxHp)) low = u; });
+      if (!low) return; var h = DL.roll('2d8').total + 2; low.hp = Math.min(low.maxHp, low.hp + h);
+      if (low.uid === 'player') DL.S.player.hp = low.hp; else if (DL.S.npcs[low.uid]) DL.S.npcs[low.uid].hp = low.hp;
+      DL.out.combat(low.name + '恢复了 ' + h + ' 点生命。');
+    }
+  };
+  // [编号, 第几卷, 哪几场仗, 条件, 人物（头像）, 名字, 一句话, 效果, 效果的说法]
+  AL.LIST = [
+    ['cages', 1, ['c9_verm', 'c9_verm_ember'], function () { return F('c6_freed_all'); }, null, '笼子里的人', '被你从笼子里放出来的那些人，举着石头和锄头冲了进来。', 'topple', '一拥而上'],
+    ['sestun', 1, ['c9_verm', 'c9_verm_ember'], function () { return F('sestun_helped') || F('sestun_fed'); }, 'sestun', '赛斯顿', '沟矮人赛斯顿从房梁上探出脑袋，把一只水桶扣了下来。', 'stun', '扣下一只水桶'],
+    ['elistan', 1, ['c9_verm', 'c9_verm_ember'], function () { return F('elistan_healed'); }, 'elistan', '伊力斯坦', '伊力斯坦把手按在受伤的人身上，低声念了一句什么。他的手在发光。', 'heal', '为伤得最重的人祈祷'],
+    ['fizban', 1, ['c9_verm', 'c9_verm_ember'], function () { return F('fizban_saved'); }, 'fizban', '费资本', '费资本念了一个火球术。落下来的是一阵羽毛，铺天盖地，敌人什么也看不见了。', 'shield', '念一个火球术（大概）'],
+    ['aran', 2, ['w9_trap', 'w9_rearguard'], function () { return F('aran_lives'); }, 'aran', '亚兰', '亚兰站在城垛上，拉满了弓。他本来该在昨天的冲锋里死掉的。', 'zap', '从城垛上放一箭'],
+    ['brian', 2, ['w9_trap', 'w9_rearguard'], function () { return F('brian_lives'); }, 'brian', '布莱恩', '布莱恩举着盾冲到你前面。他本来该在昨天的冲锋里死掉的。', 'topple', '举盾冲上去'],
+    ['stragglers', 2, ['d5_temple', 'd5_ambush'], function () { return F('d3_saved'); }, null, '掉队的那一家人', '那位老祖母的孙子扛着一根撬棍跑了进来——你背过他的祖母翻过山。', 'topple', '抡起撬棍'],
+    ['prisoners', 3, ['s8_escape'], function () { return F('s7_freed'); }, null, '牢里的人', '被你从牢里放出来的人没有跑。他们捡起地上的长矛，站到了你身后。', 'shield', '站到你身后'],
+    ['toede', 3, ['s8_escape'], function () { return F('toede_spared'); }, 'toede', '托德', '托德骑着他的矮马从旁边冲了过去，一边跑一边喊“我回来了！”——正好撞翻了两个人。他没有停。', 'topple', '撞过去（不是故意的）'],
+    ['iolanthe', 3, ['m2_riders'], function () { return F('m2_io_helped'); }, 'iolanthe', '伊欧兰丝', '远处，伊欧兰丝念了一个词。', 'stun', '念一个词'],
+    ['red', 4, ['t7_street'], function () { return F('t5_red_lives'); }, null, '红披风', '一个披着红披风的角斗士从巷子里冲了出来。你在角斗场上没有让他死。', 'zap', '冲出来补一刀'],
+    ['gnimsh', 5, ['x8_guardian'], function () { return F('x6_gnimsh_lives'); }, 'gnimsh', '尼姆许的零件', '你想起尼姆许走之前塞给你的一个小齿轮。你把它扔了出去——咔嗒一声，正好卡进了守护者的关节里。', 'stun', '把那个小齿轮扔出去'],
+    ['hilldwarf', 5, ['x8_guardian'], function () { return F('x5_spared'); }, null, '那个山丘矮人', '你救下的那个山丘矮人，抡着斧头站到了你旁边。他什么也没说。', 'zap', '抡一斧头'],
+    ['crysania', 6, ['q7_run'], function () { return F('q3_stayed'); }, 'crysania', '克丽珊娜', '克丽珊娜跪在你身后祈祷。在深渊里，帕拉丁听见了她——因为那一天，你没有让她一个人跪着。', 'heal', '为你祈祷'],
+    ['steel', 7, ['f8_swarm', 'f8_chaos'], function () { return F('f3_spoke_for_steel'); }, 'steel', '史钢的骑士', '史钢的骑士们排成一排，挡在了你前面。“他欠你的，”领头的说，“我们替他还。”', 'shield', '挡在你前面'],
+    ['family', 8, ['g7_cyan'], function () { return F('g7_freed'); }, null, '结界边上那一家人', '结界边上那一家人的大儿子举着一把猎弓。你救过他们一家的命。', 'zap', '放一箭'],
+    ['golds', 10, ['n7_galdar', 'n6_guard'], function () { return F('n6_free'); }, null, '老金龙的影子', '一条很老很老的金龙的影子从天上掠了过去。它在看着你。', 'shield', '从天上掠过'],
+    ['merc', 11, ['a6_flee'], function () { return F('a5_saved'); }, null, '年轻的佣兵', '槽子酒馆里那个年轻的佣兵，带着两个伙计挡在了巷口。他那天晚上没有被露西吻到。', 'topple', '挡在巷口'],
+    ['miller', 11, ['a6_flee'], function () { return F('a2_saved'); }, null, '磨坊家的女儿', '磨坊家的女儿站在楼上，把一整袋面粉倒了下来。', 'stun', '倒下一袋面粉']
+  ];
+  AL.ENCS = {}; AL.LIST.forEach(function (a) { a[2].forEach(function (e) { (AL.ENCS[e] = AL.ENCS[e] || []).push(a); }); });
+  AL.ready = function (encId) { return (AL.ENCS[encId] || []).filter(function (a) { try { return a[3](DL.S); } catch (e) { return false; } }); };
+  function obj(a) {
+    return {
+      id: 'ally_' + a[0], name: a[5], aliases: [a[0]], ally: true, hint: '援手', label: '【援手】' + a[5] + '：' + a[8],
+      cond: function (cb) { return foes().length > 0 && !(cb.allyUsed && cb.allyUsed[a[0]]); },
+      use: function (cb) {
+        cb.allyUsed = cb.allyUsed || {}; cb.allyUsed[a[0]] = true;
+        DL.out.combat(a[6]);
+        FX[a[7]](a[7] === 'zap' ? '被' + a[5] + '击中了' : cb);
+        var S = DL.S, v = CH.VOL(S.chapter); S.allies = S.allies || {}; var l = S.allies[v] = S.allies[v] || [];
+        if (l.indexOf(a[5]) < 0) l.push(a[5]);
+        return true;
+      }
+    };
+  }
+  var _start = C.start;
+  C.start = function (encId, opts) {
+    var r = _start.apply(this, arguments);
+    try {
+      var enc = DL.ENC[encId], list = AL.ready(encId);
+      if (enc && list.length) {
+        var have = (enc.objects || []).filter(function (o) { return !o.ally; });
+        enc.objects = have.concat(list.map(obj));
+        DL.out.combat('【援手】你帮过的人也来了：' + list.map(function (a) { return a[5]; }).join('、') + '。');
+      }
+    } catch (e) { /* 照旧 */ }
+    return r;
+  };
+  // 卷末：最后一仗里来帮你的人
+  if (SG && SG.volumeSummary) {
+    var _vs = SG.volumeSummary;
+    SG.volumeSummary = function (o) {
+      try {
+        var S = DL.S, v = CH.VOL(S.chapter), l = S.allies && S.allies[v];
+        if (l && l.length && !(S.alliesSaid && S.alliesSaid[v])) {
+          S.alliesSaid = S.alliesSaid || {}; S.alliesSaid[v] = 1;
+          DL.out.narr('最后一仗里，来帮你的人：' + l.join('、') + '。书上没有写他们。');
+        }
+      } catch (e) { /* 照旧 */ }
+      return _vs.apply(this, arguments);
+    };
+  }
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* 龙枪MUD · 1.8 你的名声（参考辐射 2 的称号）
+ * 以前有 26 个称号，可没有一个人会对它说什么；很多还要“走完第一卷”。现在：
+ *   得到称号的那一刻，说一句（以前的存档第一次读进来时，已经有的称号不再说）。
+ *   补了第二到十三卷、和 1.7/1.8 新玩法的称号（送别、改写、伊斯塔、尼姆许、宝石的脾气、援手、不拔剑……）。
+ *   名声：后来遇到的人，会提起你做过的事（第一次交谈时，只一次）。
+ *   可以“戴称号 名字”戴上一个：侧栏你的名字下面写着；“打烊以后”店主会这样叫你。“摘下称号”摘掉。 */
+(function (root) {
+  'use strict';
+  var DL = root.DL, D = DL.D, W = DL.W, CH = DL.CH, G = DL.game, C = DL.COLLECT;
+  if (!C) return;
+  var FM = DL.FAME = {};
+  var F = function (k) { return DL.flag(k); };
+  function cnt(k) { return (DL.S.counters && DL.S.counters[k]) || 0; }
+  function nKeys(o) { return o ? Object.keys(o).length : 0; }
+  function fwN(f) { var FW = DL.FW; if (!FW) return 0; return FW.LIST.filter(function (e) { try { return f(FW, e); } catch (x) { return false; } }).length; }
+  function gifts() { var GI = DL.GIFT; if (!GI) return 0; return GI.LIST.filter(function (g) { return F('gift_' + g.id); }).length; }
+
+  // ---------- 补的称号 ----------
+  [
+    { id: 'seat', name: '送别的人', desc: '三个人走的时候，你都在他们身边', test: function () { return fwN(function (FW, e) { return FW.isDead(e) && FW.isHere(e); }) >= 3; } },
+    { id: 'saver', name: '改写了一页的人', desc: '书上本来该走的人，这一次活了下来', test: function () { return fwN(function (FW, e) { return FW.isSaved(e); }) >= 1; } },
+    { id: 'knights', name: '拦住冲锋的人', desc: '法王之塔外，你拦住了德瑞克的冲锋', test: function () { return F('derek_lives'); } },
+    { id: 'istar', name: '伊斯塔最后的劝告者', desc: '在伊斯塔，你劝过人离开', test: function () { return F('t6_warned') || F('t7_friends_talked'); } },
+    { id: 'swim', name: '听见叫路的人', desc: '菲拉格斯和奇莉从沉没的伊斯塔游了出去', test: function () { return F('t7_friends_live'); } },
+    { id: 'gnimsh', name: '尼姆许的朋友', desc: '尼姆许从索巴丁的地牢里逃了出去', test: function () { return F('x6_gnimsh_lives'); } },
+    { id: 'abyss', name: '没让她一个人跪着', desc: '在深渊里，你留在了克丽珊娜身边', test: function () { return F('q3_stayed'); } },
+    { id: 'steel', name: '替史钢说话的人', desc: '在骑士们面前替史钢说了话', test: function () { return F('f3_spoke_for_steel'); } },
+    { id: 'gifts', name: '被托付的人', desc: '五位同伴求你用宝石，你都答应了', test: function () { return gifts() >= 5; } },
+    { id: 'known', name: '被认出来的人', desc: '十个人、十个地方认出了你的出身', test: function (S) { return nKeys(S.idSeen) >= 10; } },
+    { id: 'road', name: '一路听着闲话的人', desc: '路上听同伴聊过二十回', test: function (S) { return nKeys(S.bt && S.bt.seen) >= 20; } },
+    { id: 'insp', name: '靠灵感过关的人', desc: '灵感帮你重掷过五次', test: function (S) { return ((S.insp && S.insp.used) || 0) >= 5; } },
+    { id: 'env', name: '就地取材的人', desc: '在战场上用过十样东西', test: function () { return cnt('env_used') >= 10; } },
+    { id: 'allies', name: '有人来帮的人', desc: '三卷的最后一仗里，都有你帮过的人来帮你', test: function (S) { return nKeys(S.allies) >= 3; } },
+    { id: 'mood_w', name: '温柔的宝石的主人', desc: '宝石学会了温柔', test: function (S) { return (S.gemMoodHist || []).indexOf('温情') >= 0; } },
+    { id: 'mood_h', name: '爱闹的宝石的主人', desc: '宝石学会了闹', test: function (S) { return (S.gemMoodHist || []).indexOf('荒唐') >= 0; } },
+    { id: 'mood_t', name: '说真话的宝石的主人', desc: '宝石只想听真话了', test: function (S) { return (S.gemMoodHist || []).indexOf('坦白') >= 0; } },
+    { id: 'nosword', name: '不拔剑的人', desc: '十场仗没有打就过去了', test: function () { return cnt('fights_avoided') >= 10; } },
+    { id: 'codex', name: '人物志的编者', desc: '人物志里记下了四十个人', test: function () { return DL.CODEX ? DL.CODEX.count() >= 40 : false; } },
+    { id: 'closing', name: '打烊以后还在的人', desc: '走完了十三卷', test: function () { return !!F('v13_party'); } }
+  ].forEach(function (t) { C.TITLES.push(t); });
+  // 战场上用过的东西（环境动作和专门的物件都算）
+  var T = DL.TACTICS, _use = T && T.useObject;
+  if (_use) T.useObject = function () { var cb = DL.S.combat; var r = _use.apply(this, arguments); try { if (r !== false && cb) DL.count('env_used'); } catch (e) { /* 照旧 */ } return r; };
+
+  // ---------- 得到称号的那一刻 ----------
+  FM.check = function () {
+    var S = DL.S; if (!S || S.mode !== 'play') return;
+    if (S._fameT === S.time) return; S._fameT = S.time;
+    var got = C.earned(), seen = S.titlesSeen;
+    if (!seen) { S.titlesSeen = {}; got.forEach(function (t) { S.titlesSeen[t.id] = 1; }); return; }
+    got.forEach(function (t) {
+      if (seen[t.id]) return; seen[t.id] = 1;
+      DL.out.sys('（你得到了一个称号：【' + t.name + '】——' + t.desc + '。' + (S.titleWorn ? '' : '可以' + DL.tok.cmd('戴称号 ' + t.name, '戴上它') + '。') + '）');
+    });
+  };
+  var _in = G.input;
+  G.input = function () { var r = _in.apply(this, arguments); try { FM.check(); } catch (e) { /* 只是一句话 */ } return r; };
+
+  // ---------- 戴一个称号 ----------
+  FM.worn = function () {
+    var S = DL.S; if (!S || !S.titleWorn) return null;
+    var t = C.TITLES.filter(function (x) { return x.id === S.titleWorn; })[0];
+    try { return t && t.test(S) ? t : null; } catch (e) { return null; }
+  };
+  G.cmd(['戴称号', '戴上称号', '佩戴称号'], function (a) {
+    var q = String(a || '').replace(/[【】\s]/g, ''), got = C.earned();
+    if (!q) { DL.out.sys(got.length ? '戴哪一个？' + got.map(function (t) { return DL.tok.cmd('戴称号 ' + t.name, t.name); }).join('、') : '你还没有称号。'); return; }
+    var t = got.filter(function (x) { return x.name === q; })[0] || got.filter(function (x) { return x.name.indexOf(q) >= 0; })[0];
+    if (!t) { DL.out.sys('你还没有这个称号。'); return; }
+    DL.S.titleWorn = t.id;
+    DL.out.sys('你戴上了【' + t.name + '】。后来见到你的人，会这样叫你。（' + DL.tok.cmd('摘下称号') + '）');
+  }, { peek: true });
+  G.cmd(['摘下称号', '取下称号'], function () { DL.S.titleWorn = null; DL.out.sys('你摘下了称号。'); }, { peek: true });
+  var _titles = C.titles;
+  C.titles = function () {
+    _titles.apply(this, arguments);
+    var w = FM.worn(), got = C.earned();
+    if (w) DL.out.sys('现在戴着：【' + w.name + '】（' + DL.tok.cmd('摘下称号') + '）');
+    else if (got.length) DL.out.hint('可以戴上一个：' + got.slice(0, 6).map(function (t) { return DL.tok.cmd('戴称号 ' + t.name, t.name); }).join('、'));
+  };
+
+  // ---------- 名声：后来的人提起你做过的事 ----------
+  var REP = FM.REP = [
+    { id: 'fizban', npc: 'fizban', vol: [2, 3], when: function () { return F('fizban_saved'); }, lines: ['>（他眯起眼睛看你）你是那个……抓住我帽子的人？不对。是抓住我的人。帽子是我自己抓住的。'] },
+    { id: 'elistan', npc: 'elistan', vol: [2, 3], when: function () { return F('elistan_healed'); }, lines: ['>（他握住你的手）在帕克斯·塔卡斯，你看着我睁开眼睛。我一直记得。'] },
+    { id: 'goldmoon', npc: 'goldmoon', vol: [2, 3], when: function () { return F('spoke_for_goldmoon'); }, lines: ['>（她对你笑了）在旅店里，你替我说过话。那时候你还不认识我。'] },
+    { id: 'flint_drink', npc: 'flint', vol: [2, 3], when: function () { return F('beat_flint_drink'); }, lines: ['>（他眯起眼睛）上次是我让着你。今晚再来。'] },
+    { id: 'tika_cook', npc: 'tika', vol: [2, 8], when: function () { return cnt('meals') >= 5; }, lines: ['>（她闻了闻）你又做饭了？……教教我。旅店里的辣土豆，我总觉得少了点什么。'] },
+    { id: 'raist_seer', npc: 'raistlin', vol: [1, 3], when: function () { return cnt('proph_true') >= 5; }, lines: ['>（他看着你）你说中的事，太多了。……你到底读过什么书？'] },
+    { id: 'astinus_book', npc: 'astinus', vol: [3, 5], when: function () { return cnt('bookRead') >= 10; }, lines: ['>（他没有抬头）你翻那本书翻得太勤了。书会旧的。'] },
+    { id: 'toede_again', npc: 'toede', vol: [2, 3], when: function () { return C.toedeCount() >= 2; }, lines: ['>（托德一看见你，脸都白了）又、又是你！你们这些人怎么阴魂不散！'] },
+    { id: 'toede_spared', npc: 'toede', vol: [3, 3], when: function () { return F('toede_spared'); }, lines: ['>（他远远地看见你，勒住了矮马）……你那天没让坎德人把我吊死。（他咬着牙）别指望我谢你。'] },
+    { id: 'caramon_arm', npc: 'caramon', vol: [4, 7], when: function () { return F('beat_caramon_arm'); }, lines: ['>（他看着自己的胳膊，笑了一下，笑得有点难看）你掰手腕赢过我。那时候我的胳膊……比现在粗。'] },
+    { id: 'dalamar_raist', npc: 'dalamar', vol: [4, 6], when: function () { return F('bond_raistlin'); }, lines: ['>（达拉马看着你）我的主人提过你。他很少提起任何人。'] },
+    { id: 'palin_raist', npc: 'palin', vol: [7, 8], when: function () { return F('bond_raistlin'); }, lines: ['>（帕林看着你）我伯伯的笔记里，提过一个陌生人，说那人口袋里有一块灰色的石头。……是你吗？'] },
+    { id: 'tas_kender', npc: 'tas', vol: [7, 10], when: function () { return F('bond_tas') || DL.rel('tas', 'player') >= 4; }, lines: ['>（他一下子扑了过来）是你！你还欠我一个故事——不对，是我欠你一个！我攒了好多，都给你留着！'] },
+    { id: 'reghar_spare', npc: 'reghar', vol: [5, 5], when: function () { return F('x5_spared'); }, lines: ['>（他哼了一声，可没有走开）……那个山丘小子跟我说了。说你站在他前面。'] },
+    { id: 'caramon_istar', npc: 'caramon', vol: [5, 6], when: function () { return F('t7_friends_live'); }, lines: ['>（他小声说）你知道吗……我做梦，梦见菲拉格斯在水里笑。（他看着你）是你让他们游出去的，对不对？'] },
+    { id: 'innkeep_story', npc: 'w1_innkeep', vol: [2, 2], when: function () { return cnt('stories') >= 3; }, lines: ['>（旅店老板擦着杯子打量你）听说你会讲故事？晚上来一个。讲得好，酒钱算我的。'] },
+    { id: 'innkeep_story2', npc: 'w4_innkeep', vol: [2, 2], when: function () { return cnt('stories') >= 3; }, lines: ['>（他凑了过来）有人说，你在篝火边讲过一个故事，讲得一圈人都忘了睡觉。……今晚能不能在这儿讲一个？'] }
+  ];
+  function inWin(m) { var v = CH.VOL(DL.S.chapter); return !m.vol || (v >= m.vol[0] && v <= m.vol[1]); }
+  FM.repFor = function (npc) {
+    var S = DL.S, seen = S.repSeen = S.repSeen || {};
+    for (var i = 0; i < REP.length; i++) { var m = REP[i]; if (m.npc !== npc || seen[m.id] || !inWin(m)) continue; try { if (m.when(S)) return m; } catch (e) { /* 跳过 */ } }
+    return null;
+  };
+  var _list = D.listTopics;
+  D.listTopics = function (id) {
+    try {
+      var m = FM.repFor(id);
+      if (m) {
+        DL.S.repSeen[m.id] = DL.S.time || 1;
+        m.lines.forEach(function (l) { var x = /^([a-z0-9_]*)>([\s\S]*)$/.exec(l); if (x) DL.out.say(x[1] || id, x[2]); else DL.out.narr(l); });
+      }
+    } catch (e) { /* 只是一句话 */ }
+    return _list.apply(this, arguments);
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* 龙枪MUD · 1.8 不打也能过（参考辐射 2 的多种解法）
+ * 以前大约 138 处开打，只有 30 处是你在对话里选的；其余都是走进去就开打。
+ * 现在，非剧情战、不是你自己在对话里选了“动手”的那些仗，开打前先停一下（lineup_pf）：
+ *   开战（拔剑）——照旧。
+ *   说服他们让路（说服）／吓退他们（威吓）：只对讲得通话的（人、龙人、地精、骑士……）。
+ *   悄悄绕过去（隐匿，身边同伴三个以上带劣势）：谁都行。失手了就被发现，照样开打。
+ *   塞钱：讲得通话的、你钱够的时候，按人头给。
+ *   用宝石：花一次戏剧效果，让领头的做一件很不像他的事（算进宝石的脾气）。
+ * 绕过去也按赢了算：经验照给，这一仗赢了以后该发生的事照样发生（onWin）；不算杀敌。
+ * 不停的：剧情战、每卷的最后一仗、梦里、角斗场和决斗、龙、守护者这种。 */
+(function (root) {
+  'use strict';
+  var DL = root.DL, C = DL.combat, D = DL.D, W = DL.W, CH = DL.CH, DLG = DL.DLG;
+  if (!C) return;
+  var AV = DL.AVOID = {};
+  AV.SKIP = { a4_ghouls: 1, c2_baaz: 1, dream_shadow: 1, w2_twisted: 1, t5_bout1: 1, t5_bout2: 1, x2_steeltoe: 1, g3_duel: 1, bq_oak: 1, c8_slug: 1 };
+  var TALK = { hobgoblin: 1, toede: 1, seeker: 1, baaz: 1, drac_leader: 1, gully: 1, mage: 1, highlord: 1, kapak: 1, sivak: 1, aurak: 1, soldier: 1, thanoi: 1, humanoid: 1, istar: 1, gladiator: 1, knight: 1 };
+  var NO = { dragon: 1, construct: 1, god: 1, fiend: 1, dream: 1 };
+  function list(enc) {
+    var out = [];
+    (enc.enemies || []).forEach(function (x) { var m = DL.MON[x.type]; var n = DL.W.val(x.n == null ? 1 : x.n); for (var i = 0; i < (n || 0); i++) out.push(m || {}); });
+    return out;
+  }
+  AV.eligible = function (encId, opts) {
+    var S = DL.S, enc = DL.ENC[encId];
+    if (!enc || !S || opts && (opts.noAvoid || opts.pick || opts.noPick)) return false;     // noPick：直接开打
+    if (AV.SKIP[encId] || DL.PLOT_ACTS && DL.PLOT_ACTS[encId] || enc.onPlot || enc.noAvoid) return false;
+    if (DL.ALLIES && DL.ALLIES.ENCS[encId]) return false;
+    if (DL.INSP && DL.INSP.ctx) return false;          // 你自己在对话里选了动手
+    if (S.dream || S.combat || S.preFight) return false;
+    var foes = list(enc); if (!foes.length) return false;
+    return !foes.some(function (m) { return NO[m.kind]; });
+  };
+  AV.talkable = function (enc) { return list(enc).every(function (m) { return TALK[m.kind]; }); };
+  AV.dc = function (enc) { var n = list(enc).length, v = CH.VOL(DL.S.chapter); return Math.min(22, 10 + Math.min(6, n) + Math.floor(v / 3)); };
+  AV.price = function (enc) { return 15 * list(enc).length * (1 + Math.floor(CH.VOL(DL.S.chapter) / 4)); };
+  function xpOf(enc) { return list(enc).reduce(function (a, m) { return a + (m.xp || 0); }, 0); }
+  function nameOf(enc) { var l = list(enc); var nm = l.length ? (l[0].name || '他们') : '他们'; return l.length > 1 ? nm + '他们' : nm; }
+
+  AV.pass = function (encId, how) {
+    var S = DL.S, enc = DL.ENC[encId], xp = xpOf(enc);
+    S.pf = null;
+    DL.count('fights_avoided');
+    (S.avoided = S.avoided || []).push({ enc: encId, how: how, ch: S.chapter });
+    if (xp) { S.xp += xp; DL.out.sys('你获得了 ' + xp + ' 点经验（共 ' + S.xp + '）。这一仗没有打。'); }
+    if (enc.onWin) enc.onWin(S);
+    if (DL.game.afterCombat) DL.game.afterCombat();
+  };
+  function fight(encId, extra) {
+    var S = DL.S, pf = S.pf || {}, o = Object.assign({}, pf.opts || {}, extra || {}, { noAvoid: true, skipIntro: true });
+    S.pf = null;
+    return C.start(encId, o);
+  }
+  DLG.lineup_pf = {
+    noCancel: true,
+    text: function (S) {
+      var pf = S.pf, enc = pf && DL.ENC[pf.enc]; if (!enc) return '';
+      return '刀还没有真的砍下来。还来得及想一想。';
+    },
+    options: [
+      { label: '开战（拔剑）', go: function (S) { fight(S.pf.enc); return null; } },
+      { label: '说服他们让路', checkLabel: function (S) { return '说服 DC ' + AV.dc(DL.ENC[S.pf.enc]); },
+        cond: function (S) { return AV.talkable(DL.ENC[S.pf.enc]); },
+        go: function (S) {
+          var id = S.pf.enc, enc = DL.ENC[id];
+          if (DL.check('player', 'persuasion', AV.dc(enc)).ok) { DL.out.narr('你说了很久。领头的那个看了看你，又看了看你身后的人，终于往路边让了一步：“……走吧。别让我再看见你们。”'); AV.pass(id, 'persuade'); }
+          else { DL.out.narr('领头的那个冷笑了一声，拔出了武器。'); fight(id); }
+          return null;
+        } },
+      { label: '吓退他们', checkLabel: function (S) { return '威吓 DC ' + (AV.dc(DL.ENC[S.pf.enc]) + 1); },
+        cond: function (S) { return AV.talkable(DL.ENC[S.pf.enc]); },
+        go: function (S) {
+          var id = S.pf.enc, enc = DL.ENC[id];
+          if (DL.check('player', 'intimidation', AV.dc(enc) + 1).ok) { DL.out.narr('你往前走了一步，一个字也没说。他们互相看了一眼，往后退了一步，又退了一步——然后转身跑了。'); AV.pass(id, 'scare'); }
+          else { DL.out.narr('他们愣了一下，然后哄笑起来。'); fight(id); }
+          return null;
+        } },
+      { label: '悄悄绕过去', checkLabel: function (S) { var n = W.companionsHere ? W.companionsHere().length : 0; return '隐匿 DC ' + (AV.dc(DL.ENC[S.pf.enc]) - 1) + (n >= 3 ? '（人多，劣势）' : ''); },
+        go: function (S) {
+          var id = S.pf.enc, enc = DL.ENC[id], n = W.companionsHere ? W.companionsHere().length : 0;
+          if (DL.check('player', 'stealth', AV.dc(enc) - 1, { adv: n >= 3 ? -1 : 0 }).ok) { DL.out.narr('你们贴着阴影，一个跟着一个，从他们眼皮底下溜了过去。谁也没有回头。'); AV.pass(id, 'sneak'); }
+          else { DL.out.narr('有人踩断了一根树枝。所有人都转过了头——被发现了！'); fight(id); }
+          return null;
+        } },
+      { label: function (S) { return '塞钱（' + AV.price(DL.ENC[S.pf.enc]) + ' 钢币）'; },
+        cond: function (S) { var enc = DL.ENC[S.pf.enc]; return AV.talkable(enc) && S.money >= AV.price(enc); },
+        go: function (S) {
+          var id = S.pf.enc, enc = DL.ENC[id], p = AV.price(enc);
+          S.money -= p;
+          DL.out.narr('你把一袋钢币扔了过去。领头的那个掂了掂，咧嘴一笑，把钱袋揣进了怀里：“今天什么也没看见。”（−' + p + ' 钢币）');
+          AV.pass(id, 'bribe');
+          return null;
+        } },
+      { label: '用宝石', checkLabel: '花一次戏剧效果',
+        cond: function (S) { return DL.drama && DL.drama.available && DL.drama.available(); },
+        go: function (S) {
+          var id = S.pf.enc, enc = DL.ENC[id], m = DL.GEMMOOD ? DL.GEMMOOD.mood(S) : null, dir = m || '荒唐';
+          var LINE = {
+            温情: '你握紧宝石。领头的那个忽然放下了武器，揉了揉眼睛，说他想家了。他的手下面面相觑，跟着他走了。',
+            荒唐: '你握紧宝石。领头的那个忽然把头盔摘下来扣在了地上，宣布今天是他的生日，谁也不许打架。他的手下只好陪他唱歌，一路唱着走远了。',
+            坦白: '你握紧宝石。领头的那个忽然对着手下大声说：“说实话，我根本不想为这几个钢币卖命。”说完他就走了。他的手下想了想，也走了。'
+          };
+          S.drama.log.push({ t: S.time, target: 'avoid', act: 'avoid_' + id, sum: '让' + nameOf(enc) + '走开', dir: dir, ch: S.chapter, at: DL.W.val(W.room().name) });
+          S.drama.total = (S.drama.total || 0) + 1;
+          DL.out.narr(LINE[dir]);
+          AV.pass(id, 'gem');
+          return null;
+        } }
+    ]
+  };
+  var _start = C.start;
+  C.start = function (encId, opts) {
+    try {
+      if (AV.eligible(encId, opts)) {
+        var S = DL.S, enc = DL.ENC[encId];
+        S.pf = { enc: encId, opts: JSON.parse(JSON.stringify(opts || {})) };
+        if (enc.intro) DL.out.narr(DL.W.val(enc.intro));
+        D.show('lineup_pf');
+        return;
+      }
+    } catch (e) { /* 照旧开打 */ }
+    return _start.apply(this, arguments);
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* 龙枪MUD · 1.8 人物志（参考质量效应的资料库）
+ * 十三卷、七十年、上百个人。没读过原著的人，很容易记不清谁是谁。现在：
+ *   你见过的人、去过的地方、遇到过的神，都会自动记进“人物志”。
+ *   主要的五十多个人有一段手写的介绍——只写到你第一次见到他的时候，不剧透；
+ *   后面按这一局补上：第一次见面在哪一卷、哪里；他现在对你的态度（知己、在一起）；他走了没有、你在不在；这一次他活了下来。
+ *   别的人用他身上已有的描述。地方写第一次来是哪一卷，主要的有一句话。神按卷解锁。
+ * 命令：人物志、人物志 坦尼斯、人物志 地方、人物志 神。点人名的面板里也有“人物志”。 */
+(function (root) {
+  'use strict';
+  var DL = root.DL, W = DL.W, CH = DL.CH, G = DL.game;
+  var CX = DL.CODEX = {};
+  var F = function (k) { return DL.flag(k); };
+  CX.PEOPLE = {
+    tanis: '半精灵，在索拉斯长大，佛林特把他带大。一群老朋友里拿主意的那个人——虽然他自己从来不觉得自己拿得准。',
+    sturm: '史东·布莱特布雷德，索兰尼亚骑士的儿子。骑士团早就没落了，人们朝骑士扔石头，可他还守着骑士准则。',
+    flint: '佛林特·火炉，山丘矮人，铁匠，也刻木头。脾气很坏，心很软，一辈子都在骂泰斯。',
+    tas: '泰索何夫·柏伏特，坎德人。什么都不怕，口袋里永远装着不是他的东西——他会说是“捡到的”。',
+    caramon: '卡拉蒙·马哲理，力气大、心眼实的战士，雷斯林的双胞胎哥哥。吃得多，笑得多，什么时候都护着弟弟。',
+    raistlin: '雷斯林·马哲理，红袍法师，卡拉蒙的双胞胎弟弟。法师塔的试炼给了他金色的皮肤、沙漏一样的眼睛，和一副咳不完的身体。',
+    goldmoon: '奎苏部落酋长的女儿，手里有一根会发蓝光的水晶杖。她在找真神。',
+    riverwind: '奎苏部落的猎人。为了娶金月，他被派去找真神存在的证据，带回来的是那根水晶杖。',
+    tika: '最后家园旅店的女招待，一头红发，一脸雀斑。她手里的平底锅，比很多人的剑好用。',
+    laurana: '奎灵诺斯太阳咏者的女儿，坦尼斯青梅竹马的恋人。她追着坦尼斯，离开了家。',
+    gilthanas: '太阳咏者的小儿子，罗拉娜的哥哥。骄傲，敏感，对坦尼斯有心结。',
+    fizban: '一个总在找帽子的老法师。他的法术十次有九次出错，可出错的方式总是刚刚好。',
+    elistan: '寻求者的教士。他一辈子都在找真神，找到了一个又一个假的。',
+    kitiara: '卡拉蒙和雷斯林同母异父的姐姐，坦尼斯的旧情人。五年前，她没有回到约定的地方。',
+    alhana: '西瓦那斯提的公主，罗拉克国王的女儿。她到人类的地方来找人帮忙，又看不起来帮忙的人。',
+    otik: '最后家园旅店的老板。他的辣土豆，全索拉斯第一。',
+    toede: '龙军里的大地精首领。胆小，虚荣，一肚子坏水，每次都能逃掉。',
+    bupu: '一个沟矮人小姑娘，口袋里装着死老鼠，最喜欢雷斯林。',
+    derek: '德瑞克·克朗加德，玫瑰骑士。准则他背得比谁都熟，用得比谁都狠。',
+    gunthar: '索兰尼亚骑士团的首领，史东家的老朋友。',
+    astinus: '帕兰萨斯大图书馆的历史学者。世界上发生的每一件事，他都记下来。他从来不抬头。',
+    soth: '死亡骑士。很久以前他是索兰尼亚的骑士；现在，他为黑暗之后的龙骑将效力。',
+    berem: '一个胸口嵌着一块绿宝石的男人，总是在逃。龙军翻遍了整个克莱恩在找他。',
+    lorac: '西瓦那斯提的国王，阿尔瀚娜的父亲。',
+    porthios: '太阳咏者的长子，罗拉娜的大哥。他觉得人类的事，不该由精灵来管。',
+    raggart: '冰原人的首领。冰原上的规矩，他说了算。',
+    arman: '索巴丁海拉族的年轻人，自称是英雄卡拉斯的后人。',
+    sestun: '一个沟矮人，在龙军的营地里打杂。挨打最多，吃得最少。',
+    crysania: '帕拉丁教会里地位很高的女祭司，美丽、虔诚、骄傲。她要去见雷斯林。',
+    dalamar: '一个黑暗精灵，黑袍法师，雷斯林的学徒，住在帕兰萨斯的法师塔里。',
+    par_salian: '白袍法师的首领，魏瑞斯法师塔的主人。很多年前，是他主持了雷斯林的试炼。',
+    kingpriest: '伊斯塔的神王，帕拉丁教会的领袖。他身上的光，亮得让人看不清他的脸。',
+    denubis: '伊斯塔的一位老教士，善良，疲惫，越来越听不见他的神。',
+    pheragas: '伊斯塔角斗场的角斗士，从北方来，笑声比谁都大。',
+    kiiri: '伊斯塔角斗场的女角斗士，从海里来，不爱说话。',
+    arack: '伊斯塔角斗场的老板，一个满脸伤疤的矮人。',
+    garic: '一个年轻的索兰尼亚骑士。他守着的骑士团，只剩下他自己记得的那些规矩。',
+    gnimsh: '一个侏儒。他做的东西都能用——在侏儒里，这是一种丢人的毛病。',
+    reghar: '雷加·火炉，山丘矮人的首领，脾气和他的姓一样火爆。',
+    palin: '帕林·马哲理，卡拉蒙和蒂卡最小的儿子，白袍法师。',
+    steel: '史钢·布莱特布雷德，塔基西斯骑士团的骑士。他的母亲是奇蒂拉。他的父亲是谁，他自己知道。',
+    usha: '一个在伊尔达人中间长大的人类姑娘。她说，她是雷斯林的女儿。',
+    tanin: '坦宁·马哲理，卡拉蒙和蒂卡的大儿子，索兰尼亚骑士。',
+    sturm_m: '史东·马哲理，卡拉蒙和蒂卡的二儿子，索兰尼亚骑士。他的名字，是照着史东·布莱特布雷德起的。',
+    dougan: '道根·红锤，一个爱赌钱、爱吹牛、穿得花里胡哨的矮人。',
+    jenna: '帕兰萨斯的红袍女法师，开着一家魔法铺子，认识所有值得认识的人。',
+    gerard: '杰拉德·乌斯·马塔，索兰尼亚骑士，在索拉斯守了两年的英雄之墓。他讨厌这份差事。',
+    odila: '索兰尼亚骑士，杰拉德的同僚，爱讲不好笑的笑话。',
+    mina: '一个十七八岁的姑娘，剃着光头，琥珀色的眼睛。她说她听见了唯一神的声音，于是一支军队跟着她走了。',
+    galdar: '一个牛头人，米娜最忠心的部下。',
+    medan: '塔基西斯骑士团的元帅，奎灵那斯提的占领者。他爱这片土地，也爱它的花园。',
+    silvan: '西瓦诺西，阿尔瀚娜和波修斯的儿子，在流亡里长大的精灵王子。',
+    gilthas: '吉尔萨斯，罗拉娜和坦尼斯的儿子，奎灵那斯提的年轻国王，被占领者当成傀儡。他在写诗。',
+    kerian: '卡格那斯提精灵，林子里的人，吉尔萨斯的妻子。',
+    conundrum: '一个侏儒。他的人生课题是“搞清楚一件事”；他的全名，比这本书还长。',
+    mirror: '一条银龙，用人的样子出现，眼睛看不见。',
+    rhys: '里斯·梅森，马哲理的修士，安静得像一块石头。',
+    nightshade: '一个坎德人，“夜行者”——能听见死人说话。他不喜欢这个本事。',
+    atta: '一只牧羊犬，里斯的伙伴。',
+    chemosh: '死亡之神。他在收集活人的灵魂，把他们变成会走路、会说话的死人。',
+    zeboim: '海的女神，脾气和海一样坏。'
+  };
+  CX.GODS = [
+    ['帕拉丁', 1, '善神之首，白金龙的样子。大灾变以后，人们说他已经不在了。'],
+    ['米莎凯', 1, '医疗女神，帕拉丁的伴侣。金月的蓝水晶杖，是她的。'],
+    ['黑暗之后', 1, '五色龙之后，邪恶诸神之首。龙军为她而战。'],
+    ['李奥克', 1, '锻造之神，矮人的神。传说世界上的第一块宝石是他锻出来的。'],
+    ['三个月亮的神', 1, '白月索林纳瑞、红月卢尼塔瑞、黑月努塔瑞，三位魔法之神。法师的力量，随着各自的月亮涨落。'],
+    ['混沌', 7, '万物与虚无之父，比诸神更古老。'],
+    ['唯一神', 8, '米娜口中的神。没有人知道祂是谁。'],
+    ['马哲理', 11, '思想与修行之神。修士们说，他有时候化成一只螳螂。'],
+    ['契摩斯', 11, '死亡之神。'],
+    ['泽波因', 12, '海的女神，黑暗之后的女儿。']
+  ];
+  CX.PLACES = {
+    '索拉斯': '建在巨大的瓦伦木上的小镇。最后家园旅店在最大的那棵树上。',
+    '暗森林': '传说进去的人都出不来。森林守护者住在这里。',
+    '札克萨洛斯': '大灾变时沉到地底下的古城。一条黑龙在废墟里守着什么。',
+    '奎灵诺斯': '奎灵那斯提精灵的都城，白杨树和水晶塔。',
+    '帕克斯·塔卡斯': '扼守山口的古老要塞，现在是龙军的矿场和监狱。',
+    '索巴丁': '山地矮人藏在山里的王国。大灾变以后，它的门再也没有为外人开过。',
+    '塔西斯': '曾经是海港的城市。大灾变以后，海退走了，船搁在了沙地上。',
+    '西瓦那斯提': '最古老的精灵王国，森林里的城。',
+    '冰墙': '南方的冰原。冰原人和海象人在冰上打仗。',
+    '南厄格斯': '大灾变以后从大陆上断开的岛，卡格那斯提精灵住在这里。',
+    '圣克瑞斯特': '骑士团的岛，侏儒们的山也在这里。',
+    '法王之塔': '守着帕兰萨斯南边山口的骑士塔。从来没有被攻破过。',
+    '帕兰萨斯': '索兰尼亚最美的城，大图书馆和法师塔都在这里。',
+    '卡拉曼': '北方的港口城市。',
+    '奈拉卡': '黑暗之后的神殿所在的城，龙军的心脏。',
+    '血海': '伊斯塔沉没的地方。海水是红的。',
+    '魏瑞斯森林': '它不在固定的地方。只有被邀请的人才找得到它。',
+    '魏瑞斯的法师塔': '三种袍子的法师共同的塔，试炼就在这里。',
+    '伊斯塔的神殿': '世界的中心，神王的宫殿。',
+    '伊斯塔的角斗场': '伊斯塔人看人打架的地方。',
+    '帕兰萨斯的法师塔': '被诅咒的塔。门前的树林会吃人。',
+    '无底深渊': '黑暗之后的国度。',
+    '札曼': '一座会动的山里的要塞。',
+    '风暴要塞': '塔基西斯骑士团的大本营，在北方的海上。',
+    '奎灵那斯提': '奎灵诺斯周围的精灵王国，现在被骑士团占领着。',
+    '西瓦诺斯特': '西瓦那斯提的都城，罩在结界里。',
+    '索兰瑟斯': '索兰尼亚骑士最后的据点之一。',
+    '桑克申': '火山脚下的港口城市。',
+    '马哲理的修道院': '山里的修道院，修士们在这里扫地、种菜、修行。',
+    '新港': '血海边上的港口。'
+  };
+  function st() { var S = DL.S; S.codex = S.codex || { p: {}, a: {} }; return S.codex; }
+  CX.record = function () {
+    var S = DL.S; if (!S || S.mode !== 'play' || S.dream) return;
+    var c = st(), r = W.room(); if (!r || r.scene || r.dream) return;
+    var v = CH.VOL(S.chapter), at = W.val(r.name), area = W.val(r.area);
+    if (area && !c.a[area]) c.a[area] = { v: v, ch: S.chapter };
+    (W.npcsHere ? W.npcsHere() : []).forEach(function (id) {
+      var n = DL.NPC[id]; if (!n || n.kind === 'mob' || c.p[id]) return;
+      c.p[id] = { v: v, ch: S.chapter, at: at };
+    });
+  };
+  CX.count = function () { return Object.keys(st().p).length; };
+  var _enter = W.enter;
+  W.enter = function () { var r = _enter.apply(this, arguments); try { CX.record(); } catch (e) { /* 只是记一笔 */ } return r; };
+
+  var SHE = { goldmoon: 1, tika: 1, laurana: 1, kitiara: 1, alhana: 1, bupu: 1, crysania: 1, kiiri: 1, usha: 1, jenna: 1, odila: 1, mina: 1, kerian: 1, zeboim: 1, iolanthe: 1, ladonna: 1 };
+  CX.he = function (id) { return SHE[id] ? '她' : (id === 'atta' ? '它' : '他'); };
+  function status(id) {
+    var S = DL.S, out = [], rec = st().p[id], FW = DL.FW;
+    if (rec) out.push('第一次见面：第' + DL.cnNum(rec.v) + '卷' + (rec.at ? '，' + rec.at : '') + '。');
+    if (DL.COMP[id]) {
+      var tog = false; try { tog = DL.ROMANCE && DL.ROMANCE.together(id); } catch (e) { tog = false; }
+      out.push(CX.he(id) + '现在对你：' + (tog ? '在一起' : DL.attitudeOf ? DL.attitudeOf(id) : DL.attitude(DL.rel(id, 'player'))) + '。');
+    }
+    if (FW) FW.LIST.filter(function (e) { return e.who === id; }).forEach(function (e) {
+      if (FW.isSaved(e)) out.push('书上，第' + DL.cnNum(e.vol) + '卷里' + CX.he(id) + '走了。这一次，' + CX.he(id) + '活了下来。');
+      else if (FW.isDead(e)) out.push('第' + DL.cnNum(e.vol) + '卷，走了。' + (FW.isHere(e) ? '那天你在' + CX.he(id) + '身边。' : '那天你不在。'));
+    });
+    return out;
+  };
+  CX.entry = function (id) {
+    var n = DL.NPC[id], txt = CX.PEOPLE[id] || W.val(n && (n.desc || n.look)) || '';
+    return { id: id, name: n ? n.name : id, text: txt, status: status(id) };
+  };
+  CX.find = function (q) {
+    var c = st(), ids = Object.keys(c.p);
+    for (var i = 0; i < ids.length; i++) if (DL.NPC[ids[i]] && DL.NPC[ids[i]].name === q) return ids[i];
+    for (i = 0; i < ids.length; i++) if (DL.NPC[ids[i]] && (DL.NPC[ids[i]].name.indexOf(q) >= 0 || q.indexOf(DL.NPC[ids[i]].name) >= 0)) return ids[i];
+    return null;
+  };
+  CX.gods = function () { var v = CH.VOL(DL.S.chapter); return CX.GODS.filter(function (g) { return g[1] <= v; }); };
+  CX.show = function (a) {
+    var S = DL.S, c = st(), q = String(a || '').trim();
+    if (!q) {
+      var main = Object.keys(c.p).filter(function (id) { return CX.PEOPLE[id]; }), other = Object.keys(c.p).filter(function (id) { return !CX.PEOPLE[id]; });
+      var lines = ['人物志：记下了 ' + Object.keys(c.p).length + ' 个人、' + Object.keys(c.a).length + ' 个地方、' + CX.gods().length + ' 位神。'];
+      if (main.length) lines.push('主要的人：' + main.map(function (id) { return DL.tok.cmd('人物志 ' + DL.NPC[id].name, DL.NPC[id].name); }).join('、'));
+      if (other.length) lines.push('别的人：' + other.slice(0, 40).map(function (id) { return DL.tok.cmd('人物志 ' + DL.NPC[id].name, DL.NPC[id].name); }).join('、') + (other.length > 40 ? '……' : ''));
+      lines.push(DL.tok.cmd('人物志 地方', '去过的地方') + '　' + DL.tok.cmd('人物志 神', '神') + '　' + DL.tok.cmd('见闻'));
+      DL.out.text(lines.join('\n'), 'sys'); return;
+    }
+    if (/^(地方|地点|去过的地方)$/.test(q)) {
+      var by = {}; Object.keys(c.a).forEach(function (k) { (by[c.a[k].v] = by[c.a[k].v] || []).push(k); });
+      var ls = ['去过的地方：'];
+      Object.keys(by).sort(function (x, y) { return x - y; }).forEach(function (v) {
+        ls.push('第' + DL.cnNum(+v) + '卷：' + by[v].map(function (k) { return k + (CX.PLACES[k] ? '——' + CX.PLACES[k] : ''); }).join('\n　　'));
+      });
+      DL.out.text(ls.join('\n'), 'sys'); return;
+    }
+    if (/^(神|诸神|众神)$/.test(q)) { DL.out.text(['诸神：'].concat(CX.gods().map(function (g) { return '【' + g[0] + '】' + g[2]; })).join('\n'), 'sys'); return; }
+    var id = CX.find(q);
+    if (!id) { DL.out.sys('人物志里还没有“' + q + '”。见过的人才会记下来。'); return; }
+    var e = CX.entry(id);
+    if (DL.portraitKey && DL.portraitKey(id)) DL.out.text(id, 'bust');
+    DL.out.text('【' + e.name + '】' + (e.text || '') + (e.status.length ? '\n' + e.status.join('\n') : ''), 'sys');
+  };
+  G.cmd(['人物志', '名册', 'codex'], function (a) { CX.show(a); }, { peek: true });
 })(typeof window !== 'undefined' ? window : globalThis);
 
 </script>
@@ -51579,6 +52221,7 @@ img.zoomable { cursor: zoom-in; }
       keys = keys.filter(function (k) { var l = k.split('|')[0]; if (seenT[l]) return false; seenT[l] = 1; return true; });
       if (keys.length) { sec('问起'); keys.slice(0, 12).forEach(function (k) { var l = k.split('|')[0]; add(l, '问 ' + nm + ' 关于 ' + l); }); }
     }
+    if (DL.CODEX && DL.S.codex && DL.S.codex.p[id]) add('人物志', '人物志 ' + nm);
     if (DL.ID && calm) { var its = DL.ID.topicsFor(id); if (its.length) { sec('你的出身'); its.forEach(function (t) { add(DL.ID.label(t), '问 ' + nm + ' 关于 ' + t.key.split('|')[0]); }); } }
     sec('');
     if (W.has('gem') && DL.drama.cardFor(id) && !n.dramaImmune) add(DL.drama.available() ? '戏剧效果' : '戏剧效果（今天已用完）', '戏剧效果 ' + nm);
@@ -51795,14 +52438,14 @@ img.zoomable { cursor: zoom-in; }
     var P = S.player, cls = DL.R.CLASSES[P.cls];
     var hp = S.combat && S.combat.units.player ? S.combat.units.player.hp : P.hp;
     var ac = S.combat && S.combat.units.player ? S.combat.units.player.ac : DL.A.ac(P);
-    who.innerHTML = '<h2>人物</h2><div class="nm">' + esc(P.name) + '</div><div class="cl">' + esc(P.speciesCn + cls.cn + (P.robe ? '（' + DL.R.ROBES[P.robe].cn + '）' : '') + ' · ' + P.level + ' 级') + '</div>' +
+    who.innerHTML = '<h2>人物</h2><div class="nm">' + esc(P.name) + '</div>' + (DL.FAME && DL.FAME.worn() ? '<div class="tw" title="戴着的称号">「' + esc(DL.FAME.worn().name) + '」</div>' : '') + '<div class="cl">' + esc(P.speciesCn + cls.cn + (P.robe ? '（' + DL.R.ROBES[P.robe].cn + '）' : '') + ' · ' + P.level + ' 级') + '</div>' +
       '<div class="hpl"><span>生命</span><span>' + Math.max(0, hp) + ' / ' + P.hpMax + '</span></div>' + hpBar(hp, P.hpMax) +
       '<div class="stats"><div class="stat"><div class="k">护甲</div><div class="v">' + ac + '</div></div><div class="stat"><div class="k">钢币</div><div class="v">' + S.money + '</div></div><div class="stat"><div class="k">经验</div><div class="v">' + S.xp + '</div></div></div>' +
       (DL.combat.slotText(P) && DL.A.canCast(P) ? '<div class="note" style="margin-top:6px">法术位 ' + esc(DL.combat.slotText(P)) + '</div>' : '');
     renderHere(here);
     var on = DL.drama.available(), gt = DL.FW ? DL.FW.temp() : null, tn = null;
     try { tn = DL.TONIGHT ? DL.TONIGHT.line(S) : null; } catch (e) { tn = null; }
-    gem.innerHTML = '<h2>混沌宝石</h2><div class="gemrow"><div class="gemstone' + (on ? ' on' : '') + (gt ? ' ' + gt : '') + ' gt' + DL.divTierIdx(S.div) + '" aria-hidden="true"></div><div class="gemtext"><div class="t1">' + (on ? '戏剧效果：今天还剩 ' + DL.drama.left() + ' 次' : '戏剧效果：今天已用完') + '</div><div class="t2">' + (on ? '掩饰 ' + DL.sgn(DL.concealMod()) + ' · 每天 ' + DL.drama.PER_DAY + ' 次' : (DL.drama.when ? DL.drama.when() : '长休后恢复')) + ' · 累计 ' + S.drama.total + ' 次</div>' + (gt ? '<div class="t3 ' + gt + '">' + DL.FW.TEMP_TEXT[gt] + '</div>' : '') + (tn ? '<div class="t4">' + tn + '</div>' : '') + (S.insp && S.insp.got ? '<div class="t5" title="灵感：对话里的检定失败时自动重掷一次">灵感 ' + DL.INSP.stars() + '</div>' : '') + '</div></div>';
+    gem.innerHTML = '<h2>混沌宝石</h2><div class="gemrow"><div class="gemstone' + (on ? ' on' : '') + (gt ? ' ' + gt : '') + ' gt' + DL.divTierIdx(S.div) + '" aria-hidden="true"></div><div class="gemtext"><div class="t1">' + (on ? '戏剧效果：今天还剩 ' + DL.drama.left() + ' 次' : '戏剧效果：今天已用完') + '</div><div class="t2">' + (on ? '掩饰 ' + DL.sgn(DL.concealMod()) + ' · 每天 ' + DL.drama.PER_DAY + ' 次' : (DL.drama.when ? DL.drama.when() : '长休后恢复')) + ' · 累计 ' + S.drama.total + ' 次</div>' + (gt ? '<div class="t3 ' + gt + '">' + DL.FW.TEMP_TEXT[gt] + '</div>' : '') + (DL.GEMMOOD && DL.GEMMOOD.mood(S) ? '<div class="t6 m-' + DL.GEMMOOD.mood(S) + '">脾气：' + DL.GEMMOOD.label(DL.GEMMOOD.mood(S)) + '</div>' : '') + (tn ? '<div class="t4">' + tn + '</div>' : '') + (S.insp && S.insp.got ? '<div class="t5" title="灵感：对话里的检定失败时自动重掷一次">灵感 ' + DL.INSP.stars() + '</div>' : '') + '</div></div>';
     var t = DL.divTier(S.div);
     dv.innerHTML = '<h2>历史偏离度 · 本卷</h2><div class="divnum"><span>' + t.cn + '</span><b>' + S.div + '</b></div><div class="meter"><i style="width:' + S.div + '%"></i></div>' +
       '<div class="ticks">' + DL.DIV_TIERS.map(function (x) { return '<span class="' + (x === t ? 'cur' : '') + '" style="left:' + Math.max(6, Math.min(94, x.min + (x.min ? 0 : 4))) + '%">' + x.cn + '</span>'; }).join('') + '</div>';
@@ -52806,6 +53449,13 @@ img.zoomable { cursor: zoom-in; }
   // 更新说明、试玩记录
   // =====================================================================
   UX.NOTES = [
+    ['1.8 · 你做过的事', [
+      '宝石的脾气：温情、荒唐、坦白里，哪个方向用得最多（至少 4 次，超过一半），宝石就有了那个脾气——温柔的、爱闹的、说真话的，写在侧栏宝石下面。有了脾气，十二个名场面里会多出一个只有它才做得到的选项，这一下必定成功。',
+      '你帮过的人，在最后一仗来了：从笼子里放出来的人、赛斯顿、伊力斯坦、费资本、没冲下去的亚兰和布莱恩、红披风、尼姆许、克丽珊娜……每卷的高潮战里，他们会出来帮你一次（【援手】）。卷末会说一句是谁来了。',
+      '你的名声：得到称号的那一刻会说一句；称号补到 46 个；后来遇到的人会提起你做过的事；可以“戴称号 名字”，侧栏写在你名字下面，“打烊以后”店主也会这样叫你。',
+      '不打也能过：普通的仗（不是剧情战、不是每卷的最后一仗、不是你自己选了动手的）开打前会停一下：可以说服、吓退、悄悄绕过去、塞钱，或者花一次宝石。绕过去也算赢，经验照给。',
+      '人物志：见过的人、去过的地方、遇到的神，自动记下来。主要的人有一段不剧透的介绍，再加上这一局里你们的事。命令“人物志”，点人名的面板里也有。'
+    ]],
     ['1.7 · 你在场', [
       '今晚有人有话说：火堆边有人在等你的时候（带选项的夜谈、知己的那一晚、宝石的礼物），侧栏宝石下面写“今晚，某某好像有话想跟你说”；章末的“先在这里过一夜”也会写出是谁，并且亮起来。',
       '你的出身，世界认得：坎德人、矮人、精灵、侏儒，法师、牧师、圣武士、武僧、游侠、德鲁伊……第一次交谈时对方会认出你，有的人可以问带［坎德人］这类标签的话题，有的地方你的身体先认出了它，几个名场面里多一个身份选项（只改说法，有检定的带优势）。游侠和德鲁伊能听懂天马和阿塔。原来几处把你写死成“人类”的地方，也按你的种族改了。',
@@ -53383,6 +54033,7 @@ img.zoomable { cursor: zoom-in; }
     if (d.adv < 0) notes.push('劣势');
     if (d.help) notes.push(esc(DL.nameOf(d.help.who)) + ' ＋' + d.help.v);
     if (d.first) notes.push('灵感重掷（第一次 ' + d.first.roll + '）');
+    if (d.force) notes.push(esc(d.force) + '：这一下必定成功');
     el.classList.add('dice-card', d.ok ? 'ok' : 'fail');
     el.innerHTML = '<span class="d20" aria-hidden="true"><span>' + d.roll + '</span></span>' +
       '<span class="dc-body"><span class="dc-top">' + esc(d.label) + ' · DC ' + d.dc + '</span><span class="dc-sum">' + bits.join('') + (notes.length ? '<span class="dc-notes">' + notes.join(' · ') + '</span>' : '') + '</span></span>' +

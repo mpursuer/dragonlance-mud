@@ -173,7 +173,13 @@ button, input { font: inherit; color: inherit; }
 }
 .opt:hover:not(:disabled) { border-color: var(--ember); }
 .opt .n { font-family: var(--font-ui); font-variant-numeric: tabular-nums; color: var(--ember); font-weight: 700; flex: none; min-width: 1.2em; }
-.opt .ck { font-family: var(--font-ui); font-size: 0.8em; color: var(--muted); margin-left: auto; white-space: nowrap; }
+.opt { flex-wrap: wrap; row-gap: 2px; }
+.opt .opt-l { flex: 1 1 9em; min-width: 0; }
+/* 检定说明：放得下就靠右；放不下就整段换到选项文字下面，选项文字不被挤窄 */
+.opt .ck { font-family: var(--font-ui); font-size: 0.8em; color: var(--muted); margin-left: auto; text-align: right; flex: 0 1 auto; max-width: 100%; }
+@media (max-width: 640px) {
+  .opt .ck { flex: 1 1 100%; text-align: left; margin-left: calc(1.2em + 10px); line-height: 1.5; }
+}
 .opt:disabled { opacity: 0.45; cursor: default; }
 .opt.chosen { border-color: var(--ember); opacity: 0.8; }
 
@@ -758,6 +764,46 @@ img.zoomable { cursor: zoom-in; }
 .gemtext .t6.m-坦白 { color: var(--sd-t); }
 .who .tw { font-family: var(--font-display); font-size: 13px; color: var(--ember); letter-spacing: 0.06em; margin: -2px 0 4px; }
 
+/* ===================== 1.9 好用一点 ===================== */
+/* 手册：查阅类的东西在这里看，不进故事 */
+.hb-wrap { display: flex; flex-direction: column; gap: 12px; }
+.hb-tabs { display: flex; gap: 4px; overflow-x: auto; position: sticky; top: -16px; z-index: 1; background: var(--bg); margin: -16px -18px 0; padding: 10px 18px 8px; border-bottom: 1px solid var(--line); scrollbar-width: none; }
+.hb-tabs::-webkit-scrollbar { display: none; }
+.hb-tab { flex: none; border: 1px solid transparent; background: transparent; border-radius: 999px; padding: 4px 12px; min-height: 30px; font-size: 13px; cursor: pointer; color: var(--muted); }
+.hb-tab:hover { color: var(--ink); border-color: var(--line); }
+.hb-tab.on { background: var(--ember); color: var(--bg); }
+.hb-body { font-family: var(--font-body); font-size: var(--fs); line-height: 1.8; }
+.hb-body > .b { max-width: none; }
+.sheet:has(.hb-wrap) { width: min(720px, 100%); }
+@media (max-width: 640px) {
+  .modal:has(.hb-wrap) { padding: 0; align-items: stretch; }
+  .sheet:has(.hb-wrap) { max-height: none; height: 100%; border-radius: 0; border: none; }
+}
+.chip.hbchip { font-weight: 600; }
+
+/* 战斗动作栏：最要紧的打法在第一位，其余收进“战术” */
+.chips.dock { max-height: 45vh; }
+.chip.tac { color: var(--ember); }
+.dock-sub { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 6px; }
+.chip.tacopt { white-space: normal; text-align: left; border-radius: 12px; line-height: 1.5; padding: 5px 11px; }
+.chip.tacopt b { color: var(--ember); margin-right: 6px; font-variant-numeric: tabular-nums; }
+
+/* 侧栏按场合排：战斗时全队血条紧跟在你下面，别的收起 */
+#actCard { order: 1; } #goalCard { order: 2; } #whoCard { order: 3; } #hereCard { order: 4; } #gemCard { order: 5; }
+#divCard { order: 6; } #partyCard { order: 7; } #questCard { order: 8; } #mapCard { order: 9; }
+.side.in-combat #partyCard { order: 4; }
+.side.in-combat #hereCard, .side.in-combat #divCard, .side.in-combat #questCard, .side.in-combat #mapCard { display: none; }
+.side.in-combat .gemcard .gemtext > :not(.t1) { display: none; }
+#divCard:not(.open) .meter, #divCard:not(.open) .ticks { display: none; }
+#divCard h2 { display: flex; align-items: center; }
+.dv-tg { margin-left: auto; border: none; background: none; color: var(--ember); font-size: 12px; letter-spacing: 0; cursor: pointer; padding: 2px 4px; min-height: 24px; }
+
+/* 提示三层：剧情照旧；系统通知是小字（开头的标签变小标签）；可以去做的事是左边一道竖线的框 */
+.b.t-act { color: var(--ink); background: var(--panel-2); border: none; border-left: 3px solid var(--ember); border-radius: 0 8px 8px 0; padding: 6px 12px; font-family: var(--font-ui); font-size: 0.88em; line-height: 1.7; }
+.b-gem.t-act { border-left-color: var(--gem); color: var(--gem); background: var(--gem-soft); }
+.ntag { display: inline-block; font-size: 0.84em; line-height: 1.5; padding: 0 6px; margin-right: 6px; border-radius: 4px; background: var(--panel-2); border: 1px solid var(--line); color: var(--ink); vertical-align: 0.06em; }
+.hb-body b.hl { color: var(--ember); font-weight: 600; }
+
 </style>
 </head>
 <body>
@@ -772,7 +818,7 @@ img.zoomable { cursor: zoom-in; }
       <span class="clock" id="clock"></span>
       <button class="btn ghost" id="btnSaves" type="button">存档</button>
       <button class="btn ghost" id="btnSettings" type="button">设置</button>
-      <button class="btn ghost only-narrow" id="btnPanel" type="button" aria-controls="side" aria-expanded="false">队伍</button>
+      <button class="btn ghost only-narrow" id="btnPanel" type="button" aria-controls="side" aria-expanded="false" title="眼下、你自己、这里的人、宝石、同伴">状况</button>
     </div>
   </header>
   <div class="statusbar" id="statusBar" role="region" aria-label="当前状态" hidden></div>
@@ -1173,6 +1219,7 @@ img.zoomable { cursor: zoom-in; }
       b('say', (who ? DL.tok.npc(who) + '：' : '') + DL.fill(line, DL.ctxVars()), { who: who });
     },
     sys: function (t, x) { b('sys', DL.fill(t, DL.ctxVars()), x); },             // 系统提示
+    aside: function (t) { DL.out.hint(t, true); },   // 顺手一提（话题清单、能做的事）：不当成“眼下”的目标
     hint: function (t, noRec) { var s = tok.quoteCmds(DL.fill(t, DL.ctxVars())); if (!noRec && DL.recHint) DL.recHint(s); b('hint', DL.W && DL.W.linkPlaces ? DL.W.linkPlaces(s) : s); },   // 新手提示（记在这个地方，卡住时可以再看；提到的去过的地方可以点）
     combat: function (t) { b('combat', t); },
     roll: function (t, x) { b('roll', t, x); },                                   // 掷骰细节（默认折叠）
@@ -1202,7 +1249,7 @@ img.zoomable { cursor: zoom-in; }
 (function (root) {
   'use strict';
   var DL = root.DL;
-  DL.VERSION = '1.8.3';
+  DL.VERSION = '1.9.0';
   DL.SAVE_VERSION = 1;
 
   DL.newState = function () {
@@ -2068,7 +2115,7 @@ img.zoomable { cursor: zoom-in; }
     var seen = {};
     keys = keys.filter(function (k) { var l = k.split('|')[0]; if (seen[l]) return false; seen[l] = 1; return true; });
     if (!keys.length) return;
-    DL.out.hint('可以问' + DL.nameOf(id) + '：' + keys.map(function (k) {
+    DL.out.aside('可以问' + DL.nameOf(id) + '：' + keys.map(function (k) {
       var label = k.split('|')[0];
       return DL.tok.cmd('问 ' + DL.nameOf(id) + ' 关于 ' + label, label);
     }).join('、'));
@@ -3317,7 +3364,7 @@ img.zoomable { cursor: zoom-in; }
       DL.out.sys('戏剧效果：' + DR.status() + '。用法：戏剧效果 目标 [温情 / 荒唐 / 坦白]，比如“戏剧效果 雷斯林 温情”。');
       var cands = DL.W.npcsHere().filter(function (id) { return DR.cardFor(id); });
       if (S.combat) cands = cands.concat(DL.combat.living('enemy').map(function (u) { return u.uid; }));
-      if (cands.length) DL.out.hint('这里可以选：' + cands.map(function (id) { var nm = S.combat && S.combat.units[id] ? S.combat.units[id].name : DL.nameOf(id); return DL.tok.cmd('戏剧效果 ' + nm, nm); }).join('、'));
+      if (cands.length) DL.out.aside('这里可以选：' + cands.map(function (id) { var nm = S.combat && S.combat.units[id] ? S.combat.units[id].name : DL.nameOf(id); return DL.tok.cmd('戏剧效果 ' + nm, nm); }).join('、'));
       return;
     }
     var rm0 = DL.W.room();
@@ -4370,6 +4417,7 @@ img.zoomable { cursor: zoom-in; }
     G.rest(long);
   });
   cmd(['帮助', '指令', 'help', 'h', '?'], function (a) { G.help(a); }, { peek: true });
+  cmd(['手册', 'handbook'], function () { G.help(); }, { peek: true });     // 网页上打开手册面板（ui19.js）；没有界面的时候就是帮助
   cmd(['存档', 'save'], function (a) { G.saveCmd(a); });
   cmd(['读档', 'load'], function (a) { G.loadCmd(a); });
   cmd(['删除存档', '删档', 'delete'], function (a) { return G.deleteCmd(a); });
@@ -4659,9 +4707,10 @@ img.zoomable { cursor: zoom-in; }
       var key = (rr.area || '') + (rr.area === r.area ? (rr.pos && rr.pos[2] === 1 ? ' · 树上' : rr.pos && rr.pos[2] === 2 ? ' · 楼上' : ' · 地面') : '');
       if (!other[key] || reach[id].d < reach[other[key]].d) { if (!other[key]) oa.push(key); other[key] = id; }
     });
-    if (oa.length) lines.push('', '别处：' + oa.map(function (k) { var id = other[k]; return DL.tok.cmd('前往 ' + G.travelArg(id), k + '（' + G.placeName(id) + '）'); }).join('　'));
-    lines.push('（只显示去过的地方。点一个地方，就沿着走过的路直接过去；也可以输入“前往 地名”。）');
+    // 格子图不折行（窄屏上可以横着滑）；下面两行字照常折行
     DL.out.text(lines.join('\n'), 'map');
+    if (oa.length) DL.out.sys('别处：' + oa.map(function (k) { var id = other[k]; return DL.tok.cmd('前往 ' + G.travelArg(id), k + '（' + G.placeName(id) + '）'); }).join('　'));
+    DL.out.sys('（只显示去过的地方。点一个地方，就沿着走过的路直接过去；也可以输入前往，后面跟地名。）');
   };
   G.help = function (topic) {
     if (/戏剧/.test(topic)) {
@@ -4689,6 +4738,7 @@ img.zoomable { cursor: zoom-in; }
       '手机：拍照（在名场面拍照，或者“拍照 人物”）、相册。没电了？雷斯林好像一直在偷偷看你的手机（问 雷斯林 关于 小石板）；之后可以“充电”。月亮：看三个月亮的盈亏（法师在自己的月亮满月时更强）。',
       '消遣（旅店、营地）：掰手腕 人物、拼酒 人物、猜谜、讲故事、赌骰子 钢币数（出千 需要灌铅骰子）。',
       '收集：收集（一览）、图鉴、称号（戴称号 名字、摘下称号）、收藏、见闻、人物志（人物志 名字、人物志 地方、人物志 神）。搜索时留意旧地图的碎片。',
+      '手册：网页上，状态、同伴、背包、任务、地图、人物志、收藏、帮助都在“手册”里（底部的“手册”按钮）；打这些命令也会打开它，不会写进故事里。有选项的时候，可以直接按数字键选。',
       '系统：提示（不知道下一步做什么时）、状态、队伍、日志、地图、时间、偏离度、收藏、短休、长休、准备（法师）、存档、读档、删除存档、导出、设置、重新开始。'
     ].join('\n'), 'sys');
   };
@@ -5406,7 +5456,7 @@ img.zoomable { cursor: zoom-in; }
     if (!q) {
       var here = W.companionsHere().filter(function (id) { return B.D[id]; });
       DL.out.sys('用法：谈心 某人。每位同伴每天可以谈一次，对你的好感度越高，聊得越深。');
-      if (here.length) DL.out.hint('这里可以找：' + here.map(function (id) { return DL.tok.cmd('谈心 ' + DL.nameOf(id), DL.nameOf(id)) + '（' + DL.attitudeOf(id) + '）'; }).join('、'));
+      if (here.length) DL.out.aside('这里可以找：' + here.map(function (id) { return DL.tok.cmd('谈心 ' + DL.nameOf(id), DL.nameOf(id)) + '（' + DL.attitudeOf(id) + '）'; }).join('、'));
       return;
     }
     if (S.combat) { DL.out.sys('打仗呢，没空谈心。'); return; }
@@ -5422,7 +5472,7 @@ img.zoomable { cursor: zoom-in; }
     if (s.state === 'active') { if (B.tryHandIn(id)) return; B.play(id, ['>' + W.val(d.quest.remind, s)]); B.hint(id); return; }
     if (rel >= 5) return B.giveQuest(id);
     if (s.day === today()) { B.play(id, ['>' + d.busy]); return; }
-    if (rel < 0) { B.play(id, ['>' + d.refuse]); DL.out.hint('（' + DL.nameOf(id) + '现在对你有些冷淡。帮帮忙、送点合心意的东西，或者在对话里多照顾对方的感受，关系会慢慢回暖。）'); return; }
+    if (rel < 0) { B.play(id, ['>' + d.refuse]); DL.out.aside('（' + DL.nameOf(id) + '现在对你有些冷淡。帮帮忙、送点合心意的东西，或者在对话里多照顾对方的感受，关系会慢慢回暖。）'); return; }
     D.show('bond_tier', { id: id, t: Math.max(0, Math.min(4, rel)) });
   };
   DLG.bond_tier = {
@@ -5490,7 +5540,7 @@ img.zoomable { cursor: zoom-in; }
     s.state = 'night';
     DL.quest('bond_' + id, 'done');
     DL.quest('bond_night_' + id, 'active', d.quest.nightTitle || ('和' + DL.nameOf(id) + '的约定'), '等到夜里扎营歇下的时候，' + DL.nameOf(id) + '有话想跟你说。');
-    DL.out.hint('（夜里在营地长休时会触发；也可以在夜里或营地对' + DL.nameOf(id) + '用“谈心”。）');
+    DL.out.aside('（夜里在营地长休时会触发；也可以在夜里或营地对' + DL.nameOf(id) + '用“谈心”。）');
   };
   // 专属情节
   B.scene = function (id) {
@@ -6115,8 +6165,9 @@ img.zoomable { cursor: zoom-in; }
   };
 
   // =========================== 轮到你：状态 + 战术菜单 ===========================
-  T.foeTag = function (f, seenRef) {
-    var bits = [C.hpWord(f)];
+  // brief：“轮到你了”里用——血量顶上的状态条和侧栏里有，谁盯着谁【敌情】里有，这里只说别处看不到的
+  T.foeTag = function (f, seenRef, brief) {
+    var bits = brief ? [] : [C.hpWord(f)];
     if (f.row === 'back') bits.push('后排');
     if (f.air) bits.push('空中');
     if (f.cond.asleep) bits.push('昏睡');
@@ -6127,7 +6178,7 @@ img.zoomable { cursor: zoom-in; }
     var it = f.intent;
     if (it && it.type === 'cast') bits.push('念咒');
     if (it && it.type === 'flee') bits.push('想逃');
-    if (it && it.type === 'attack' && U(it.target)) bits.push('盯着' + nm(U(it.target)));
+    if (!brief && it && it.type === 'attack' && U(it.target)) bits.push('盯着' + nm(U(it.target)));
     if (!seenRef || !seenRef[f.ref]) { var kt = T.knownTag(mon(f).shadowOf || f.ref); if (kt) bits.push(kt.replace(/[（）]/g, '')); if (seenRef) seenRef[f.ref] = 1; }
     return bits.join('，');
   };
@@ -6136,10 +6187,10 @@ img.zoomable { cursor: zoom-in; }
     T.flushSummary(cb);
     var list = C.living('enemy');
     var seenRef = {};
-    var parts = list.map(function (f) { return f.noFight ? f.name + '（不参战）' : DL.tok.cmd('攻击 ' + f.name, f.name) + '（' + T.foeTag(f, seenRef) + '）'; });
+    var parts = list.map(function (f) { if (f.noFight) return null; var tg = T.foeTag(f, seenRef, true); return tg ? DL.tok.cmd('攻击 ' + f.name, f.name) + '（' + tg + '）' : null; }).filter(Boolean);
     var tail = T.moraleOn(cb) ? '｜士气：' + moraleWord(cb.morale) : '';
     if (cb.dark > 0) tail += '｜一片漆黑（还有 ' + cb.dark + ' 轮）';
-    DL.out.combat('▶ 轮到你了（生命 ' + u.hp + '/' + u.maxHp + '，护甲 ' + (u.ac + (u.cond.shield ? 5 : 0)) + '，' + (u.row === 'front' ? '前排' : '后排') + (cb.extraAction ? '，动作如潮' : '') + '）。敌人：' + parts.join('、') + tail);
+    DL.out.combat('▶ 轮到你了（生命 ' + u.hp + '/' + u.maxHp + '，护甲 ' + (u.ac + (u.cond.shield ? 5 : 0)) + '，' + (u.row === 'front' ? '前排' : '后排') + (cb.extraAction ? '，动作如潮' : '') + '）' + (parts.length ? '。' + parts.join('、') : '。') + tail);
     cb.menu = T.buildMenu(cb);
     if (!cb.helped) {
       cb.helped = true;
@@ -6154,7 +6205,7 @@ img.zoomable { cursor: zoom-in; }
       if (cb.bench && cb.bench.length) acts.push('支援');
       if (!alone) acts.push('连携');
       if (DL.ENC[cb.id].fleeTo) acts.push('逃跑');
-      DL.out.hint('点下面的选项，或者直接输入命令：' + acts.map(function (a) { return DL.tok.cmd(a); }).join(' · ') + '。' + (alone ? '' : '也可以指挥同伴，比如“卡拉蒙 攻击 X”“金月 治疗 我”。'));
+      DL.out.hint('点下面的按钮（“战术”里是这一轮的打法建议，也可以按数字键），或者直接输入命令：' + acts.map(function (a) { return DL.tok.cmd(a); }).join(' · ') + '。' + (alone ? '' : '也可以指挥同伴，比如“卡拉蒙 攻击 X”“金月 治疗 我”。'));
     }
     D.show('cb_menu');
   };
@@ -17135,7 +17186,7 @@ img.zoomable { cursor: zoom-in; }
     S.counters.bookRead = (S.counters.bookRead || 0) + 1;
     if (pg.changed) DL.out.sys('（标着 ※ 的地方，和你记得的不一样。' + (pg.changed >= 2 ? '你把那几页翻来覆去看了很久。' : '') + '）');
     else DL.out.sys('（这一章，和你记得的一字不差。）');
-    if (!F('book_first')) { set('book_first'); DL.journal('我翻开了那本旧书。书里写的故事，会跟着我做的事一起改变。'); DL.out.hint('（还可以“翻书 第二章”回看前面，或者“往后翻”偷看下一章原来的样子。想把知道的事说出来，可以“预言”。）'); }
+    if (!F('book_first')) { set('book_first'); DL.journal('我翻开了那本旧书。书里写的故事，会跟着我做的事一起改变。'); DL.out.aside('（还可以“翻书 第二章”回看前面，或者“往后翻”偷看下一章原来的样子。想把知道的事说出来，可以“预言”。）'); }
     if (here('tas') && !F('tas_saw_book')) { set('tas_saw_book'); DL.out.say('tas', '你在看什么？一本书？里面有图吗？有地图吗？（他凑过来看了一眼）……这上面写的是“坦尼斯”？还有“泰索何夫”？！这是一本写我的书？！我要看！我要看！'); DL.out.narr('你赶紧把书合上了。泰斯一整天都在想办法从你包里“借”它。'); }
   };
   B.ahead = function () {
@@ -49855,7 +49906,7 @@ img.zoomable { cursor: zoom-in; }
     if (!S || S.chapter !== ch || st().omen[ch]) return;
     st().omen[ch] = 1;
     DL.out.gem('口袋里的宝石，忽然凉了下来。像一块在雪地里放了一夜的石头。');
-    if (!st().coldSeen) { st().coldSeen = true; DL.out.hint('（宝石凉下来，是它在替你记着：书上的这一章里，有人会走。）'); }
+    if (!st().coldSeen) { st().coldSeen = true; DL.out.aside('（宝石凉下来，是它在替你记着：书上的这一章里，有人会走。）'); }
   }
   ['narr', 'cut', 'say'].forEach(function (k) {
     var f = DL.out[k]; if (!f) return;
@@ -50006,7 +50057,7 @@ img.zoomable { cursor: zoom-in; }
     run: function (S) {
       var nm = Object.keys(DL.COMP).filter(function (k) { return W.present(k); }).slice(0, 3).map(function (k) { return DL.nameOf(k); });
       DL.out.narr('睡前，你从包袱里摸出那本旧书。借着火光翻开，书页上写着几个名字——' + nm.join('，') + '……都是今天坐在这堆火边上的人。\n你想起了地铁上看见的那一行字。');
-      DL.out.hint('（想看书上怎么写他们，可以' + DL.tok.cmd('翻书') + '；想偷看下一章原来的样子，可以' + DL.tok.cmd('往后翻') + '。）');
+      DL.out.aside('（想看书上怎么写他们，可以' + DL.tok.cmd('翻书') + '；想偷看下一章原来的样子，可以' + DL.tok.cmd('往后翻') + '。）');
     } });
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -50664,7 +50715,7 @@ img.zoomable { cursor: zoom-in; }
     var r = _list.apply(this, arguments);
     try {
       var ts = ID.topicsFor(id);
-      if (ts.length) DL.out.hint('你的出身让你还能问：' + ts.map(function (t) { return DL.tok.cmd('问 ' + DL.nameOf(id) + ' 关于 ' + t.key.split('|')[0], ID.label(t)); }).join('、'));
+      if (ts.length) DL.out.aside('你的出身让你还能问：' + ts.map(function (t) { return DL.tok.cmd('问 ' + DL.nameOf(id) + ' 关于 ' + t.key.split('|')[0], ID.label(t)); }).join('、'));
     } catch (e) { /* 只是提示 */ }
     return r;
   };
@@ -51601,7 +51652,7 @@ img.zoomable { cursor: zoom-in; }
     _titles.apply(this, arguments);
     var w = FM.worn(), got = C.earned();
     if (w) DL.out.sys('现在戴着：【' + w.name + '】（' + DL.tok.cmd('摘下称号') + '）');
-    else if (got.length) DL.out.hint('可以戴上一个：' + got.slice(0, 6).map(function (t) { return DL.tok.cmd('戴称号 ' + t.name, t.name); }).join('、'));
+    else if (got.length) DL.out.aside('可以戴上一个：' + got.slice(0, 6).map(function (t) { return DL.tok.cmd('戴称号 ' + t.name, t.name); }).join('、'));
   };
 
   // ---------- 名声：后来的人提起你做过的事 ----------
@@ -52314,7 +52365,7 @@ img.zoomable { cursor: zoom-in; }
         var html = blk.text ? '<div class="cp">' + rich(blk.text) + '</div>' : '';
         if (!blk.input) {
           html += '<div class="opts">' + (blk.options || []).map(function (o) {
-            return '<button type="button" class="opt' + (o.hot ? ' hot' : '') + '" data-n="' + o.n + '"><span class="n">' + o.n + '</span><span>' + rich(o.label) + '</span>' + (o.check ? '<span class="ck">' + esc(o.check) + '</span>' : '') + '</button>';
+            return '<button type="button" class="opt' + (o.hot ? ' hot' : '') + '" data-n="' + o.n + '"><span class="n">' + o.n + '</span><span class="opt-l">' + rich(o.label) + '</span>' + (o.check ? '<span class="ck">' + esc(o.check) + '</span>' : '') + '</button>';
           }).join('') + '</div>';
         }
         el.innerHTML = html;
@@ -52327,11 +52378,15 @@ img.zoomable { cursor: zoom-in; }
       default:
         el.innerHTML = rich(blk.text);
     }
+    // 地图的格子图可能比窄屏宽：可以横着滑，键盘也能聚焦到它
+    if (blk.cls === 'map') { el.tabIndex = 0; el.setAttribute('role', 'region'); el.setAttribute('aria-label', '地图'); }
     // 体验层（ux.js）在挂上页面之前加工：战报加粗、插图换成图片。返回 false 表示这一块不显示
     if (UI.decorate && UI.decorate(el, blk) === false) return null;
     el._blk = blk;
     return el;
   }
+
+  UI.build = build;     // 手册面板也用同一套渲染
 
   // ---------- 输入 ----------
   UI.send = function (text, quiet) {
@@ -52538,6 +52593,16 @@ img.zoomable { cursor: zoom-in; }
   // ---------- 快捷按钮 ----------
   function chip(label, cmd, cls) { return '<button type="button" class="chip ' + (cls || '') + '" data-cmd="' + esc(cmd) + '">' + esc(label) + '</button>'; }
   UI.chip = chip;
+  // 这里是不是睡觉的地方（只看房间本身，不去问房间的规则——有些规则一问就会推时间、出事件）：
+  // 营地、旅店、写明可以睡的地方；离上次长休满 16 小时，或者营地会自己熬到能睡的时候
+  UI.canSleep = function () {
+    var S = DL.S, r = DL.W.room();
+    if (!S || !r || S.combat || S.dream || S.pending || S.flags.escaping || r.noRest || !r.longRest) return false;
+    var inn = (r.tags || []).indexOf('inn') >= 0;
+    if (!r.camp && !inn && r.longRest !== true) return false;
+    var nt = DL.NIGHT && DL.NIGHT.CAMPS && DL.NIGHT.CAMPS[S.room];
+    return S.time - S.lastLongRest >= 16 * 60 || !!r.vigil || !!nt;
+  };
   UI.renderChips = function () {
     var S = DL.S, h = [];
     if (!S || S.mode === 'title' || S.mode === 'chargen') { chips.innerHTML = ''; return; }
@@ -52550,7 +52615,7 @@ img.zoomable { cursor: zoom-in; }
       chips.innerHTML = h.join(''); return;
     }
     if (S.mode === 'dead' || S.mode === 'ended') {
-      h.push(chip('读取自动存档', '读档 自动', 'hot'), chip('重新开始', '重新开始'), chip('队伍', '队伍'), chip('偏离度', '偏离度'), chip('收藏', '收藏'));
+      h.push(chip('读取自动存档', '读档 自动', 'hot'), chip('重新开始', '重新开始'), chip('手册', '手册', 'hbchip'));
       chips.innerHTML = h.join(''); return;
     }
     if (S.pending && !S.pending.input) { chips.innerHTML = ''; return; }   // 选项太多，只在正文里列出
@@ -52578,13 +52643,18 @@ img.zoomable { cursor: zoom-in; }
     if (S.dream && DL.DREAM) {
       var ds = DL.DREAM.cur();
       if (ds && !ds.done && ds.type !== 'gate' && ds.type !== 'echo') h.push(chip(DL.DREAM.actLabel(ds) || '靠近', '靠近', 'hot'));
-      h.push(chip('醒来', '醒来', 'gemchip'), chip('状态', '状态'), chip('帮助', '帮助'));
+      h.push(chip('醒来', '醒来', 'gemchip'), chip('手册', '手册', 'hbchip'));
       chips.innerHTML = h.join(''); return;
+    }
+    if (UI.canSleep()) {
+      // 能睡的地方：长休是每天都要做的事。今晚有人想跟你说话，就亮起来
+      var tn = DL.TONIGHT && DL.TONIGHT.here && DL.TONIGHT.here(S) && DL.TONIGHT.waiting(S).length;
+      h.push(chip(tn ? '长休 · 有人想说话' : '长休', '长休', tn ? 'hot' : ''));
     }
     if (DL.DREAM && DL.W.room().camp && !DL.DREAM.canDream()) h.push(chip('入梦', '入梦', 'gemchip'));
     if (DL.EXPLORE && (DL.W.room().tags || []).indexOf('wild') >= 0 && !S.flags.escaping) h.push(chip('探索', '探索'));
     if (DL.drama.available()) h.push(chip('戏剧效果', '戏剧效果', 'gemchip'));
-    h.push(chip('背包', '背包'), chip('状态', '状态'), chip('日志', '日志'), chip('地图', '地图'), chip('帮助', '帮助'));
+    h.push(chip('手册', '手册', 'hbchip'));     // 状态、背包、任务、地图、人物志、收藏、帮助都在手册里
     chips.innerHTML = h.join('');
   };
 
@@ -53636,6 +53706,13 @@ img.zoomable { cursor: zoom-in; }
   // 更新说明、试玩记录
   // =====================================================================
   UX.NOTES = [
+    ['1.9 · 好用一点', [
+      '手册：状态、同伴、背包、任务、地图、人物志、收藏、帮助，都收进底部的“手册”按钮，分页签看，不再写进故事里；打这些命令也会打开它。点手册里的东西，会关掉手册、直接去做。',
+      '战斗：战术建议和基本动作合成底部一条。最要紧的那条（打断、散开、掩护……）亮在第一位，其余在“战术”里（宽屏默认展开）；“轮到你了”只说别处看不到的敌人状态。',
+      '侧栏：战斗时，全队和敌人的血条紧跟在你自己下面，此地、偏离度、任务、小地图先收起来；平时偏离度收成一行，点“展开”看刻度。手机上的“队伍”按钮改叫“状况”。',
+      '提示：剧情、系统通知、可以去做的事各一种样式；【新任务】【升级】这种变成小标签。能睡的地方多了“长休”按钮，今晚有人想跟你说话时会亮。',
+      '有选项的时候可以直接按数字键选。手机上带检定说明的选项不再被挤成一字一行；地图在窄屏上不再横着溢出；“眼下”不再被话题清单这种顺手一提的提示顶掉。'
+    ]],
     ['1.8.3 · 这一夜没睡成', [
       '有几夜，原著里就没睡成：泰斯半夜把你摇醒去看龙珠，卡拉蒙站在克丽珊娜的帐篷外，城门半夜开了……这种夜不算长休，什么都没有恢复，以前游戏不说。现在这一夜的事都过去、又轮到你的时候，会提示一句“这一夜没睡成”，说清楚哪些没恢复、去哪儿补觉。',
       '营地夜谈、知己的那一夜、宝石的礼物不受影响：它们在睡下之前，谈完接着睡，照样是一次完整的长休。'
@@ -54446,6 +54523,260 @@ img.zoomable { cursor: zoom-in; }
       if (ts && o) { var abs = o.src; try { abs = new URL(o.src, doc.baseURI).href; } catch (e) { /* 老浏览器 */ } ts.classList.add('has-art'); ts.style.setProperty('--title-art', 'url("' + abs.replace(/"/g, '%22') + '")'); }
       atmosphere();
     } catch (e) { /* 只是装饰 */ }
+    return r;
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* 龙枪MUD · 1.9 界面：好用一点
+ * 一、手册：状态、同伴、背包、任务、地图、人物志、收藏、帮助……这些查阅类的东西，在网页上打开一个分页签的面板，
+ *     不再写进故事里。做法：照旧执行原来的命令，只是把它这一次的输出接进面板（引擎一行不改）。
+ *     万一某个命令引出了新的选择（不该有），就照旧放回正文。
+ * 二、战斗动作栏：战术建议和基本动作合成底部一条。最要紧的那条建议（打断、散开、掩护……）直接亮在第一位，
+ *     其余收进“战术”；“轮到你了”里的战术选项不再在正文里列一遍（数字键照样能选）。
+ * 三、侧栏按场合排：战斗时，“此地”、偏离度、任务、小地图收起来，全队和敌人的血条紧跟在你自己下面；宝石只留一行。
+ *     平时偏离度收成一行，点“展开”看刻度。
+ * 四、提示三层：剧情照旧；系统通知（sys）是小字，开头的【新任务】【升级】这种标签变成小标签；
+ *     可以去做的事（hint、宝石）是同一种左边一道竖线的框。整段外面的括号去掉——框本身就说明了它是旁白。
+ * 五、数字键：有选项等你选的时候，直接按 1–9（输入框空着的时候）。 */
+(function (root) {
+  'use strict';
+  var DL = root.DL, UI = DL && DL.ui, doc = root.document;
+  if (!UI || !doc || !UI.build) return;
+  var G = DL.game, W = DL.W, C = DL.combat;
+  function $(id) { return doc.getElementById(id); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  var chip = UI.chip;
+  function ls(k, v) { try { if (v === undefined) return root.localStorage.getItem('dlmud.' + k); root.localStorage.setItem('dlmud.' + k, v); } catch (e) { return null; } return null; }
+
+  // =====================================================================
+  // 一、手册
+  // =====================================================================
+  var HB = DL.HANDBOOK = {};
+  HB.TABS = [
+    { id: 'me', label: '人物', cmd: '状态', verbs: ['状态', '属性', '人物卡', '角色', 'score', 'stat', 'sc'] },
+    { id: 'party', label: '同伴', cmd: '队伍', verbs: ['队伍', '同伴', 'party', 'p'] },
+    { id: 'bag', label: '背包', cmd: '背包', verbs: ['背包', '物品', '行囊', 'i', 'inv', 'inventory'] },
+    { id: 'quest', label: '任务', cmd: '日志', verbs: ['日志', '任务', 'journal', 'quest', 'j'] },
+    { id: 'map', label: '地图', cmd: '地图', verbs: ['地图', 'map', 'm'] },
+    { id: 'codex', label: '人物志', cmd: '人物志', verbs: ['人物志', '名册', 'codex'] },
+    { id: 'coll', label: '收藏', cmd: '收藏', verbs: ['收藏', '戏剧收藏', '称号', '头衔', 'titles', '图鉴', '怪物图鉴', 'bestiary', '见闻', '传说', 'lore', '梦痕', '梦境', '梦的记录', '偏离度', '历史偏离度', '命运之书', 'fate', '相册', '照片', 'album'] },
+    { id: 'help', label: '帮助', cmd: '帮助', verbs: ['帮助', '指令', 'help', 'h', '?'] }
+  ];
+  var OPEN_VERBS = ['手册', 'handbook'];
+  HB.last = ls('hbTab') || 'me';
+  // 这条命令是不是查阅类的；是的话，归哪一页
+  HB.match = function (raw) {
+    var t = String(raw || '').trim().toLowerCase(); if (!t) return null;
+    if (OPEN_VERBS.indexOf(t) >= 0) return { tab: HB.last, v: t, open: true };
+    var best = null;
+    HB.TABS.forEach(function (tab) {
+      tab.verbs.forEach(function (v) {
+        var cjk = /[一-龥]/.test(v);
+        var ok = t === v || t.indexOf(v + ' ') === 0 || (cjk && v.length >= 2 && t.indexOf(v) === 0);
+        if (ok && (!best || v.length > best.v.length)) best = { tab: tab.id, v: v };
+      });
+    });
+    return best;
+  };
+  // 照旧执行命令，把这一次的输出接过来
+  HB.capture = function (raw) {
+    var S = DL.S, pend = S && S.pending, old = DL.io.sink, got = [];
+    DL.io.sink = function (b) { got.push(b); };
+    try { G.dispatch(DL.normalize ? DL.normalize(raw) : raw); }
+    catch (e) { got.push({ cls: 'sys', text: '（出了点问题：' + (e && e.message || e) + '）' }); }
+    finally { DL.io.sink = old; }
+    var leak = got.some(function (b) { return b.cls === 'choice' || b.cls === 'clear' || b.cls === 'room'; }) || (DL.S && DL.S.pending !== pend);
+    if (leak) { got.forEach(function (b) { if (old) old(b); }); return null; }
+    return got;
+  };
+  HB.open = function (tabId, raw) {
+    var tab = HB.TABS.filter(function (t) { return t.id === tabId; })[0] || HB.TABS[0];
+    var blocks = HB.capture(raw || tab.cmd);
+    if (!blocks) { UI.refresh(); return false; }
+    HB.last = tab.id; ls('hbTab', tab.id);
+    var tabs = '<div class="hb-tabs" role="tablist" aria-label="手册的页签">' + HB.TABS.map(function (t) {
+      var on = t.id === tab.id;
+      return '<button type="button" role="tab" class="hb-tab' + (on ? ' on' : '') + '" aria-selected="' + on + '" data-hb="' + t.id + '">' + esc(t.label) + '</button>';
+    }).join('') + '</div>';
+    UI.openModal('手册', '<div class="hb-wrap">' + tabs + '<div class="hb-body" role="tabpanel" aria-label="' + esc(tab.label) + '"></div></div>');
+    var body = $('modalBody').querySelector('.hb-body');
+    blocks.forEach(function (b) { if (b.cls === 'echo') return; var el = UI.build(b); if (el) body.appendChild(el); });
+    if (!body.children.length) body.innerHTML = '<div class="b b-sys">这里还没有内容。</div>';
+    // 帮助：每一行开头的“移动：”“战斗：”加粗，好扫读
+    if (tab.id === 'help') body.querySelectorAll('.b').forEach(function (el) { el.innerHTML = el.innerHTML.replace(/(^|\n)([\u4e00-\u9fa5]{2,5})：/g, '$1<b class="hl">$2</b>：'); });
+    var on = $('modalBody').querySelector('.hb-tab.on');
+    if (on) { try { on.focus({ preventScroll: true }); } catch (e) { on.focus(); } if (on.scrollIntoView) on.scrollIntoView({ block: 'nearest', inline: 'nearest' }); }
+    $('modalBody').scrollTop = 0;
+    return true;
+  };
+  HB.isOpen = function () { var m = $('modal'); return !!(m && !m.hidden && $('modalBody').querySelector('.hb-wrap')); };
+  // 打字、点按钮、点正文里的链接，最后都走 UI.send：查阅类的命令在这里改道
+  var _send = UI.send;
+  UI.send = function (text, quiet) {
+    var S = DL.S;
+    if (S && S.player && S.mode !== 'title' && S.mode !== 'chargen') {
+      var m = HB.match(text);
+      if (m) {
+        if (UI.flushAll) UI.flushAll();
+        if (HB.open(m.tab, m.open ? null : String(text).trim())) { var inp = $('cmdInput'); if (inp) inp.value = ''; return; }
+      }
+    }
+    return _send.apply(this, arguments);
+  };
+  // 面板里的点击：换页签；查阅类的链接留在面板里；别的（去哪儿、做什么、点人和东西）关掉面板再做
+  function hbClick(e) {
+    if (!$('modalBody').querySelector('.hb-wrap')) return;
+    var t = e.target.closest('button, [data-cmd]'); if (!t || !$('modalBody').contains(t)) return;
+    var hb = t.getAttribute('data-hb');
+    if (hb) { e.stopPropagation(); e.preventDefault(); HB.open(hb); return; }
+    if (t.classList.contains('cs-open')) return;   // 折叠/展开照旧
+    var k = t.getAttribute('data-k'), a = t.getAttribute('data-a'), cmd = t.getAttribute('data-cmd');
+    if (k === 'cmd' || cmd) {
+      var c = cmd || a, m = HB.match(c);
+      e.stopPropagation(); e.preventDefault();
+      if (m) { HB.open(m.open ? HB.last : m.tab, m.open ? null : c); return; }
+      UI.closeModal(); UI.send(c, true); return;
+    }
+    if (k === 'go') { e.stopPropagation(); e.preventDefault(); UI.closeModal(); UI.send(a, true); return; }
+    if (k === 'npc' || k === 'item') { e.stopPropagation(); e.preventDefault(); UI.closeModal(); UI.select(k, a); return; }
+  }
+  // 页签之间用左右方向键
+  function hbKey(e) {
+    var t = e.target; if (!t || !t.classList || !t.classList.contains('hb-tab')) return;
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    var i = HB.TABS.map(function (x) { return x.id; }).indexOf(t.getAttribute('data-hb'));
+    var n = HB.TABS[(i + (e.key === 'ArrowRight' ? 1 : HB.TABS.length - 1)) % HB.TABS.length];
+    e.preventDefault(); HB.open(n.id);
+  }
+
+  // =====================================================================
+  // 二、战斗动作栏
+  // =====================================================================
+  // 宽屏放得下：战术默认展开；手机上默认收起，点“战术”再看
+  function tacDefault() { return (root.innerWidth || 0) > 900; }
+  var dockTac = tacDefault(), dockMore = false;
+  var URG = /^(散开|打断|拦住|掩护|照亮|活捉)/;
+  function shortLabel(label) { return DL.tok.strip(String(label)).replace(/（[^（）]*）$/, '').replace(/——.*$/, '').trim(); }
+  UI.combatMenu = function (S) {
+    var cb = S.combat, live = S.pending && S.pending.node === 'cb_menu';
+    return (cb.menu || []).map(function (it, k) { return { n: k + 1, label: DL.tok.strip(it.label), cmd: live ? String(k + 1) : it.cmd }; });
+  };
+  function dock(S) {
+    var cb = S.combat, P = S.player, enc = DL.ENC[cb.id] || {}, T = DL.TACTICS, h = [], more = [];
+    var menu = UI.combatMenu(S);
+    var foes = C.living('enemy').filter(function (u) { return !u.noFight; });
+    (enc.objects || []).forEach(function (o) { if (o.plot && T && T.objAvail && T.objAvail(o, cb)) h.push(chip(DL.W.val(o.label).replace(/（[^（）]*）$/, ''), '互动 ' + o.name, 'plot')); });
+    var urgent = menu.filter(function (it) { return URG.test(it.label); })[0];
+    if (urgent) h.push('<button type="button" class="chip hot" data-cmd="' + esc(urgent.cmd) + '" title="' + esc(urgent.label) + '">' + esc(shortLabel(urgent.label)) + '</button>');
+    var best = T && T.bestTarget ? T.bestTarget(cb) : foes[0];
+    if (best) h.push(chip('攻击 ' + best.name, '攻击 ' + best.name, urgent ? '' : 'hot'));
+    if (DL.A.canCast(P)) h.push(chip('施法', '施法'));
+    h.push(chip('防御', '防御'));
+    var tac = menu.filter(function (it) { return it !== urgent && !/^防御/.test(it.label); });
+    if (tac.length) h.push('<button type="button" class="chip tac" data-dock="tac" aria-expanded="' + dockTac + '">' + (dockTac ? '收起战术' : '战术 · ' + tac.length) + '</button>');
+    if (W.has('gem')) h.push(chip(DL.drama.available() ? '戏剧效果' : '戏剧效果（已用完）', '戏剧效果', 'gemchip'));
+    foes.forEach(function (f) { if (f !== best) more.push(chip('攻击 ' + f.name, '攻击 ' + f.name)); });
+    if (P.uses.secondWind > 0) more.push(chip('回气', '回气'));
+    if (P.uses.rage > 0 && !(cb.units.player && cb.units.player.cond.raging)) more.push(chip('狂暴', '狂暴'));
+    C.classActions().forEach(function (a) { more.push(chip(a, a)); });
+    if (S.inv.indexOf('potion') >= 0) more.push(chip('喝药水', '用 药水'));
+    var me = cb.units.player;
+    more.push(chip(me && me.row === 'front' ? '后退' : '上前', me && me.row === 'front' ? '后退' : '上前'));
+    if (cb.bench && cb.bench.length && !cb.supportUsed) more.push(chip('支援', '支援'));
+    if (enc.fleeTo) more.push(chip('逃跑', '逃跑'));
+    if (more.length) h.push('<button type="button" class="chip more" data-dock="more" aria-expanded="' + dockMore + '">' + (dockMore ? '收起' : '更多…') + '</button>');
+    var out = h.join('');
+    if (dockTac && tac.length) out += '<div class="dock-sub" role="group" aria-label="这一轮的打法">' + tac.map(function (it) { return '<button type="button" class="chip tacopt" data-cmd="' + esc(it.cmd) + '"><b>' + it.n + '</b>' + esc(it.label) + '</button>'; }).join('') + '</div>';
+    if (dockMore) out += '<div class="dock-sub" role="group" aria-label="更多动作">' + more.join('') + '</div>';
+    return out;
+  }
+  var _rc = UI.renderChips;
+  UI.renderChips = function () {
+    var S = DL.S, el = $('chips');
+    if (S && S.combat && S.mode === 'play' && (!S.pending || S.pending.node === 'cb_menu')) { el.innerHTML = dock(S); el.classList.add('dock'); return; }
+    el.classList.remove('dock');
+    dockTac = tacDefault(); dockMore = false;
+    return _rc.apply(this, arguments);
+  };
+
+  // =====================================================================
+  // 三、侧栏按场合排 + 四、提示三层（都在渲染这一步加工）
+  // =====================================================================
+  var divOpen = ls('divOpen') === '1';
+  var _rs = UI.renderSide;
+  UI.renderSide = function () {
+    var r = _rs.apply(this, arguments);
+    var S = DL.S, side = $('side'), dv = $('divCard');
+    if (side) side.classList.toggle('in-combat', !!(S && S.combat));
+    if (dv) {
+      dv.classList.toggle('open', divOpen);
+      var h2 = dv.querySelector('h2');
+      if (h2 && !h2.querySelector('.dv-tg')) h2.insertAdjacentHTML('beforeend', '<button type="button" class="dv-tg" aria-expanded="' + divOpen + '" aria-label="' + (divOpen ? '收起偏离度的刻度' : '展开偏离度的刻度') + '">' + (divOpen ? '收起' : '展开') + '</button>');
+    }
+    return r;
+  };
+  // 整段外面套着一对括号：去掉（框和小字本身就说明它是旁白）
+  function unwrapParen(el) {
+    var txt = el.textContent.trim();
+    if (txt.charAt(0) !== '（' || txt.charAt(txt.length - 1) !== '）') return;
+    var d = 0;
+    for (var i = 0; i < txt.length; i++) { var ch = txt.charAt(i); if (ch === '（') d++; else if (ch === '）') { d--; if (d === 0 && i < txt.length - 1) return; } }
+    var walk = doc.createTreeWalker(el, 4), first = null, last = null, n;
+    while ((n = walk.nextNode())) { if (!n.nodeValue.trim()) continue; if (!first) first = n; last = n; }
+    if (!first) return;
+    first.nodeValue = first.nodeValue.replace(/^(\s*)（/, '$1');
+    last.nodeValue = last.nodeValue.replace(/）(\s*)$/, '$1');
+  }
+  var _dec = UI.decorate;
+  UI.decorate = function (el, blk) {
+    if (blk && blk.cls === 'choice' && blk.node === 'cb_menu' && DL.S && DL.S.combat) return false;   // 战术选项在底部动作栏里
+    var r = _dec ? _dec.apply(this, arguments) : undefined;
+    if (r === false || !blk || blk.stg) return r;
+    if (blk.cls === 'hint' || blk.cls === 'gem') { el.classList.add('t-act'); unwrapParen(el); }
+    else if (blk.cls === 'sys') {
+      el.classList.add('t-note');
+      var m = /^【([^【】]{1,8})】/.exec(el.innerHTML);
+      if (m) el.innerHTML = '<span class="ntag">' + m[1] + '</span>' + el.innerHTML.slice(m[0].length);
+      else unwrapParen(el);
+    }
+    return r;
+  };
+
+  // =====================================================================
+  // 五、数字键直接选
+  // =====================================================================
+  function digitKey(e) {
+    if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey || !/^[1-9]$/.test(e.key)) return;
+    var m = $('modal'); if (m && !m.hidden) return;
+    if (doc.querySelector('.lb')) return;
+    var t = e.target, inp = $('cmdInput');
+    if (t && t !== inp && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return;
+    if (t === inp && inp.value) return;
+    var S = DL.S, p = S && S.pending; if (!p || p.input || !p.shown || +e.key > p.shown.length) return;
+    e.preventDefault(); UI.send(e.key, true);
+  }
+
+  var _init = UI.init;
+  UI.init = function () {
+    var r = _init.apply(this, arguments);
+    $('modalBody').addEventListener('click', hbClick, true);
+    $('modalBody').addEventListener('keydown', hbKey);
+    $('chips').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-dock]'); if (!b) return;
+      var k = b.getAttribute('data-dock');
+      if (k === 'tac') { dockTac = !dockTac; if (dockTac) dockMore = false; }
+      if (k === 'more') { dockMore = !dockMore; if (dockMore) dockTac = false; }
+      UI.renderChips();
+      var nb = $('chips').querySelector('[data-dock="' + k + '"]'); if (nb) nb.focus();
+    });
+    $('side').addEventListener('click', function (e) {
+      var b = e.target.closest('.dv-tg'); if (!b) return;
+      divOpen = !divOpen; ls('divOpen', divOpen ? '1' : '0'); UI.renderSide();
+      var nb = $('divCard').querySelector('.dv-tg'); if (nb) nb.focus();
+    });
+    doc.addEventListener('keydown', digitKey);
     return r;
   };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -804,6 +804,67 @@ img.zoomable { cursor: zoom-in; }
 .ntag { display: inline-block; font-size: 0.84em; line-height: 1.5; padding: 0 6px; margin-right: 6px; border-radius: 4px; background: var(--panel-2); border: 1px solid var(--line); color: var(--ink); vertical-align: 0.06em; }
 .hb-body b.hl { color: var(--ember); font-weight: 600; }
 
+/* ===================== 1.10 认路 ===================== */
+:root { --wf-c: 46px; --wf-l: 12px; --wf-c-s: 34px; --wf-l-s: 6px; }
+.b-wfmap { font-family: var(--font-ui); font-size: 13px; }
+.wf-head { font-size: 12px; color: var(--muted); letter-spacing: 0.1em; margin-bottom: 6px; }
+.wf-next { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 2px 0 8px; font-size: 13px; color: var(--ink); }
+.wf-next.here { color: var(--gem); }
+.wf-k { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; margin-right: 2px; }
+.wf-to { color: var(--muted); }
+.wf-b { border: 1px solid var(--line-strong, var(--line)); background: var(--panel-2); color: var(--ink); border-radius: 999px; padding: 2px 10px; min-height: 26px; font: inherit; font-size: 12px; cursor: pointer; }
+.wf-b:hover { border-color: var(--ember); }
+.wf-b.hot { background: var(--ember); color: var(--bg); border-color: var(--ember); font-weight: 600; }
+.wf-row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 8px; font-size: 12px; }
+.wf-scroll { overflow-x: auto; padding: 2px; max-width: 100%; }
+.wf-grid { display: grid; width: max-content; }
+.wf-c { position: relative; display: flex; align-items: center; justify-content: center; border-radius: 6px; background: var(--panel-2); color: var(--ink); border: 1px solid var(--line); font: inherit; font-size: 12px; padding: 0; overflow: visible; white-space: nowrap; }
+button.wf-c { cursor: pointer; }
+button.wf-c:hover { border-color: var(--ember); }
+.wf-c .wf-lab { overflow: hidden; max-width: 100%; }
+.wf-c.cur { background: var(--ember); color: var(--bg); border-color: var(--ember); font-weight: 700; }
+.wf-c.target { border: 2px solid var(--gem); color: var(--gem); }
+.wf-c.cur.target { color: var(--bg); }
+.wf-c.path:not(.cur):not(.target) { border-style: dashed; border-color: var(--ember); }
+.wf-c.ghost { background: transparent; border-style: dashed; color: var(--muted); }
+.wf-c.ghost.target { color: var(--gem); border-color: var(--gem); }
+.wf-c.prev:not(.cur)::after { content: '来'; position: absolute; left: -4px; top: -6px; font-size: 9px; line-height: 1; padding: 1px 2px; border-radius: 3px; background: var(--panel); color: var(--muted); border: 1px solid var(--line); }
+.wf-c b { position: absolute; font-size: 9px; line-height: 1; font-weight: 700; }
+.wf-up { right: 2px; top: 1px; } .wf-dn { right: 2px; bottom: 1px; }
+.wf-st { left: 2px; top: 1px; color: var(--gem); }
+.wf-ux { left: 2px; bottom: 1px; color: var(--ember); }
+.wf-pp, .wf-legend .wf-pp { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--good); }
+.wf-c .wf-pp { position: absolute; left: 50%; bottom: 2px; transform: translateX(-50%); }
+.wf-l { display: block; align-self: center; justify-self: center; background: var(--line-strong, var(--line)); }
+.wf-l.h { width: 100%; height: 2px; }
+.wf-l.v { width: 2px; height: 100%; }
+.wf-l.ghost { background: transparent; border-top: 2px dashed var(--line); height: 0; }
+.wf-l.v.ghost { border-top: none; border-left: 2px dashed var(--line); width: 0; height: 100%; }
+.wf-l.path { background: var(--ember); }
+.wf-legend { margin-top: 10px; font-size: 11px; color: var(--muted); line-height: 1.8; }
+/* 侧栏的小地图 */
+#mapCard .wf-c { font-size: 11px; border-radius: 4px; }
+.wf-compact .wf-c.prev::after { display: none; }
+#mapCard .wf-c b { font-size: 8px; }
+#mapCard .wf-next, #mapCard .wf-row { font-size: 12px; margin: 4px 0 6px; }
+#goalCard .wf-next { margin: 8px 0 0; font-size: 12px; }
+.sb-next { flex: none; border: 1px solid var(--ember); background: transparent; color: var(--ember); border-radius: 999px; padding: 0 8px; min-height: 24px; font-size: 12px; font-weight: 600; cursor: pointer; margin-left: 6px; }
+.wf-l.door { background: transparent; border-top: 2px dotted var(--line-strong, var(--line)); height: 0; }
+.wf-l.v.door { border-top: none; border-left: 2px dotted var(--line-strong, var(--line)); width: 0; height: 100%; }
+.wf-l.door.path { border-color: var(--ember); }
+
+/* ===================== 1.10 回合（动作、附赠动作、移动、反应） ===================== */
+.dock-eco { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+.eco-h { letter-spacing: 0.1em; margin-right: 2px; }
+.eco-k { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--good); color: var(--ink); }
+.eco-k::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--good); }
+.eco-k.used { border-color: var(--line); color: var(--muted); text-decoration: line-through; text-decoration-color: var(--muted); }
+.eco-k.used::before { background: transparent; border: 1px solid var(--muted); width: 4px; height: 4px; }
+.eco-t { padding: 1px 8px; border-radius: 999px; background: var(--panel-2); border: 1px dashed var(--gem); color: var(--gem); }
+.dock .chip > b { color: var(--ember); margin-right: 6px; font-variant-numeric: tabular-nums; }
+.dock .chip.hot > b { color: var(--bg); }
+.dock .chip.bonus { border-color: var(--good); }
+
 </style>
 </head>
 <body>
@@ -1249,7 +1310,7 @@ img.zoomable { cursor: zoom-in; }
 (function (root) {
   'use strict';
   var DL = root.DL;
-  DL.VERSION = '1.9.0';
+  DL.VERSION = '1.10.0';
   DL.SAVE_VERSION = 1;
 
   DL.newState = function () {
@@ -2060,7 +2121,7 @@ img.zoomable { cursor: zoom-in; }
     } else {
       var inp = DL.normalize(input), lbls = p.shown.map(function (i) { return DL.normalize(DL.tok.strip(DL.W.val(node.options[i].label, p.arg))); });
       for (var k = 0; k < lbls.length; k++) if (lbls[k] === inp) { idx = p.shown[k]; break; }          // 完全相同（单字选项如“他”“她”也能直接输入）
-      if (idx < 0 && inp.length >= 2) for (k = 0; k < lbls.length; k++) if (lbls[k].indexOf(inp) >= 0) { idx = p.shown[k]; break; }
+      if (idx < 0 && inp.length >= 2 && !node.exact) for (k = 0; k < lbls.length; k++) if (lbls[k].indexOf(inp) >= 0) { idx = p.shown[k]; break; }   // exact：只认数字和完整的选项（战斗菜单：打的字是命令，不是去对选项）
     }
     if (idx < 0) return false;
     var opt = node.options[idx], arg = p.arg;
@@ -2296,12 +2357,14 @@ img.zoomable { cursor: zoom-in; }
       var adv = u.initAdv ? 1 : 0;
       if (u.side === 'enemy' && (enc.enemyInitAdv || opts.enemyAdv)) adv = 1;
       if (u.side === 'party' && opts.partyAdv) adv = 1;
+      if (u.side === 'enemy' && opts.enemyDis) adv = adv > 0 ? 0 : -1;   // 被偷袭：先攻劣势
       var r = DL.d20(adv, u.lucky).roll + u.init - (DL.st.has('party', '动摇') && u.side === 'party' ? 1 : 0) - (u.side === 'enemy' && u.kind === 'hobgoblin' && DL.st.has('toede_troops', '轻视') ? 2 : 0);
       u.initRoll = r;
       return { uid: uid, r: r + (u.side === 'party' ? 0.1 : 0) };
     });
     inits.sort(function (a, b) { return b.r - a.r; });
     cb.order = inits.map(function (x) { return x.uid; });
+    if (opts.ambush) Object.keys(cb.units).forEach(function (uid) { var x = cb.units[uid]; if (x.side === 'party') x.advNext = true; });   // 摸上去的：每人第一下有优势
     if (enc.intro && !opts.skipIntro) DL.out.narr(DL.W.val(enc.intro));
     if (C.beforeOrder) C.beforeOrder(cb, enc, opts);
     DL.out.combat('⚔ 战斗开始！先攻顺序：' + cb.order.map(function (uid) { return nm(cb.units[uid]) + '（' + Math.floor(cb.units[uid].initRoll) + '）'; }).join(' → '));
@@ -2461,34 +2524,34 @@ img.zoomable { cursor: zoom-in; }
 
   // ---------- 攻击结算 ----------
   C.advFor = function (att, def, atk) {
-    var adv = 0, why = [];
+    var pos = 0, neg = 0, why = [];   // 1.10：优势和劣势各算各的；两样都有就互相抵消（不是相减）
     var melee = !atk.ranged || atk.forceMelee;
-    if (def.cond.prone) { if (melee) { adv++; why.push('目标倒地'); } else { adv--; why.push('目标倒地'); } }
-    if (def.cond.asleep) { adv++; why.push('目标昏睡'); }
-    if (def.cond.restrained) { adv++; why.push('目标被缠住'); }
-    if (def.cond.dodge) { adv--; why.push('目标在防御'); }
-    if (def.exposed) { adv++; why.push(nm(def) + '冲得太靠前'); }
-    if (def.reckless) { adv++; why.push(nm(def) + '不顾防守'); }
-    if (att.reckless && melee) { adv++; why.push('鲁莽攻击'); }
-    if (att.cond.sapped) { adv--; why.push('被削弱'); att.cond.sapped = false; }
-    if (att.cond.grappled) { adv--; }
-    if (att.cond.frightened) { adv--; why.push('恐惧'); }
-    if (att.vexOn === def.uid) { adv++; why.push('侵扰'); att.vexOn = null; }
-    if (def.guided && !atk.guiding) { adv++; why.push('光导'); }
-    if (att.exhausted) { adv--; }
-    if (!melee && att.row === 'front' && C.front(def.side).length && !atk.noReact) { adv--; why.push('近身射击'); }
-    if (!melee && def.ref === 'toede' && C.living('enemy').some(function (x) { return x.kind === 'hobgoblin'; })) { adv--; why.push('托德躲在手下身后'); }
-    if (att.advNext) { adv++; att.advNext = false; }
-    if (att.disNext) { adv--; att.disNext = false; }
-    if (def.serene && !def.sereneUsed && att.side === 'enemy') { def.sereneUsed = true; adv--; why.push('宁静'); }
-    if (att.side === 'enemy' && DL.st.has('drac_troops', '动摇') && att.kind === 'baaz') { adv--; }
-    if (C.advHook) { var ah = C.advHook(att, def, atk, melee); if (ah) { adv += ah.adv || 0; if (ah.why) why.push(ah.why); } }
+    if (def.cond.prone) { if (melee) { pos++; why.push('目标倒地'); } else { neg++; why.push('目标倒地'); } }
+    if (def.cond.asleep) { pos++; why.push('目标昏睡'); }
+    if (def.cond.restrained) { pos++; why.push('目标被缠住'); }
+    if (def.cond.dodge) { neg++; why.push('目标在防御'); }
+    if (def.exposed) { pos++; why.push(nm(def) + '冲得太靠前'); }
+    if (def.reckless) { pos++; why.push(nm(def) + '不顾防守'); }
+    if (att.reckless && melee) { pos++; why.push('鲁莽攻击'); }
+    if (att.cond.sapped) { neg++; why.push('被削弱'); att.cond.sapped = false; }
+    if (att.cond.grappled) { neg++; }
+    if (att.cond.frightened) { neg++; why.push('恐惧'); }
+    if (att.vexOn === def.uid) { pos++; why.push('侵扰'); att.vexOn = null; }
+    if (def.guided && !atk.guiding) { pos++; why.push('光导'); }
+    if (att.exhausted) { neg++; }
+    if (!melee && att.row === 'front' && C.front(def.side).length && !atk.noReact) { neg++; why.push('近身射击'); }
+    if (!melee && def.ref === 'toede' && C.living('enemy').some(function (x) { return x.kind === 'hobgoblin'; })) { neg++; why.push('托德躲在手下身后'); }
+    if (att.advNext) { pos++; att.advNext = false; }
+    if (att.disNext) { neg++; att.disNext = false; }
+    if (def.serene && !def.sereneUsed && att.side === 'enemy') { def.sereneUsed = true; neg++; why.push('宁静'); }
+    if (att.side === 'enemy' && DL.st.has('drac_troops', '动摇') && att.kind === 'baaz') { neg++; }
+    if (C.advHook) { var ah = C.advHook(att, def, atk, melee); if (ah) { if (ah.pos != null || ah.neg != null) { pos += ah.pos || 0; neg += ah.neg || 0; } else if (ah.adv > 0) pos += ah.adv; else if (ah.adv < 0) neg -= ah.adv; if (ah.why) why.push(ah.why); } }
     // 卡拉蒙的守护：盟友在他身边被攻击时，给攻击者劣势
     if (def.side === 'party' && melee) {
       var guard = C.living('party').filter(function (g) { return g.ai === 'guard' && g.uid !== def.uid && !g.reactUsed && g.row === def.row && !g.cond.asleep; })[0];
-      if (guard && (def.uid === 'raistlin' || DL.chance(0.35))) { guard.reactUsed = true; adv--; why.push(guard.name + '举盾护住了' + nm(def)); }
+      if (guard && (def.uid === 'raistlin' || DL.chance(0.35))) { guard.reactUsed = true; neg++; why.push(guard.name + '举盾护住了' + nm(def)); }
     }
-    return { adv: DL.clamp(adv, -1, 1), why: why };
+    return { adv: pos && neg ? 0 : pos ? 1 : neg ? -1 : 0, why: why, pos: pos, neg: neg };
   };
   C.verb = function (atk) {
     if (atk.spell) return '施放' + atk.name + '，打向';
@@ -2505,13 +2568,14 @@ img.zoomable { cursor: zoom-in; }
     if (def.uid === 'raistlin' && att.side === 'enemy') { cb.lastAttacker = cb.lastAttacker || {}; cb.lastAttacker.raistlin = att.uid; }
     var r = DL.d20(a.adv, att.lucky), nat = r.roll;
     var bonus = atk.bonus + (att.side === 'party' && cb.partyBless > 0 ? 2 : 0);
-    var total = nat + bonus, ac = def.ac + (def.cond.shield ? 5 : 0);
+    var cover = C.coverAC ? C.coverAC(att, def, atk) : 0;
+    var total = nat + bonus, ac = def.ac + (def.cond.shield ? 5 : 0) + cover;
     var crit = nat >= (atk.spell ? 20 : att.crit) && nat !== 1;
     var hit = nat !== 1 && (crit || total >= ac);
     if (def.cond.asleep && hit && !atk.ranged) crit = true;
     // 护盾术
     if (hit && !crit && total < ac + 5 && C.tryShield(def)) { ac += 5; hit = false; }
-    DL.out.roll(nm(att) + '的攻击：d20=' + nat + (a.adv ? (a.adv > 0 ? '（优势 ' : '（劣势 ') + r.rolls.join('/') + '）' : '') + DL.sgn(bonus) + ' = ' + total + ' 对 护甲 ' + ac + (a.why.length ? '；' + a.why.join('，') : ''));
+    DL.out.roll(nm(att) + '的攻击：d20=' + nat + (a.adv ? (a.adv > 0 ? '（优势 ' : '（劣势 ') + r.rolls.join('/') + '）' : '') + DL.sgn(bonus) + ' = ' + total + ' 对 护甲 ' + ac + (cover ? '（半掩护 +' + cover + '）' : '') + (a.why.length ? '；' + a.why.join('，') : ''));
     var line = nm(att) + C.verb(atk) + nm(def) + '，';
     if (!hit) {
       line += nat === 1 ? '失手了。' : '没有命中。';
@@ -2568,7 +2632,7 @@ img.zoomable { cursor: zoom-in; }
       case 'Slow': def.cond.slowed = true; break;
       case 'Topple':
         var dc = 8 + (att.uid === 'player' ? DL.A.prof(DL.S.player) : 3) + DL.mod(att.abil[atk.abil || 'str']);
-        var sv = C.save(def, 'con');
+        var sv = def.big ? 99 : C.save(def, 'con', dc);
         if (sv < dc && !def.big) { def.cond.prone = true; DL.out.combat(nm(def) + '被掀翻在地！'); }
         break;
       case 'Push':
@@ -2589,13 +2653,20 @@ img.zoomable { cursor: zoom-in; }
     if (u.uid === 'player' && ab === 'dex' && DL.S.player.cls === 'barbarian' && DL.S.player.level >= 2) adv = 1;   // 危险感知
     if (u.cond.restrained && ab === 'dex') adv = -1;
     var bless = (u.side === 'party' && DL.S.combat && DL.S.combat.partyBless > 0 ? 2 : 0);
-    var r = DL.d20(adv, u.lucky).roll + b + bless;
+    var cov = ab === 'dex' && C.coverAC ? C.coverAC(null, u, { ranged: true, save: true }) : 0;
+    var r = DL.d20(adv, u.lucky).roll + b + bless + cov;
     // 不屈（战士 9 级）：豁免失败时重掷一次
     if (dc != null && r < dc && u.uid === 'player' && DL.S.player.uses && DL.S.player.uses.indomitable > 0) {
       DL.S.player.uses.indomitable--;
       var r2 = DL.d20(adv, u.lucky).roll + b + bless;
       DL.out.combat('你咬紧牙关——不屈！（豁免重掷：' + r + ' → ' + r2 + '）');
       r = Math.max(r, r2);
+    }
+    // 传奇抗性（龙和大头目）：豁免失败时，可以硬扛过去
+    if (dc != null && r < dc && u.legRes > 0 && u.side === 'enemy' && u.hp > 0) {
+      u.legRes--;
+      DL.out.combat('（传奇抗性：' + u.name + '硬生生扛住了——还剩 ' + u.legRes + ' 次）');
+      r = dc;
     }
     return r;
   };
@@ -2757,7 +2828,8 @@ img.zoomable { cursor: zoom-in; }
     if (!q && !forceRanged && u.row === 'front') {
       var reach0 = C.reachable(u, true).filter(function (f) { return !f.noFight; });
       var hasRanged0 = u.attacks.some(function (a) { return a.ranged || a.thrown; });
-      if (reach0.length && reach0.indexOf(target) < 0 && (!hasRanged0 || target.plot)) target = reach0.filter(function (f) { return !f.plot; })[0] || reach0[0];
+      // 1.10：手上有飞斧也一样——贴身的不打、去扔后排，要挨“近身射击”的劣势，后排还有半掩护
+      if (reach0.length && reach0.indexOf(target) < 0) target = reach0.filter(function (f) { return !f.plot; })[0] || reach0[0];
     }
     var atks = u.attacks;
     var ranged = atks.filter(function (a) { return a.ranged; })[0];
@@ -2782,11 +2854,12 @@ img.zoomable { cursor: zoom-in; }
       if (u.stuck || !DL.S.combat || cb.over || cb.plotHit) break;
       // 武僧的震慑拳
       if (P.cls === 'monk' && P.level >= 5 && P.uses.focus > 0 && t.hp > 0 && !t.cond.stunned && t.maxHp >= 20 && !t.big) {
-        P.uses.focus--; var sv = C.save(t, 'con'), dc = 8 + DL.A.prof(P) + DL.mod(P.abil.wis);
+        P.uses.focus--; var dc = 8 + DL.A.prof(P) + DL.mod(P.abil.wis), sv = C.save(t, 'con', dc);
         if (sv < dc) { t.cond.stunned = 1; DL.out.combat('你一掌拍在' + t.name + '的要害上，它被震慑住了！'); }
       }
     }
-    if (R.CLASSES[P.cls].martialArts && !atk.ranged && C.living('enemy').length && !u.stuck && DL.S.combat) {
+    if (R.CLASSES[P.cls].martialArts && !atk.ranged && C.living('enemy').length && !u.stuck && DL.S.combat && (opts.flurry || !cb.bonusUsed)) {
+      if (!opts.flurry) cb.bonusUsed = true;   // 武艺的附赠一击就是这回合的附赠动作
       var n = opts.flurry ? 2 : 1;
       for (var j = 0; j < n; j++) {
         var t2 = target.hp > 0 ? target : C.reachable(u, true)[0];
@@ -2794,7 +2867,7 @@ img.zoomable { cursor: zoom-in; }
         var ua = atks.filter(function (a) { return a.unarmed; })[0];
         DL.out.combat(opts.flurry ? '（疾风连击）' : '（武艺：附赠一击）');
         var res = C.attack(u, t2, ua);
-        if (opts.flurry && res.hit && P.level >= 3 && t2.hp > 0 && !t2.big && C.save(t2, 'dex') < 8 + DL.A.prof(P) + DL.mod(P.abil.wis)) { t2.cond.prone = true; DL.out.combat(t2.name + '被你扫倒在地！'); }
+        if (opts.flurry && res.hit && P.level >= 3 && t2.hp > 0 && !t2.big && C.save(t2, 'dex', 8 + DL.A.prof(P) + DL.mod(P.abil.wis)) < 8 + DL.A.prof(P) + DL.mod(P.abil.wis)) { t2.cond.prone = true; DL.out.combat(t2.name + '被你扫倒在地！'); }
       }
     }
     return true;
@@ -2942,7 +3015,7 @@ img.zoomable { cursor: zoom-in; }
           if (f.hp <= sp.pwk && !f.plot) { DL.out.combat(f.name + '听见了那个字。它倒了下去，再也没有起来。'); C.damage(f, f.hp, sp.type, u); return; }
           var pd = DL.roll(sp.dmg).total; DL.out.combat(f.name + '太强了，那个字没能杀死它——它受到 ' + pd + ' 点' + sp.type + '伤害。'); C.damage(f, pd, sp.type, u); return;
         }
-        var sv = C.save(f, sp.save), ok = sv >= k.dc;
+        var sv = C.save(f, sp.save, k.dc), ok = sv >= k.dc;
         DL.out.roll(f.name + '的' + R.ABIL_CN[sp.save] + '豁免：' + sv + ' 对 DC ' + k.dc + (ok ? '，成功' : '，失败'));
         if (sp.sleep) {
           if (!ok && f.kind !== 'undead' && !f.big) { f.cond.asleep = 10; DL.out.combat(f.name + '眼皮一沉，倒头睡去。'); }
@@ -4392,7 +4465,7 @@ img.zoomable { cursor: zoom-in; }
   });
   cmd(['猎人印记'], function (a) { if (!DL.S.combat) return DL.out.sys('现在没有在战斗。'); combatAct(DL.combat.playerCast('猎人印记', a)); });
   cmd(['跳过', '等待', '结束回合', 'pass', 'wait'], function (a) {
-    if (DL.S.combat) { DL.out.combat('你按兵不动。'); DL.combat.endPlayerTurn(); return; }
+    if (DL.S.combat) { DL.out.combat(DL.S.combat.actionUsed ? '你结束了这一回合。' : '你按兵不动。'); DL.combat.endPlayerTurn({ force: true }); return; }
     if (DL.S.flags.escaping) { DL.out.narr('身后有追兵，没时间磨蹭！'); return; }
     var n = parseInt(a, 10) || 10; n = DL.clamp(n, 5, 120);
     DL.advance(n); DL.out.narr('你等了' + n + '分钟。');
@@ -4683,7 +4756,9 @@ img.zoomable { cursor: zoom-in; }
   cmd(['前往', '赶往', '回到', 'travel', 'goto'], function (a) { return G.travel(a); });
 
   G.map = function () {
-    var S = DL.S, r = W.room(), z = (r.pos || [0, 0, 0])[2];
+    var S = DL.S, r = W.room();
+    if (!r) { DL.out.sys('这里没有地图。'); return; }
+    var z = (r.pos || [0, 0, 0])[2];
     var cells = {}, minX = 99, maxX = -99, minY = 99, maxY = -99, reach = S.combat || S.dream ? {} : W.reach();
     Object.keys(S.seen).forEach(function (id) {
       var rr = DL.ROOMS[id]; if (!rr || !rr.pos || rr.pos[2] !== z || rr.area !== r.area) return;
@@ -4709,6 +4784,12 @@ img.zoomable { cursor: zoom-in; }
     });
     // 格子图不折行（窄屏上可以横着滑）；下面两行字照常折行
     DL.out.text(lines.join('\n'), 'map');
+    // 1.10 认路：下一步往哪儿、这里还有哪些路没走过、从哪儿来
+    if (DL.WAY && !S.combat && !S.dream) {
+      var nt = DL.WAY.nextText(); if (nt) DL.out.sys(nt);
+      var ux = DL.WAY.unexplored(); if (ux.length) DL.out.sys('这里没走过的路：' + ux.map(function (e) { return DL.tok.go(e.dir, e.dir); }).join('、') + '。');
+      var bk = DL.WAY.backDir(); if (bk) DL.out.sys('来路：' + DL.tok.go(bk.dir, bk.dir) + '（' + bk.name + '）。');
+    }
     if (oa.length) DL.out.sys('别处：' + oa.map(function (k) { var id = other[k]; return DL.tok.cmd('前往 ' + G.travelArg(id), k + '（' + G.placeName(id) + '）'); }).join('　'));
     DL.out.sys('（只显示去过的地方。点一个地方，就沿着走过的路直接过去；也可以输入前往，后面跟地名。）');
   };
@@ -4726,6 +4807,8 @@ img.zoomable { cursor: zoom-in; }
       '物品：拿 / 放下 / 给 人物 物品 / 出示 物品 / 用 物品 / 吃 / 读 / 背包。',
       '商店：商品、买 物品。',
       '战斗：攻击 目标、射击、施法 法术 目标（“施法 魔法飞弹 2环 龙人”可以升环）、防御、上前 / 后退、逃跑。职业能力：回气、狂暴、动作如潮、鲁莽、躲藏、疾风连击、坚强防御、至圣斩、圣疗。指挥同伴：卡拉蒙 攻击 大地精；全队 谨慎 / 集中 / 自由。',
+      '回合：每回合一个动作（攻击、施法、防御、撤离、协助、躲藏、擒抱、推倒 / 推开……）、一个附赠动作（回气、狂暴、喝药水、盗贼的灵巧动作、治疗言语这类附赠法术，动作前后都能用）、一次移动（上前 / 后退）；反应每轮一次（护盾术、借机攻击）。动作用过以后还有附赠动作可用，会停一下问你；不用就“结束回合”。',
+      '规则：从前排退下来，贴身的敌人会借机攻击（撤离、朦胧步不会）。后排有前排挡着：远程和法术攻击打它护甲 +2，敏捷豁免 +2。祝福术、猎人印记、蛛网术这类法术要专注：受伤要过体质豁免，同时只能专注一个。优势和劣势两样都有就抵消。成年的龙有传奇动作和传奇抗性。',
       '战术：每场最多 4 名同伴上阵，人多时开战前选人、排前后排。每轮开始会亮出【敌情】：谁盯上了谁、谁在念咒、谁要吐息。应对：集火 X、散开（躲吐息）、掩护 X（替人挡一下）、打断 X（念咒、祈祷、吹号角）、拦住 X（不让它跑）、照亮（驱散黑暗）、威吓（打击士气）、活捉 X、互动 物件（推倒吊灯、掀翻赌桌……）、支援（叫场外的同伴帮一次）、连携（关系好的两个人合力一次）。短休：两次长休之间最多两次。',
       '倒下：你倒下以后，第一个轮到的同伴会来救你（每轮一个人）：先掷医药检定把你稳住，下一轮把你扶起来，生命 1。会治疗的同伴直接用法术。同伴全倒下就算这一仗输了。',
       '里世界：从第二章起，在营地睡下时可以“入梦”，走进宝石里面的梦。梦里有你去过的地方、你没选的那些路（推开门就能看见）、还没发生的事的影子、另一条时间线上的同伴。往北走梦越深，“靠近”看清眼前的东西，随时可以“醒来”。梦里知道的事会在现实里变成“梦痕”选项；醒来后可以“说梦 X”，把梦讲给同伴听；“梦痕”查看记录。',
@@ -6026,13 +6109,13 @@ img.zoomable { cursor: zoom-in; }
   };
   C.advHook = function (att, def, atk, melee) {
     var cb = DL.S.combat; if (!cb) return null;
-    var adv = 0, why = [];
-    if (cb.dark > 0 && att.side === 'party' && !atk.spell) { adv--; why.push('一片漆黑'); }
-    if (att.uid === 'player' && cb.pAdv && cb.pAdv === def.uid) { adv++; why.push('看准了破绽'); cb.pAdv = null; }
-    if (att.side === 'enemy' && cb.shieldwall === cb.round) { adv--; why.push('盾墙'); }
-    if (att.side === 'enemy' && def.warned) { def.warned = false; adv--; why.push('有人提醒了' + nm(def)); }
-    if (att.side === 'enemy' && att.blinded) { att.blinded--; adv--; why.push('看不清'); }
-    return { adv: adv, why: why.join('，') };
+    var pos = 0, neg = 0, why = [];
+    if (cb.dark > 0 && att.side === 'party' && !atk.spell) { neg++; why.push('一片漆黑'); }
+    if (att.uid === 'player' && cb.pAdv && cb.pAdv === def.uid) { pos++; why.push('看准了破绽'); cb.pAdv = null; }
+    if (att.side === 'enemy' && cb.shieldwall === cb.round) { neg++; why.push('盾墙'); }
+    if (att.side === 'enemy' && def.warned) { def.warned = false; neg++; why.push('有人提醒了' + nm(def)); }
+    if (att.side === 'enemy' && att.blinded) { att.blinded--; neg++; why.push('看不清'); }
+    return { pos: pos, neg: neg, why: why.join('，') };
   };
   T.know = function (ref) { var S = DL.S; S.beastKnow = S.beastKnow || {}; return (S.beastKnow[ref] = S.beastKnow[ref] || { weak: {}, resist: {} }); };
   T.knownTag = function (ref) {
@@ -6205,12 +6288,17 @@ img.zoomable { cursor: zoom-in; }
       if (cb.bench && cb.bench.length) acts.push('支援');
       if (!alone) acts.push('连携');
       if (DL.ENC[cb.id].fleeTo) acts.push('逃跑');
-      DL.out.hint('点下面的按钮（“战术”里是这一轮的打法建议，也可以按数字键），或者直接输入命令：' + acts.map(function (a) { return DL.tok.cmd(a); }).join(' · ') + '。' + (alone ? '' : '也可以指挥同伴，比如“卡拉蒙 攻击 X”“金月 治疗 我”。'));
+      acts.push('撤离', '躲藏');
+      if (!alone) acts.push('协助');
+      acts.push('擒抱', '推倒', '结束回合');
+      DL.out.hint('点下面的按钮（“战术”里是这一轮的打法建议，也可以按数字键），或者直接输入命令：' + DL.uniq(acts).map(function (a) { return DL.tok.cmd(a); }).join(' · ') + '。' + (alone ? '' : '也可以指挥同伴，比如“卡拉蒙 攻击 X”“金月 治疗 我”。') +
+        '每回合有一个动作、一个附赠动作（回气、喝药水、灵巧动作、附赠法术……动作前后都能用）、一次移动（上前 / 后退）；从前排退下来，贴身的敌人会借机攻击你，“撤离”就不会。');
     }
     D.show('cb_menu');
   };
   DLG.cb_menu = {
     keepOnDrama: true,
+    exact: true,
     prompt: '',
     options: [0, 1, 2, 3, 4, 5, 6].map(function (k) {
       return {
@@ -6274,6 +6362,11 @@ img.zoomable { cursor: zoom-in; }
     // 支援
     if (!cb.supportUsed && cb.bench && cb.bench.length) { var sb = T.bestSupport(cb); if (sb) add('支援：' + DL.nameOf(sb) + '——' + T.SUPPORT[sb].label, '支援 ' + DL.nameOf(sb)); }
     if (T.moraleOn(cb) && cb.morale <= 80) add('威吓（敌人' + moraleWord(cb.morale) + '）', '威吓');
+    // 1.10：标准动作——伤得重、身边有敌人：撤离；前排人手够、你力气大：把它推倒，大家打它有优势
+    var X = DL.DND;
+    if (X && u.row === 'front' && u.hp <= u.maxHp * 0.35 && X.threats(u).length && !(P.cls === 'rogue' && P.level >= 2)) add('撤离（退到后排，贴身的敌人追不上你）', '撤离');
+    var tg2 = T.bestTarget(cb);
+    if (X && tg2 && !tg2.big && !tg2.cond.prone && !tg2.air && X.inReach(tg2) && (P.abil.str || 10) >= 14 && C.front('party').filter(function (x) { return x.uid !== 'player' && standing(x); }).length >= 2) add('推倒 ' + tg2.name + '（同伴近战打它有优势）', '推倒 ' + tg2.name);
     add('防御', '防御');
     return out;
   };
@@ -6424,7 +6517,9 @@ img.zoomable { cursor: zoom-in; }
   var _dispatch = G.dispatch;
   G.dispatch = function (raw) {
     if (DL.S && DL.S.combat && /^(推倒|推|掀翻|掀|踢翻|踢|拉下|拉|砍断|砍开|砍|撬开|撬|泼|扔出|扔|撞开|撞|点燃|点|甩出|甩|割断|割|拽|摇|吹灭|用)/.test(raw)) {
-      var o = T.findObj(raw);
+      // “用 治疗药水”说的是你身上的东西，不是战场上的“泥水”
+      var rest = String(raw).replace(/^用\s*/, ''), mine = /^用/.test(raw) && rest ? W.find(rest, { prefer: 'item', units: false }) : null;
+      var o = mine && mine.kind === 'item' && DL.S.inv.indexOf(mine.id) >= 0 ? null : T.findObj(raw);
       if (o) { T.useObject(o.name); return; }
     }
     return _dispatch.apply(this, arguments);
@@ -6848,6 +6943,772 @@ img.zoomable { cursor: zoom-in; }
     if (ready) { S.mode = 'play'; D.show('ch_next'); } else S.mode = 'ended';
     if (DL.platform) DL.platform.save(o.id + '_end', DL.serialize(), DL.game.meta()).catch(function () { });
     DL.game.refresh();
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* 龙枪MUD · 1.10 认路
+ * 以前：提示记在说它的那个地方。你一走开，“眼下”就只剩任务名，地图上也看不出该往哪儿走——来回走几趟就不知道下一步了。
+ * 现在：
+ *   记住这一章最近的那条去向提示（在哪儿说的、说了什么），换算成一个目标地点：
+ *     提示里提到的地名（离说话的地方最近、名字最长的那一个）→ 提示里提到的人现在在哪儿 → 提示里的方向（从说话的地方往那边走一步）。
+ *   从你现在的位置找路（没去过的地方也算——只给方向和步数，不说那边有什么）：下一步往哪儿、还有几步。
+ *   地图数据：去过的地方、和它们相连但没去过的地方（？）、目标、路线、你从哪儿来、哪里有认识的人、上下楼和进出的门。
+ *   到了目标那里就说“到了”。换章、或者有了新的提示，就换目标。 */
+(function (root) {
+  'use strict';
+  var DL = root.DL, W = DL.W, G = DL.game;
+  if (!W || !G) return;
+  var WF = DL.WAY = {};
+  WF.DIRS = { '北': [0, 1], '南': [0, -1], '东': [1, 0], '西': [-1, 0], '东北': [1, 1], '西北': [-1, 1], '东南': [1, -1], '西南': [-1, -1] };
+
+  // ---------- 记下来路、记下最近的去向提示 ----------
+  var _go = W.go;
+  W.go = function () {
+    var S = DL.S, from = S && S.room;
+    var r = _go.apply(this, arguments);
+    try { if (S && DL.S === S && from && S.room !== from) S.prevRoom = from; } catch (e) { /* 只是记一下 */ }
+    return r;
+  };
+  var _rec = DL.recHint;
+  DL.recHint = function (t) {
+    var S = DL.S;
+    _rec.apply(this, arguments);
+    try {
+      var c = S && S.chHints;
+      if (c && c.ch === S.chapter && c.list[c.list.length - 1] === t) S.lead = { t: t, from: S.room, ch: S.chapter };
+    } catch (e) { /* 只是记一下 */ }
+  };
+
+  function val(x) { try { return W.val(x); } catch (e) { return null; } }
+  function names(id) {
+    var r = DL.ROOMS[id], out = []; if (!r) return out;
+    [r.name, r.short, r.mapChar].forEach(function (n) { n = val(n); if (n && n.length >= 2 && out.indexOf(n) < 0) out.push(n); });
+    return out;
+  }
+  function okRoom(id) { var r = DL.ROOMS[id]; return !!(r && !r.scene && !r.dream); }
+  // 从 start 出发，走所有能走的路（去没去过都算），最多 maxD 步
+  WF.bfs = function (start, maxD) {
+    var got = {}, q = [start]; got[start] = { prev: null, dir: null, d: 0 };
+    while (q.length) {
+      var cur = q.shift(); if (got[cur].d >= (maxD || 40)) continue;
+      W.edges(cur).forEach(function (e) { if (got[e.to]) return; got[e.to] = { prev: cur, dir: e.dir, d: got[cur].d + 1 }; q.push(e.to); });
+    }
+    return got;
+  };
+  // 这条提示指的是哪儿
+  // 读法（都是从全部提示里一条条对出来的）：
+  //   “还可以 / 也可以 / 或者 / 不妨”后面说的是顺带的事，不算目标；
+  //   “再 / 然后”后面说的才是最后要去的地方（“回广场，再回旅店后院”）；
+  //   “X 东边的 Y”“Y 在 X 的北边”“X 下面”：X 只是参照，目标是 X 那个方向上的那一格；
+  //   “从 X …”“离开 X”：X 是起点，不是目标；
+  //   提示里方向链接指的那条路，算加分（从说话的地方往那边走，正好通向这个地方）；
+  //   落脚以后还有“再往北”，就从那里再往北走一格。
+  var DIRW = '东北|西北|东南|西南|东|西|南|北|上|下';
+  var SIDE = new RegExp('^(?:的)?(' + DIRW + ')(?:边|面|头|侧)');
+  var THEN = new RegExp('^[^。；]*?(?:再|然后)往(' + DIRW + ')');
+  WF.targetOf = function (text, from) {
+    var S = DL.S, plain = DL.tok.strip(String(text || '')), reach = WF.bfs(from, 30), cand = {};
+    var opt = plain.search(/还可以|也可以|或者|不妨|顺便/), then = plain.search(/再|然后/);
+    var g = /\[\[go:([^|\]]+)\|/.exec(String(text || '')), gdir = g && g[1];
+    function first(id) { var cur = id, k = 0; while (reach[cur] && reach[cur].prev && reach[cur].prev !== from && k++ < 60) cur = reach[cur].prev; return reach[cur] ? reach[cur].dir : null; }
+    function add(id, sc, at) { if (!reach[id] || !okRoom(id)) return; if (gdir && id !== from && first(id) === gdir) sc += 150; if (!cand[id] || sc > cand[id].sc) cand[id] = { id: id, sc: sc, at: at }; }
+    function edge(id, dir) { return W.edges(id).filter(function (e) { return e.dir === dir; })[0]; }
+    Object.keys(reach).forEach(function (id) {
+      if (!okRoom(id)) return;
+      names(id).forEach(function (n) {
+        var at = -1;
+        while ((at = plain.indexOf(n, at + 1)) >= 0) {
+          if (opt >= 0 && at > opt) break;
+          var sc = n.length * 100 - reach[id].d, pre = plain.slice(Math.max(0, at - 2), at), post = plain.slice(at + n.length);
+          if (then >= 0 && at > then) sc += 1000;
+          if (/从|离开|出了/.test(pre)) sc -= 300;
+          var side = SIDE.exec(post);
+          if (side) { var e = edge(id, side[1]); sc -= 300; if (e) add(e.to, n.length * 100 + 50 + (then >= 0 && at > then ? 1000 : 0), at); }
+          // 说话的地方自己：“在营地长休”就是这里；带着方向链接、或者“出/回/从/离开”这里，就不是
+          if (id === from) { if (gdir || /从|离开|出|回/.test(pre)) continue; sc -= 50; }
+          add(id, sc, at);
+        }
+      });
+    });
+    var list = Object.keys(cand).map(function (k) { return cand[k]; }).sort(function (a, b) { return b.sc - a.sc; });
+    var best = list[0] || null;
+    if (!best) {
+      // 提到的人：他现在在哪儿（跟着你走的不算）
+      Object.keys(S.npcs || {}).forEach(function (nid) {
+        var n = S.npcs[nid], def = DL.NPC[nid]; if (!n || !def || n.follow || !n.loc || !reach[n.loc] || n.loc === from) return;
+        [def.name].concat(def.aliases || []).forEach(function (nm) { var at = nm && nm.length >= 2 ? plain.indexOf(nm) : -1; if (at >= 0 && (opt < 0 || at < opt)) add(n.loc, nm.length * 100 - reach[n.loc].d - 50, at); });
+      });
+      list = Object.keys(cand).map(function (k) { return cand[k]; }).sort(function (a, b) { return b.sc - a.sc; });
+      best = list[0] || null;
+    }
+    if (!best && gdir) { var ge = edge(from, gdir); if (ge && okRoom(ge.to)) return ge.to; }
+    if (!best) return null;
+    // 落脚以后还有“再往北”：从那里再走一格（中间没再提到别的地方才算）
+    var id = best.id, rest = plain.slice(best.at), m = THEN.exec(rest);
+    if (m && !list.some(function (c) { return c.at > best.at && c.at < best.at + m[0].length; })) { var ne = edge(id, m[1]); if (ne && okRoom(ne.to)) id = ne.to; }
+    return id;
+  };
+  // 带过来的那条提示，走到它说的地方、那里又出了事（多了剧情标记、任务有了变化），就算办完了：走开以后不再指回去
+  function sig() { var S = DL.S, n = 0; Object.keys(S.flags || {}).forEach(function (k) { if (S.flags[k] && !/_turn$|^rom_|^morning/.test(k)) n++; }); return n + '|' + Object.keys(S.quests || {}).map(function (k) { return S.quests[k].state; }).join(''); }
+  WF.sig = sig;
+  // 用哪一条：这一章最近说的那条（不管在哪儿说的）。回到早先说过话的地方，那里的旧提示已经过时了，不拿来认路。
+  // （只有老存档里没记下“最近那条”的时候，才看这个地方自己的提示。）
+  WF.lead = function () {
+    var S = DL.S; if (!S || !S.room) return null;
+    var L = S.lead;
+    if (L && L.ch === S.chapter) {
+      if (L.arr != null && S.room !== L.tg && sig() !== L.arr) return null;
+      return { t: L.t, from: L.from, here: L.from === S.room, carried: true };
+    }
+    var e = S.roomHints && S.roomHints[S.room];
+    if (e && e.ch === S.chapter && e.list.length) return { t: e.list[e.list.length - 1], from: S.room, here: true };
+    return null;
+  };
+  WF.done = function () { var S = DL.S, L = S && S.lead; return !!(L && L.ch === S.chapter && !WF.lead()); };
+  var cache = { key: null, v: null };
+  WF.next = function () {
+    var S = DL.S; if (!S || !S.room || S.combat || S.dream || S.mode !== 'play' || !okRoom(S.room)) return null;
+    var L = WF.lead(); if (!L) return null;
+    var key = [S.room, L.from, L.t, S.time, S.chapter, sig()].join('|');
+    if (cache.key === key) return cache.v;
+    var v = null, tgt = WF.targetOf(L.t, L.from);
+    if (L.carried && S.lead) { S.lead.tg = tgt; if (tgt && tgt === S.room && S.lead.arr == null) S.lead.arr = sig(); }
+    if (tgt === S.room) v = { here: true, to: tgt, name: G.placeName(tgt) };
+    else if (tgt) {
+      var reach = WF.bfs(S.room, 40);
+      if (reach[tgt]) {
+        var path = [], cur = tgt, g = 0;
+        while (cur !== S.room && g++ < 80) { path.unshift({ dir: reach[cur].dir, to: cur }); cur = reach[cur].prev; }
+        v = { to: tgt, name: G.placeName(tgt), dir: path[0].dir, step: path[0].to, steps: path.length, path: path.map(function (p) { return p.to; }), seen: !!S.seen[tgt] };
+      }
+    }
+    cache = { key: key, v: v };
+    return v;
+  };
+  // 这里有哪些出口通向没去过的地方
+  WF.unexplored = function (id) { var S = DL.S; return W.edges(id || S.room).filter(function (e) { return !S.seen[e.to] && okRoom(e.to); }); };
+  // 从这里回来路的方向
+  WF.backDir = function () {
+    var S = DL.S; if (!S.prevRoom) return null;
+    var e = W.edges(S.room).filter(function (x) { return x.to === S.prevRoom; })[0];
+    return e ? { dir: e.dir, to: e.to, name: G.placeName(e.to) } : null;
+  };
+  // 给界面画地图用的数据（只画这一片、这一层）
+  WF.mapData = function () {
+    var S = DL.S, r = W.room(); if (!S || !r || !r.pos || S.dream) return null;
+    var z = r.pos[2], area = r.area, cells = {}, nx = S.combat ? null : WF.next(), onPath = {};
+    if (nx && nx.path) nx.path.forEach(function (id) { onPath[id] = 1; });
+    function same(id) { var t = DL.ROOMS[id]; return !!(t && t.pos && t.pos[2] === z && t.area === area && okRoom(id)); }
+    function put(id, ghost) {
+      var t = DL.ROOMS[id], k = t.pos[0] + ',' + t.pos[1], old = cells[k];
+      var pri = id === S.room ? 5 : (nx && nx.to === id) ? 4 : !ghost ? (onPath[id] ? 3 : 2) : 1;
+      if (old && old.pri >= pri) return;
+      cells[k] = { id: id, x: t.pos[0], y: t.pos[1], pri: pri, ghost: !!ghost };
+    }
+    var seen = Object.keys(S.seen).concat([S.room]).filter(same);
+    seen.forEach(function (id) { put(id, false); });
+    seen.forEach(function (id) { W.edges(id).forEach(function (e) { if (!S.seen[e.to] && e.to !== S.room && same(e.to)) put(e.to, true); }); });
+    if (nx && nx.path) nx.path.forEach(function (id) { if (same(id)) put(id, !S.seen[id]); });
+    var list = Object.keys(cells).map(function (k) { return cells[k]; });
+    if (!list.length) return null;
+    var minX = Math.min.apply(null, list.map(function (c) { return c.x; })), maxX = Math.max.apply(null, list.map(function (c) { return c.x; }));
+    var minY = Math.min.apply(null, list.map(function (c) { return c.y; })), maxY = Math.max.apply(null, list.map(function (c) { return c.y; }));
+    var reach = S.combat || S.pending || S.mode !== 'play' ? {} : W.reach();
+    var who = {};
+    Object.keys(S.npcs || {}).forEach(function (nid) { var n = S.npcs[nid]; if (n && n.met && n.loc && !n.follow && DL.NPC[nid]) (who[n.loc] = who[n.loc] || []).push(DL.nameOf(nid)); });
+    list.forEach(function (c) {
+      var id = c.id, ed = c.ghost ? [] : W.edges(id);
+      c.cur = id === S.room; c.target = !!(nx && nx.to === id); c.path = !!onPath[id]; c.prev = id === S.prevRoom;
+      c.name = G.placeName(id);
+      c.label = c.ghost ? (c.target ? '★' : '？') : (val(DL.ROOMS[id].mapChar) || c.name).slice(0, 2);
+      c.up = ed.some(function (e) { return e.dir === '上'; }); c.down = ed.some(function (e) { return e.dir === '下'; });
+      c.door = ed.some(function (e) { return e.dir === '进' || e.dir === '出'; });
+      c.people = c.ghost ? [] : (who[id] || []);
+      c.travel = !c.cur && !c.ghost && !!reach[id] ? G.travelArg(id) : null;
+      c.unexplored = c.ghost ? 0 : W.edges(id).filter(function (e) { return !S.seen[e.to] && okRoom(e.to); }).length;
+    });
+    // 相邻而且真有路相通的两格，画一道连线
+    var links = [];
+    // （按两格的位置算，不看方向的名字：“进”“出”这种门，只要两格挨着，也画上）
+    var byId = {}; list.forEach(function (c) { byId[c.id] = c; });
+    list.forEach(function (a) {
+      if (a.ghost) return;
+      W.edges(a.id).forEach(function (e) {
+        var b = byId[e.to]; if (!b || Math.abs(b.x - a.x) + Math.abs(b.y - a.y) !== 1) return;
+        var key = [a.x, a.y, b.x, b.y].join(',');
+        if (links.some(function (l) { return l.key === key || l.key === [b.x, b.y, a.x, a.y].join(','); })) return;
+        links.push({ key: key, x1: a.x, y1: a.y, x2: b.x, y2: b.y, ghost: b.ghost, door: e.dir === '进' || e.dir === '出', path: !!((a.cur || a.path) && b.path) });
+      });
+    });
+    return {
+      area: area, z: z, zLabel: z === 1 ? '树上' : z === 2 ? '楼上' : z === -1 ? '地下' : '', minX: minX, maxX: maxX, minY: minY, maxY: maxY,
+      cells: list, links: links, next: nx, unexplored: WF.unexplored(), back: WF.backDir()
+    };
+  };
+  // 一句话的“下一步”（文字版地图、没有界面的时候用）
+  WF.nextText = function () {
+    var nx = WF.next(); if (!nx) return null;
+    if (nx.here) return '目标就在这里：' + nx.name + '。';
+    return '下一步：往' + DL.tok.go(nx.dir, nx.dir) + '（去' + nx.name + (nx.steps > 1 ? '，还有 ' + nx.steps + ' 步' : '') + '）。';
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* 龙枪MUD · 1.10 按 D&D 5e（SRD 5.2）来的回合
+ * 以前：轮到你，做一件事，回合就结束了；前后排随便换；附赠动作只有几个职业有，而且得在动作之前用。
+ * 现在一个回合里有四样东西，各用一次——
+ *   动作：攻击、施法、防御、撤离、协助、躲藏、擒抱、推撞、用战场上的东西……
+ *   附赠动作：回气、狂暴、灵巧动作（盗贼的躲藏 / 撤离）、圣疗、治疗言语这类附赠法术、喝药水（2024 版规则：喝药水是附赠动作）。
+ *     动作之前、之后都能用。动作做完以后，手上还有派得上用场的附赠动作，就停一下，问你要不要用；没有就直接结束回合。
+ *   移动：上前 / 后退，一回合一次。从前排退下来，贴身的敌人可以借机攻击你（撤离、朦胧步就不会）。
+ *   反应：每轮一次（护盾术、直觉闪避、借机攻击……都在这里）。
+ * 以及几条规则：
+ *   专注：祝福术、猎人印记、蛛网术、纠缠术、放逐术、怪物定身术、灵性武器、圣洁灵光。同时只能专注一个；
+ *     受伤就要过体质豁免（DC 10 或者伤害的一半，取大的），失败法术就散了；倒下也会散。
+ *     被蛛网、藤蔓困住的，每回合用动作挣扎（力量检定）；被定身的，每回合末过感知豁免。
+ *   掩护：前排有人站着，后排就有半掩护：远程攻击和法术攻击打后排，护甲 +2；后排的敏捷豁免 +2。
+ *   躲藏：隐匿检定 DC 15（贴身厮杀时有劣势）。藏住了，敌人很少盯上你、打你有劣势；你下一次攻击有优势，一出手就暴露。
+ *   擒抱 / 推撞：代替一次攻击。对方过力量或敏捷豁免（DC 8 + 你的力量调整值 + 熟练加值）。
+ *     擒住的敌人跑不了、换不了位置，打别人有劣势，有时会花一回合挣脱；推撞能把它推倒，或者推到后排。
+ *   协助：你在敌人身边虚晃一招，下一个打它的同伴有优势。
+ *   优势和劣势：各算各的，两样都有就抵消。
+ *   偷袭：开战前悄悄摸上去，成功了敌人先攻劣势，你们每人第一下有优势。
+ *   成年的龙：传奇动作（每轮三次，在你们每个人的回合之后，甩尾、振翅）和传奇抗性（豁免失败时硬扛过去，三次）；大头目也有传奇抗性。 */
+(function (root) {
+  'use strict';
+  var DL = root.DL, C = DL.combat, G = DL.game, R = DL.R;
+  if (!C || !G) return;
+  var X = DL.DND = {};
+  function cbx() { return DL.S && DL.S.combat; }
+  function U(uid) { var cb = cbx(); return cb ? cb.units[uid] : null; }
+  function alive(u) { return !!(u && u.hp > 0 && !u.fled && !u.out); }
+  function standing(u) { return alive(u) && !u.cond.asleep && !u.cond.restrained && !u.cond.stunned; }
+  function nm(u) { return u.uid === 'player' ? '你' : u.name; }
+  function note(t) { if (DL.TACTICS && DL.TACTICS.note) DL.TACTICS.note(t); else DL.out.combat(t); }
+  function P() { return DL.S.player; }
+  function playerTurn() { var cb = cbx(); return !!(cb && !cb.over && cb.order[cb.idx] === 'player'); }
+
+  // =====================================================================
+  // 掩护
+  // =====================================================================
+  // 后排、同一边前排有人站着：远程和法术攻击护甲 +2，敏捷豁免 +2
+  C.coverAC = function (att, def, atk) {
+    var cb = cbx(); if (!cb || !def || def.row !== 'back' || def.air) return 0;
+    if (atk && !atk.ranged && !atk.spell && !atk.save) return 0;
+    if (atk && atk.forceMelee) return 0;
+    var wall = C.living(def.side).some(function (x) { return x !== def && x.row === 'front' && standing(x) && !x.air && !x.noFight; });
+    return wall ? 2 : 0;
+  };
+
+  // =====================================================================
+  // 回合开始：动作、附赠动作、移动都还在
+  // =====================================================================
+  var _ts = C.turnStart;
+  C.turnStart = function (u) {
+    var cb = cbx(), c = u.cond;
+    if (u.legAct) u.legAct.left = u.legAct.max;
+    if (cb && u.hp > 0 && !c.asleep && !c.stunned && !u.stuck) {
+      if (u.restrainedBy && c.restrained) X.struggle(u);
+      if (u.grappledBy) X.grappleTurn(u);
+    }
+    if (u.mustFlee === true && u.coward) X.fleeCtx = u;
+    var r;
+    try { r = _ts.apply(this, arguments); } finally { X.fleeCtx = null; }
+    if (u._holdFail) { u._holdFail = false; if (u.restrainedBy) c.restrained = 99; }
+    if (u.uid === 'player' && cb && DL.S.combat === cb) {
+      cb.actionUsed = false; cb.moveUsed = false; cb.postAct = false; u.disengaged = false;
+      if (u.hidden && u.hidden.until < cb.round) u.hidden = null;
+    }
+    return r;
+  };
+
+  // =====================================================================
+  // 附赠动作：现在派得上用场的（all：所有能用的，给界面列出来）
+  // =====================================================================
+  X.potion = function () { var S = DL.S; return ['potion_greater', 'potion'].filter(function (id) { return S.inv.indexOf(id) >= 0 && DL.ITEMS[id]; })[0] || null; };
+  X.hurt = function (lim) {
+    return C.units('party').filter(function (x) { return !x.dead && !x.out && !x.fled && x.hp <= x.maxHp * lim; }).sort(function (a, b) { return a.hp / a.maxHp - b.hp / b.maxHp; });
+  };
+  X.threats = function (u) { return C.living(u.side === 'party' ? 'enemy' : 'party').filter(function (f) { return f.row === 'front' && standing(f) && !f.air && !f.noFight && !f.reactUsed && (f.attacks || []).some(function (a) { return !a.ranged; }); }); };
+  X.bonusOpts = function (all) {
+    var cb = cbx(), Pl = P(), u = U('player'), out = [];
+    if (!cb || !u || cb.bonusUsed || !alive(u) || cb.over) return out;
+    var low = u.hp <= u.maxHp * 0.5, L = Pl.level, uses = Pl.uses || {};
+    function add(label, cmd, why) { if (!out.some(function (o) { return o.cmd === cmd; })) out.push({ label: label, cmd: cmd, why: why || '' }); }
+    if (uses.secondWind > 0 && (all || low)) add('回气', '回气', '恢复 1d10+' + L);
+    var pot = X.potion();
+    if (pot && (all || u.hp <= u.maxHp * 0.6)) add('喝' + DL.itemName(pot), '用 ' + DL.itemName(pot), pot === 'potion' ? '2d4+2' : '4d4+4');
+    if (Pl.cls === 'barbarian' && uses.rage > 0 && !u.cond.raging) add('狂暴', '狂暴', '受到的刀剑伤害减半');
+    if (Pl.cls === 'rogue' && L >= 2) {
+      if (!u.hidden) add('躲藏（灵巧动作）', '躲藏', '隐匿 DC 15');
+      if (u.row === 'front' && X.threats(u).length) add('撤离（灵巧动作）', '撤离', '退到后排，贴身的敌人追不上');
+    }
+    if (Pl.cls === 'monk' && L >= 2 && uses.focus > 0 && (all || low)) add('坚强防御', '坚强防御', '敌人打你有劣势');
+    if (Pl.cls === 'paladin' && DL.A.unsealed(Pl) && uses.layOnHands > 0) {
+      var h = X.hurt(0.5)[0];
+      if (h) add('圣疗 ' + (h.uid === 'player' ? '自己' : h.name), '圣疗 ' + (h.uid === 'player' ? '我' : h.name), '还剩 ' + uses.layOnHands + ' 点');
+      else if (all) add('圣疗', '圣疗');
+    }
+    if (DL.A.canCast(Pl)) {
+      DL.uniq(DL.A.knownSpells(Pl)).forEach(function (sid) {
+        var sp = R.SPELLS[sid]; if (!sp || !sp.bonus || !C.takeSlotPeek(Pl, sp.lvl)) return;
+        if (sp.kind === 'heal') { var t = X.hurt(0.5)[0]; if (t || all) add('施法 ' + sp.cn + (t ? ' ' + (t.uid === 'player' ? '自己' : t.name) : ''), '施法 ' + sp.cn + (t ? ' ' + (t.uid === 'player' ? '我' : t.name) : ''), t ? (t.hp <= 0 ? '把' + nm(t) + '救起来' : '') : ''); }
+        else if (sp.kind === 'massheal') { if (X.hurt(0.6).length >= 2 || all) add('施法 ' + sp.cn, '施法 ' + sp.cn); }
+        else if (sp.kind === 'misty') { if ((u.row === 'front' && (low || X.threats(u).length >= 2)) || all) add('施法 ' + sp.cn, '施法 ' + sp.cn, '闪到后排，贴身的敌人追不上'); }
+        else if (sp.kind === 'spiritual') { if (!u.spiritWeapon || !(u.spiritWeapon.rounds > 0)) add('施法 ' + sp.cn, '施法 ' + sp.cn, '每回合多打一下（专注）'); }
+        else if (sp.kind === 'mark') { var mt = u.markOn && U(u.markOn); if (!mt || !alive(mt)) add('施法 ' + sp.cn, '施法 ' + sp.cn, '命中多 1d6（专注）'); }
+        else if (all) add('施法 ' + sp.cn, '施法 ' + sp.cn);
+      });
+    }
+    return out;
+  };
+
+  // =====================================================================
+  // 动作用完了：还有派得上用场的附赠动作，就停一下
+  // =====================================================================
+  var _end = C.endPlayerTurn;
+  C.endPlayerTurn = function (opts) {
+    var cb = cbx(); if (!cb) return;
+    var u = U('player');
+    if (opts && opts.force) { cb.postAct = false; X.legendaryAfter(u); return _end.call(this); }
+    if (cb.over || C.checkEnd()) { cb.postAct = false; return; }                         // 这一下就打完了（剧情动作、最后一个敌人）
+    if (cb.extraAction) { cb.actionUsed = false; return _end.call(this); }   // 动作如潮：再来一个动作
+    cb.actionUsed = true;
+    if (!cb.over && u && alive(u) && DL.S.combat === cb && DL.settings.turnFlow !== 'auto' && X.bonusOpts(false).length) { cb.postAct = true; C.promptPlayer(); return; }
+    cb.postAct = false;
+    X.legendaryAfter(u);
+    if (DL.S.combat !== cb || cb.over) return;
+    return _end.call(this);
+  };
+  X.postMenu = function () {
+    var cb = cbx(), u = U('player'), out = [];
+    X.bonusOpts(false).forEach(function (o) { out.push({ label: o.label + (o.why ? '（' + o.why + '）' : ''), cmd: o.cmd }); });
+    var Pl = P();
+    if (Pl.cls === 'fighter' && Pl.level >= 2 && Pl.uses && Pl.uses.actionSurge > 0) out.push({ label: '动作如潮（马上再来一个动作）', cmd: '动作如潮' });
+    if (!cb.moveUsed && u && !u.cond.grappled) out.push(u.row === 'front' ? { label: '后退' + (X.threats(u).length ? '（贴身的敌人会趁你转身出手）' : ''), cmd: '后退' } : { label: '上前', cmd: '上前' });
+    out.push({ label: '结束回合', cmd: '结束回合' });
+    return out.slice(0, 7);
+  };
+  var _pp = C.promptPlayer;
+  C.promptPlayer = function () {
+    var cb = cbx();
+    if (!cb || !cb.postAct) return _pp.apply(this, arguments);
+    var bo = X.bonusOpts(false);
+    if (!bo.length) { cb.postAct = false; X.legendaryAfter(U('player')); if (DL.S.combat === cb && !cb.over) _end.call(C); return; }
+    if (DL.TACTICS && DL.TACTICS.flushSummary) DL.TACTICS.flushSummary(cb);
+    cb.menu = X.postMenu();
+    DL.out.combat('▶ 动作用过了。还可以用附赠动作：' + bo.map(function (o) { return DL.tok.cmd(o.cmd, o.label); }).join(' · ') + '；' + (cb.moveUsed ? '' : '也可以' + DL.tok.cmd(U('player').row === 'front' ? '后退' : '上前') + '；') + '或者' + DL.tok.cmd('结束回合') + '。');
+    DL.D.show('cb_menu');
+  };
+
+  // 动作用完以后，只认附赠动作、移动、结束回合，和那些不占回合的（看、查状态、戏剧效果、指挥同伴……）
+  var POST_OK = /^(结束回合|结束|跳过|等待|pass|wait|end|上前|前进|冲上去|后退|退后|回气|狂暴|rage|坚强防御|圣疗|lay|动作如潮|surge|戏剧效果|戏剧|drama|de|看|查看|观察|look|l|状态|属性|队伍|同伴|背包|物品|日志|任务|地图|帮助|指令|help|h|\?|提示|设置|手册|偏离度|收藏|图鉴|人物志|存档|读档)(\s|$)/i;
+  X.postOk = function (raw) {
+    var cb = cbx(), Pl = P(), t = String(raw || '').trim();
+    if (POST_OK.test(t) || /^(全队|大家|所有人)/.test(t) || /^\d+$/.test(t)) return true;
+    if (G.leadingCompanion && G.leadingCompanion(t)) return true;                         // 指挥同伴不占你的回合
+    if (/^(躲藏|隐藏|hide|撤离|脱离)/.test(t)) return Pl.cls === 'rogue' && Pl.level >= 2;  // 灵巧动作
+    if (/^(用|使用|喝|吃)\s*/.test(t)) return /药水/.test(t);                               // 喝药水
+    var m = /^(?:施法|施放|念咒|cast)\s*(.+)$/.exec(t) || /^(猎人印记)(.*)$/.exec(t);
+    if (m) { var sid = C.matchSpell(m[1].split(/\s+/)[0], Pl) || C.matchSpell(m[1], Pl); return !!(sid && R.SPELLS[sid].bonus); }
+    return false;
+  };
+  var _disp = G.dispatch;
+  G.dispatch = function (raw) {
+    var cb = cbx();
+    if (cb && cb.postAct && playerTurn() && !X.postOk(raw)) {
+      var bo = X.bonusOpts(false);
+      DL.out.sys('这回合你的动作已经用过了。' + (bo.length ? '还能用附赠动作：' + bo.map(function (o) { return DL.tok.cmd(o.cmd, o.label); }).join('、') + '；' : '') + '不用的话就' + DL.tok.cmd('结束回合') + '。');
+      if (DL.S.pending && DL.S.pending.node === 'cb_menu') return;
+      C.promptPlayer(); return;
+    }
+    return _disp.apply(this, arguments);
+  };
+  // 结束回合
+  // 动作如潮：动作用过以后再用，就是马上再来一个动作（不是再多一个）
+  var _surge = C.playerSurge;
+  C.playerSurge = function () {
+    var cb = cbx(), post = cb && cb.actionUsed;
+    var r = _surge.apply(this, arguments);
+    if (r && cb && post && cb.extraAction) { cb.extraAction = false; cb.actionUsed = false; cb.postAct = false; DL.out.combat('（动作如潮：再来一个动作。）'); }
+    return r;
+  };
+  // （“结束回合”“跳过”“等待”在 game.js 里：都是直接结束这一回合）
+  G.cmd(['结束', 'end'], function () {
+    var cb = cbx();
+    if (!cb) { DL.out.sys('现在没有在战斗。'); return; }
+    DL.out.combat(cb.actionUsed ? '你结束了这一回合。' : '你按兵不动。');
+    C.endPlayerTurn({ force: true });
+  });
+  // 喝药水这类附赠动作：先看还有没有附赠动作，用完接着这一回合
+  C.bonusBusy = function (what) {
+    var cb = cbx(); if (!cb) return false;
+    if (cb.bonusUsed) { DL.out.sys('这回合你已经用过附赠动作了。（' + what + '是附赠动作）'); return true; }
+    return false;
+  };
+  C.bonusDone = function () {
+    var cb = cbx(); if (!cb) return;
+    cb.bonusUsed = true;
+    if (!cb.over && DL.S.combat === cb) C.promptPlayer();
+  };
+
+  // =====================================================================
+  // 移动：一回合一次；离开前排，贴身的敌人借机攻击
+  // =====================================================================
+  X.provoke = function (mv, maxN) {
+    var cb = cbx(); if (!cb || !mv || mv.disengaged) return 0;
+    var foes = X.threats(mv).slice(0, maxN || 2), n = 0;
+    if (!foes.length) return 0;
+    note((mv.uid === 'player' ? '你从' : mv.name + '从') + foes.map(function (f) { return f.uid === 'player' ? '你' : f.name; }).join('、') + '身边抽身——' + (foes.length > 1 ? '他们' : foes[0].uid === 'player' ? '你' : '它') + '趁机' + (mv.side === 'party' ? '砍了过来' : '追了一下') + '！（借机攻击）');
+    foes.forEach(function (f) {
+      if (!alive(mv) || mv.hp <= 0 || !DL.S.combat || cb.over) return;
+      var atk = f.attacks.filter(function (a) { return !a.ranged; })[0]; if (!atk) return;
+      f.reactUsed = true; n++;
+      C.attack(f, mv, atk);
+    });
+    return n;
+  };
+  var _mv = C.playerMove;
+  C.playerMove = function (row, opts) {
+    var cb = cbx(), u = U('player');
+    if (!cb || !u || u.row === row) return _mv.apply(this, arguments);
+    if (cb.moveUsed && !(opts && opts.free)) { DL.out.sys('这回合你已经移动过了（一回合只能换一次位置）。'); return false; }
+    if (u.cond.grappled) { DL.out.sys('你被抓住了，挪不开身。'); return false; }
+    if (u.row === 'front' && row === 'back' && !(opts && opts.noReact)) {
+      X.provoke(u);
+      if (!alive(u) || u.hp <= 0 || !DL.S.combat || cb.over) return true;
+    }
+    var r = _mv.apply(this, arguments);
+    if (r) { cb.moveUsed = true; X.release(u); }
+    return r;
+  };
+  // 撤离：退到后排，不挨借机攻击。盗贼（灵巧动作）是附赠动作，别人是动作
+  X.disengage = function () {
+    var cb = cbx(), u = U('player'), Pl = P(), rogue = Pl.cls === 'rogue' && Pl.level >= 2;
+    if (u.row !== 'front') { DL.out.sys('你在后排，身边没有贴身的敌人。'); return false; }
+    if (rogue) { if (cb.bonusUsed) { DL.out.sys('这回合你已经用过附赠动作了。'); return false; } cb.bonusUsed = true; }
+    u.disengaged = true;
+    DL.out.combat(rogue ? '你虚晃一下，滑出了混战。（灵巧动作：撤离）' : '你一步一步往后退，剑尖始终对着前面的人。（撤离）');
+    if (!cb.moveUsed && !u.cond.grappled) { _mv.call(C, 'back'); cb.moveUsed = true; X.release(u); }
+    else DL.out.combat('（这回合已经移动过了：先稳住，下一回合再退，也不会挨借机攻击。）');
+    return rogue ? 'bonus' : true;
+  };
+
+  // 敌人吓跑的时候从前排转身：贴身的你（或者同伴）可以追上去砍一下
+  var _flee = C.flee;
+  C.flee = function (u, how) {
+    var cb = cbx();
+    if (cb && u && u.side === 'enemy' && u.grappledBy === 'player' && standing(U('player'))) {
+      DL.out.combat(u.name + '想跑，可被你死死揪住，挣不开。');
+      return;
+    }
+    if (cb && u && u.side === 'enemy' && X.fleeCtx === u && u.row === 'front' && !u.plot && !u.plotFloor && !u.noFight && !u.air) {
+      X.fleeCtx = null;
+      var p = U('player'), who = p && p.row === 'front' && standing(p) && !p.reactUsed ? p : C.living('party').filter(function (x) { return x.row === 'front' && standing(x) && !x.reactUsed && x.attacks && x.attacks.some(function (a) { return !a.ranged; }); })[0];
+      if (who) {
+        var atk = who.attacks.filter(function (a) { return a.melee && !a.unarmed; })[0] || who.attacks.filter(function (a) { return !a.ranged; })[0];
+        if (atk) { who.reactUsed = true; note((who.uid === 'player' ? '你' : who.name) + '趁' + u.name + '转身，追上去补了一下。（借机攻击）'); C.attack(who, u, atk); }
+        if (!alive(u)) return;
+      }
+    }
+    return _flee.apply(this, arguments);
+  };
+  var _pre = C.preTurn;
+  if (_pre) C.preTurn = function (u) { X.fleeCtx = u; try { return _pre.apply(this, arguments); } finally { X.fleeCtx = null; } };
+
+  // =====================================================================
+  // 专注
+  // =====================================================================
+  X.CONC = { bless: 'bless', holy_aura: 'bless', hunters_mark: 'mark', spiritual_weapon: 'spirit', web: 'hold', entangle: 'hold', banishment: 'hold', hold_monster: 'hold' };
+  X.HOW = { web: 'str', entangle: 'str', hold_monster: 'wis', banishment: 'none' };
+  X.endConc = function (u, why, keepState) {
+    var cb = cbx(), c = u && u.conc; if (!c) return;
+    u.conc = null;
+    var st = X.CONC[c.sid], sp = R.SPELLS[c.sid];
+    var bits = [];
+    if (st === 'bless' && keepState !== 'bless' && cb) { if (cb.partyBless > 0) bits.push(u.side === 'party' ? '同伴们身上的光褪去了' : ''); cb.partyBless = 0; }
+    if (st === 'mark' && keepState !== 'mark') u.markOn = null;
+    if (st === 'spirit' && keepState !== 'spirit') { if (u.spiritWeapon) bits.push('那柄发光的武器消散了'); u.spiritWeapon = null; }
+    if (st === 'hold' && cb) Object.keys(cb.units).forEach(function (k) {
+      var t = cb.units[k];
+      if (t.restrainedBy === u.uid && t.restrainSid === c.sid) { t.restrainedBy = null; t.restrainSid = null; if (t.cond.restrained) { t.cond.restrained = 0; if (alive(t)) bits.push(t.name + '脱身了'); } }
+    });
+    if (why) note('（' + nm(u) + '的' + (sp ? sp.cn : '法术') + why + (bits.filter(Boolean).length ? '：' + bits.filter(Boolean).join('，') : '') + '。）');
+  };
+  var _cast = C.cast;
+  C.cast = function (u, sid, targetQ, k) {
+    var cb = cbx(), sp = R.SPELLS[sid], before = {};
+    if (cb && sp && sp.kind === 'restrain') Object.keys(cb.units).forEach(function (id) { before[id] = cb.units[id].cond.restrained || 0; });
+    var res = _cast.apply(this, arguments);
+    if (u && u.hidden) u.hidden = null;                       // 念咒就暴露了
+    if (!res || !cb || DL.S.combat !== cb || !X.CONC[sid]) return res;
+    if (u.conc && u.conc.sid !== sid) X.endConc(u, '散了（换成了' + sp.cn + '）', X.CONC[sid]);
+    if (X.CONC[sid] === 'hold') Object.keys(cb.units).forEach(function (id) {
+      var t = cb.units[id];
+      if (t.side !== u.side && t.cond.restrained && !before[id]) { t.cond.restrained = 99; t.restrainedBy = u.uid; t.restrainSid = sid; t.restrainDC = k && k.dc || 13; t.restrainHow = X.HOW[sid] || 'str'; }
+    });
+    var first = !u.conc && u.uid === 'player' && !cb.concTold;
+    u.conc = { sid: sid, cn: sp.cn };
+    if (first) { cb.concTold = true; note('（专注：' + sp.cn + '。受伤时要过体质豁免，没过法术就散了；同时只能专注一个法术。）'); }
+    return res;
+  };
+  // 被法术困住的：用动作挣扎
+  X.struggle = function (u) {
+    var c = u.cond, by = U(u.restrainedBy), how = u.restrainHow || 'str', dc = u.restrainDC || 13, sp = R.SPELLS[u.restrainSid] || {};
+    if (!by || !by.conc || by.conc.sid !== u.restrainSid) { u.restrainedBy = null; c.restrained = 0; return; }
+    if (how === 'none') return;                                   // 放逐：等施法的人专注断了才回来
+    var ok;
+    if (how === 'wis') { var sv = C.save(u, 'wis', dc); ok = sv >= dc; DL.out.roll(u.name + '的感知豁免：' + sv + ' 对 DC ' + dc + (ok ? '，挣脱了' : '，失败')); }
+    else { var m = DL.mod((u.abil && u.abil.str) || 10), r = DL.d20(0, u.lucky).roll; ok = r + m >= dc; DL.out.roll(u.name + '挣扎（力量检定）：d20=' + r + DL.sgn(m) + ' = ' + (r + m) + ' 对 DC ' + dc + (ok ? '，挣脱了' : '，没挣开')); }
+    c.restrained = 0;
+    u.skip = (u.skip || 0) + 1;
+    if (ok) { u.restrainedBy = null; u.restrainSid = null; u.skipText = u.name + (how === 'wis' ? '终于能动了，可这一回合已经过去了。' : '挣开了' + (sp.vines ? '藤蔓' : '蛛丝') + '，这一回合什么也没来得及做。'); }
+    else { u._holdFail = true; u.skipText = u.name + (how === 'wis' ? '僵在原地，一动也不能动。' : '被缠得死死的，这一回合都在挣扎。'); }
+  };
+  var _dmg = C.damage;
+  C.damage = function (def, dmg, type, att, atk) {
+    var hp0 = def.hp;
+    var r = _dmg.apply(this, arguments);
+    var cb = cbx();
+    if (cb && def.conc) {
+      var lost = hp0 - def.hp;
+      if (def.hp <= 0) X.endConc(def, '散了（' + (def.uid === 'player' ? '你' : nm(def)) + '倒下了）');
+      else if (lost > 0) {
+        var dc = Math.min(30, Math.max(10, Math.floor(lost / 2))), sv = C.save(def, 'con', dc);
+        DL.out.roll(nm(def) + '的专注（体质豁免）：' + sv + ' 对 DC ' + dc + (sv >= dc ? '，稳住了' : '，没稳住'));
+        if (sv < dc) X.endConc(def, '散了');
+      }
+    }
+    if (cb && def.grappledBy && def.hp <= 0) def.grappledBy = null;
+    if (cb && def.uid === 'player' && def.hp <= 0) X.release(def);
+    return r;
+  };
+
+  // =====================================================================
+  // 躲藏
+  // =====================================================================
+  C.playerHide = function () {
+    var cb = cbx(), Pl = P(), u = U('player'), rogue = Pl.cls === 'rogue' && Pl.level >= 2;
+    if (u.hidden) { DL.out.sys('你已经藏好了。'); return false; }
+    if (rogue && cb.bonusUsed) { DL.out.sys('这回合你已经用过附赠动作了。'); return false; }
+    if (rogue) cb.bonusUsed = true;
+    var engaged = u.row === 'front' && C.front('enemy').some(standing);
+    var r = DL.check('player', 'stealth', 15, { label: '隐匿' + (engaged ? '（贴身厮杀，劣势）' : ''), adv: engaged ? -1 : 0 });
+    if (r.ok) {
+      u.hidden = { until: cb.round + 1 }; u.advNext = true;
+      DL.out.combat('你闪进了' + (engaged ? '混战的空当里' : '同伴身后的阴影里') + '。（藏起来了：敌人很少盯上你、打你有劣势；你下一次攻击有优势——一出手就暴露）');
+    } else DL.out.combat('你想躲起来，可敌人的目光一直追着你。');
+    return rogue ? 'bonus' : true;
+  };
+  var _pick = C.pickTarget;
+  C.pickTarget = function (att, melee, prefer) {
+    if (att && att.side === 'enemy') {
+      var p0 = prefer;
+      prefer = function (x) { return !x.hidden && (!p0 || p0(x)); };
+    }
+    return _pick.call(this, att, melee, prefer);
+  };
+  var _atk = C.attack;
+  C.attack = function (att, def, atk, opts) {
+    var hid = att && att.hidden;
+    var r = _atk.apply(this, arguments);
+    if (hid && att.hidden) { att.hidden = null; if (att.uid === 'player') DL.out.combat('（你从暗处现了身。）'); }
+    return r;
+  };
+
+  // =====================================================================
+  // 优势和劣势：躲藏、擒抱、协助
+  // =====================================================================
+  var _ah = C.advHook;
+  C.advHook = function (att, def, atk, melee) {
+    var r = _ah ? _ah.apply(this, arguments) : null, pos = 0, neg = 0, why = [];
+    if (r) { if (r.pos != null || r.neg != null) { pos += r.pos || 0; neg += r.neg || 0; } else if (r.adv > 0) pos += r.adv; else if (r.adv < 0) neg -= r.adv; if (r.why) why.push(r.why); }
+    var cb = cbx();
+    if (def.hidden && att.side !== def.side) { neg++; why.push(nm(def) + '藏着'); }
+    if (att.grappledBy && def.uid !== att.grappledBy) { neg++; why.push(nm(att) + '被揪住了'); }
+    if (cb && cb.helpOn && att.side === 'party' && att.uid !== 'player' && cb.helpOn.t === def.uid && cb.round <= cb.helpOn.round + 1) { pos++; why.push('你在旁边协助'); cb.helpOn = null; }
+    return { pos: pos, neg: neg, why: why.join('，') };
+  };
+
+  // =====================================================================
+  // 擒抱、推撞、协助（都要贴身）
+  // =====================================================================
+  X.inReach = function (f) { var u = U('player'); return u.row === 'front' && !f.air && C.reachable(u, true).indexOf(f) >= 0; };
+  X.unarmedDC = function () { var Pl = P(); return 8 + DL.mod(Pl.abil.str) + DL.A.prof(Pl); };
+  // 对方挑力量和敏捷里好的那个过豁免
+  X.resist = function (f, dc) {
+    var bs = function (ab) { return (f.saves && f.saves[ab] != null) ? f.saves[ab] : DL.mod((f.abil || {})[ab] || 10); };
+    var ab = bs('dex') > bs('str') ? 'dex' : 'str', sv = C.save(f, ab, dc);
+    DL.out.roll(f.name + '的' + R.ABIL_CN[ab] + '豁免：' + sv + ' 对 DC ' + dc + (sv >= dc ? '，成功' : '，失败'));
+    return sv >= dc;
+  };
+  // 擒抱、推撞代替一次攻击：有额外攻击的，剩下的照样打
+  X.restAttacks = function (f) {
+    var u = U('player'), n0 = u.nAttacks;
+    if (!(n0 > 1) || !DL.S.combat) return true;
+    u.nAttacks = n0 - 1;
+    try { DL.out.combat('（额外攻击）'); C.playerAttack(alive(f) ? f.name : null); } finally { u.nAttacks = n0; }
+    return true;
+  };
+  X.grapple = function (q) {
+    var cb = cbx(), u = U('player'), f = C.findEnemy(q);
+    if (!f) { DL.out.sys(q ? '没有这个敌人：' + q : '要擒抱谁？比如“擒抱 ' + ((C.living('enemy').filter(function (x) { return !x.noFight; })[0] || {}).name || '龙人') + '”。'); return false; }
+    if (!X.inReach(f)) { DL.out.sys(u.row !== 'front' ? '你在后排，够不着。先' + DL.tok.cmd('上前') + '。' : f.name + '不在你身边。'); return false; }
+    if (f.big || f.kind === 'dragon' || f.plot || f.plotFloor || f.noFight) { DL.out.sys(f.name + '太大了（或者根本抓不住）。'); return false; }
+    var old = Object.keys(cb.units).map(function (k) { return cb.units[k]; }).filter(function (x) { return x.grappledBy === 'player'; })[0];
+    if (old === f) { DL.out.sys('你已经揪住' + f.name + '了。'); return false; }
+    if (old) { old.grappledBy = null; DL.out.combat('你松开了' + old.name + '。'); }
+    DL.out.combat('你扑上去，想揪住' + f.name + '。');
+    var dc = X.unarmedDC();
+    if (!X.resist(f, dc)) { f.grappledBy = 'player'; f.grappleDC = dc; DL.out.combat('你死死揪住了' + f.name + '！（它跑不了、换不了位置，打别人有劣势）'); if (DL.TACTICS && DL.TACTICS.morale) DL.TACTICS.morale(-5, ''); }
+    else DL.out.combat(f.name + '一扭身，挣开了你的手。');
+    return X.restAttacks(f);
+  };
+  X.release = function (u) {
+    var cb = cbx(); if (!cb || !u || u.uid !== 'player') return;
+    Object.keys(cb.units).forEach(function (k) { var t = cb.units[k]; if (t.grappledBy === 'player') { t.grappledBy = null; if (alive(t)) DL.out.combat('你松开了' + t.name + '。'); } });
+  };
+  X.grappleTurn = function (u) {
+    var p = U('player');
+    if (!p || !standing(p) || p.row !== 'front' || p.hp <= 0) { u.grappledBy = null; return; }
+    if (!DL.chance(0.4)) return;
+    var m = Math.max(DL.mod((u.abil && u.abil.str) || 10), DL.mod((u.abil && u.abil.dex) || 10)), r = DL.d20(0, u.lucky).roll, dc = u.grappleDC || X.unarmedDC();
+    var ok = r + m >= dc;
+    DL.out.roll(u.name + '想挣脱：d20=' + r + DL.sgn(m) + ' = ' + (r + m) + ' 对 DC ' + dc + (ok ? '，挣开了' : '，没挣开'));
+    if (ok) u.grappledBy = null;
+    u.skip = (u.skip || 0) + 1; u.skipText = ok ? u.name + '甩开了你的手，喘着粗气往后一跳。' : u.name + '在你手里扭来扭去，这一回合白费了力气。';
+  };
+  X.shove = function (q, mode) {
+    var cb = cbx(), u = U('player'), f = C.findEnemy(q);
+    if (!f && q && DL.TACTICS && DL.TACTICS.useObject) return G.dispatch('互动 ' + q);     // “推倒 货摊”：那是战场上的东西
+    if (!f) { DL.out.sys('要推谁？比如“推倒 ' + ((C.living('enemy').filter(function (x) { return !x.noFight; })[0] || {}).name || '龙人') + '”或者“推开 …”。'); return false; }
+    if (!X.inReach(f)) { DL.out.sys(u.row !== 'front' ? '你在后排，够不着。先' + DL.tok.cmd('上前') + '。' : f.name + '不在你身边。'); return false; }
+    if (f.big || f.kind === 'dragon' || f.noFight) { DL.out.sys(f.name + '太大了，推不动。'); return false; }
+    if (mode === 'push' && f.row !== 'front') { DL.out.sys(f.name + '已经在后面了。'); return false; }
+    DL.out.combat('你一肩膀撞向' + f.name + '。');
+    if (!X.resist(f, X.unarmedDC())) {
+      if (mode === 'push') { f.row = 'back'; X.releaseIf(f); DL.out.combat(f.name + '被你撞得踉跄着退到了后面。'); }
+      else { f.cond.prone = true; DL.out.combat(f.name + '被你撞翻在地！（近战打它有优势，远程打它有劣势；它要花力气爬起来）'); }
+    } else DL.out.combat(f.name + '晃了一下，站住了。');
+    return X.restAttacks(f);
+  };
+  X.releaseIf = function (f) { if (f.grappledBy === 'player') f.grappledBy = null; };
+  X.help = function (q) {
+    var cb = cbx(), u = U('player'), f = C.findEnemy(q);
+    if (!f) { DL.out.sys('要协助同伴打谁？比如“协助 ' + ((C.living('enemy').filter(function (x) { return !x.noFight; })[0] || {}).name || '龙人') + '”。'); return false; }
+    if (!C.living('party').some(function (x) { return x.uid !== 'player' && standing(x); })) { DL.out.sys('没有能接上这一下的同伴。'); return false; }
+    if (!X.inReach(f)) { DL.out.sys(u.row !== 'front' ? '你得站到' + f.name + '身边才能协助。先' + DL.tok.cmd('上前') + '。' : f.name + '不在你身边。'); return false; }
+    cb.helpOn = { t: f.uid, round: cb.round };
+    DL.out.combat('你绕到' + f.name + '身侧虚晃一招，替同伴撕开了一道破绽。（协助：下一个打' + f.name + '的同伴有优势）');
+    return true;
+  };
+  function act(res) { if (DL.TACTICS && DL.TACTICS.act) return DL.TACTICS.act(res); if (res === 'free' || res === 'bonus') { C.promptPlayer(); return; } if (res === 'ended') return; if (res) C.endPlayerTurn(); }
+  function cc(verbs, fn) {
+    G.cmd(verbs, function (a, raw) {
+      if (!cbx()) { if (!G.customVerb(raw)) DL.out.sys('现在没有在战斗。'); return; }
+      return act(fn(a, raw));
+    });
+  }
+  cc(['擒抱', '揪住', 'grapple'], function (a) { return X.grapple(a); });
+  cc(['推倒', '撞倒', '绊倒', 'shove'], function (a) { return X.shove(a, 'prone'); });
+  cc(['推开', '撞开', '逼退'], function (a) { return X.shove(a, 'push'); });
+  cc(['协助', '策应', 'assist'], function (a) { return X.help(a); });
+  cc(['撤离', '脱离', 'disengage'], function () { return X.disengage(); });
+
+  // =====================================================================
+  // 传奇动作、传奇抗性
+  // =====================================================================
+  var _bo = C.beforeOrder;
+  C.beforeOrder = function (cb, enc, opts) {
+    if (_bo) _bo.apply(this, arguments);
+    Object.keys(cb.units).forEach(function (k) {
+      var u = cb.units[k]; if (u.side !== 'enemy' || u.noFight) return;
+      // 按怪物本来的血量算（不算为了上阵人数调过的）：成年的龙、大头目
+      var base = ((DL.MON[u.ref] || {}).hp) || u.maxHp, boss = u.big && base >= 150;
+      if (boss) u.legRes = 3;
+      if (u.kind === 'dragon' && boss && !u.plot) u.legAct = { max: 3, left: 3 };
+    });
+  };
+  // 在你们每个人的回合之后：甩尾（1 次），振翅（2 次：前排敏捷豁免，没过就被掀翻）
+  X.legendary = function (after) {
+    var cb = cbx(); if (!cb || cb.over || !after || after.side !== 'party') return;
+    C.living('enemy').forEach(function (d) {
+      if (!d.legAct || d.legAct.left <= 0 || !standing(d) || d.air || cb.over || DL.S.combat !== cb) return;
+      var front = C.living('party').filter(function (x) { return x.row === 'front' && x.hp > 0; });
+      var base = (d.attacks || [])[0]; if (!base) return;
+      var mod = +((/([+-]\d+)$/.exec(base.dmg) || [0, 0])[1]);
+      var dc = (d.breath && d.breath.dc) ? d.breath.dc - 1 : 15;
+      if (d.legAct.left >= 2 && front.length >= 2 && DL.chance(0.35)) {
+        d.legAct.left -= 2;
+        note('【传奇动作】' + d.name + '猛地展开双翼，狂风卷着碎石扫过前排！');
+        front.forEach(function (v) {
+          var sv = C.save(v, 'dex', dc), hit = sv < dc, dd = DL.roll('2d6' + DL.sgn(mod)).total;
+          if (!hit) dd = Math.floor(dd / 2);
+          DL.out.combat(nm(v) + (hit ? '被扫中' : '伏低身子躲过了大半') + '，受到 ' + dd + ' 点钝击伤害。' + (hit && !v.big ? nm(v) + '被掀翻在地！' : ''));
+          C.damage(v, dd, '钝击', d);
+          if (hit && v.hp > 0) v.cond.prone = true;
+        });
+        return;
+      }
+      var t = (front.length ? front : C.living('party').filter(function (x) { return x.hp > 0; }));
+      if (!t.length) return;
+      var tgt = t[Math.floor(DL.rng() * t.length)];
+      d.legAct.left -= 1;
+      note('【传奇动作】' + d.name + '一甩尾巴！');
+      C.attack(d, tgt, { name: '尾巴', bonus: base.bonus, dmg: '2d8' + DL.sgn(mod), type: '钝击', natural: true, melee: true });
+    });
+  };
+  X.legendaryAfter = function (u) { try { if (u) X.legendary(u); } catch (e) { /* 照旧 */ } };
+  var _aai = C.afterAI;
+  C.afterAI = function (u) {
+    if (_aai) _aai.apply(this, arguments);
+    var cb = cbx();
+    if (cb && !cb.over && u && u.side === 'party') X.legendaryAfter(u);
+  };
+
+  // =====================================================================
+  // 敌人也按规则来：盯上正在专注的施法者；块头大的会把人撞倒
+  // =====================================================================
+  var _pick2 = C.pickTarget;
+  C.pickTarget = function (att, melee, prefer) {
+    if (att && att.side === 'enemy' && !att.forceTarget && !att.focusPlayer && DL.chance(0.4)) {
+      var p0 = prefer, any = C.reachable(att, melee).some(function (x) { return x.conc && alive(x) && !x.hidden && (!p0 || p0(x)); });
+      if (any) prefer = function (x) { return !!x.conc && (!p0 || p0(x)); };
+    }
+    return _pick2.call(this, att, melee, prefer);
+  };
+  X.BRUTE = { gladiator: 1, soldier: 1, beast: 1, plant: 1, fiend: 1 };
+  var _eai = C.enemyAI;
+  C.enemyAI = function (u) {
+    var cb = cbx();
+    if (cb && u.big && X.BRUTE[u.kind] && !u.multi && !u.noFight && !u.breath && !u.casts && !(u.intent && u.intent.type && u.intent.type !== 'attack') && DL.chance(0.2)) {
+      var it0 = u.intent && u.intent.type === 'attack' ? U(u.intent.target) : null;   // 亮出来盯着谁，就撞谁
+      var t = it0 && it0.row === 'front' && alive(it0) ? it0 : C.pickTarget(u, true, function (x) { return x.row === 'front' && !x.cond.prone && !x.big; });
+      if (t && t.row === 'front' && !t.cond.prone && alive(t)) {
+        var dc = 8 + DL.mod((u.abil && u.abil.str) || 14) + 3;
+        DL.out.combat(u.name + '一肩膀撞向' + nm(t) + '！');
+        var ab = t.uid === 'player' ? (DL.A.save(P(), 'dex') > DL.A.save(P(), 'str') ? 'dex' : 'str') : 'str', sv = C.save(t, ab, dc);
+        DL.out.roll(nm(t) + '的' + R.ABIL_CN[ab] + '豁免：' + sv + ' 对 DC ' + dc + (sv >= dc ? '，站住了' : '，失败'));
+        if (sv < dc) { t.cond.prone = true; DL.out.combat(nm(t) + '被撞翻在地！（近战打' + nm(t) + '有优势）'); }
+        else DL.out.combat(nm(t) + '晃了一下，站住了。');
+        if (!(u.nAttacks > 1) || C.checkEnd()) return;
+        var n0 = u.nAttacks; u.nAttacks = n0 - 1;
+        try { return _eai.apply(this, arguments); } finally { u.nAttacks = n0; }
+      }
+    }
+    return _eai.apply(this, arguments);
+  };
+
+  // =====================================================================
+  // 给界面：这一回合用掉了什么
+  // =====================================================================
+  X.economy = function () {
+    var cb = cbx(), u = U('player'); if (!cb || !u) return null;
+    return { action: !!cb.actionUsed, bonus: !!cb.bonusUsed, move: !!cb.moveUsed, reaction: !!u.reactUsed, post: !!cb.postAct, extra: !!cb.extraAction,
+      conc: u.conc ? u.conc.cn : null, hidden: !!u.hidden, grappling: Object.keys(cb.units).map(function (k) { return cb.units[k]; }).filter(function (x) { return x.grappledBy === 'player' && alive(x); }).map(function (x) { return x.name; })[0] || null };
   };
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -8181,9 +9042,10 @@ img.zoomable { cursor: zoom-in; }
     desc: '一小瓶红色的药水，摇一摇，里面有细小的金光在打转。',
     eat: function (S) { DL.ITEMS.potion.use(S); },
     use: function (S, target) {
+      if (S.combat && DL.combat.bonusBusy && DL.combat.bonusBusy('喝药水')) return;   // 1.10：喝药水是附赠动作
       W.lose('potion');
       var h = DL.roll('2d4+2').total;
-      if (S.combat) { var u = S.combat.units.player; DL.combat.heal(u, h); DL.out.combat('你一口喝下药水，恢复了 ' + h + ' 点生命。'); DL.combat.endPlayerTurn(); return; }
+      if (S.combat) { var u = S.combat.units.player; DL.combat.heal(u, h); DL.out.combat('你一口喝下药水，恢复了 ' + h + ' 点生命。'); if (DL.combat.bonusDone) DL.combat.bonusDone(); else DL.combat.endPlayerTurn(); return; }
       S.player.hp = Math.min(S.player.hpMax, S.player.hp + h);
       DL.out.narr('药水带着一股薄荷和铁锈的味道。一股暖流从胃里散开，你恢复了 ' + h + ' 点生命。');
     }
@@ -15712,9 +16574,10 @@ img.zoomable { cursor: zoom-in; }
     desc: '一小瓶金色的药水，瓶塞是一片压紧的树叶。',
     eat: function (S) { I.potion_greater.use(S); },
     use: function (S) {
+      if (S.combat && DL.combat.bonusBusy && DL.combat.bonusBusy('喝药水')) return;   // 1.10：喝药水是附赠动作
       W.lose('potion_greater');
       var h = DL.roll('4d4+4').total;
-      if (S.combat) { var u = S.combat.units.player; DL.combat.heal(u, h); DL.out.combat('你一口喝下金色的药水，恢复了 ' + h + ' 点生命。'); DL.combat.endPlayerTurn(); return; }
+      if (S.combat) { var u = S.combat.units.player; DL.combat.heal(u, h); DL.out.combat('你一口喝下金色的药水，恢复了 ' + h + ' 点生命。'); if (DL.combat.bonusDone) DL.combat.bonusDone(); else DL.combat.endPlayerTurn(); return; }
       S.player.hp = Math.min(S.player.hpMax, S.player.hp + h);
       DL.out.narr('药水像一口融化的阳光。你恢复了 ' + h + ' 点生命。');
     }
@@ -51702,6 +52565,7 @@ img.zoomable { cursor: zoom-in; }
  *   开战（拔剑）——照旧。
  *   说服他们让路（说服）／吓退他们（威吓）：只对讲得通话的（人、龙人、地精、骑士……）。
  *   悄悄绕过去（隐匿，身边同伴三个以上带劣势）：谁都行。失手了就被发现，照样开打。
+ *   先下手（1.10）：同样是隐匿，难一点；成功了是偷袭（敌人先攻劣势，你们第一下有优势），失手了照常开打。
  *   塞钱：讲得通话的、你钱够的时候，按人头给。
  *   用宝石：花一次戏剧效果，让领头的做一件很不像他的事（算进宝石的脾气）。
  * 绕过去也按赢了算：经验照给，这一仗赢了以后该发生的事照样发生（onWin）；不算杀敌。
@@ -51778,6 +52642,14 @@ img.zoomable { cursor: zoom-in; }
           var id = S.pf.enc, enc = DL.ENC[id], n = W.companionsHere ? W.companionsHere().length : 0;
           if (DL.check('player', 'stealth', AV.dc(enc) - 1, { adv: n >= 3 ? -1 : 0 }).ok) { DL.out.narr('你们贴着阴影，一个跟着一个，从他们眼皮底下溜了过去。谁也没有回头。'); AV.pass(id, 'sneak'); }
           else { DL.out.narr('有人踩断了一根树枝。所有人都转过了头——被发现了！'); fight(id); }
+          return null;
+        } },
+      // 1.10：先下手——悄悄摸上去，抢先动手（D&D 的偷袭：被偷袭的一方先攻劣势；摸上去的人藏着，第一下有优势）
+      { label: '先下手（摸上去偷袭）', checkLabel: function (S) { var n = W.companionsHere ? W.companionsHere().length : 0; return '隐匿 DC ' + AV.dc(DL.ENC[S.pf.enc]) + (n >= 3 ? '（人多，劣势）' : ''); },
+        go: function (S) {
+          var id = S.pf.enc, enc = DL.ENC[id], n = W.companionsHere ? W.companionsHere().length : 0;
+          if (DL.check('player', 'stealth', AV.dc(enc), { adv: n >= 3 ? -1 : 0 }).ok) { DL.out.narr('你打了个手势。大家散开，猫着腰，从三面摸了上去——直到刀出了鞘，他们才回过头来。'); DL.out.sys('（偷袭得手：敌人先攻劣势；你们每人第一次攻击有优势。）'); fight(id, { ambush: true, enemyDis: true }); }
+          else { DL.out.narr('离得还有十几步，有人踢翻了一块石头。所有人都转过了头——没摸上去。'); fight(id); }
           return null;
         } },
       { label: function (S) { return '塞钱（' + AV.price(DL.ENC[S.pf.enc]) + ' 钢币）'; },
@@ -53706,6 +54578,13 @@ img.zoomable { cursor: zoom-in; }
   // 更新说明、试玩记录
   // =====================================================================
   UX.NOTES = [
+    ['1.10 · 认得路，按规矩打', [
+      '地图画成了格子：去过的地方、相通的路、旁边还没去过的地方（？）、目标（★）和去目标的路线、你从哪儿来、哪里有认识的人、上下楼和门。去过的格子点一下就直接过去，旁边没去过的点一下就往那边走。',
+      '“下一步”：最近那条提示说的是哪儿，从你现在的地方往哪个方向走、还有几步。手册的地图页、右边的“眼下”、手机顶上的状态条都有，点一下就走。走开以后“眼下”接着说那条提示；那里的事办完了，就不再指回去。',
+      '战斗按 D&D 的回合来：每回合一个动作、一个附赠动作、一次移动、每轮一次反应，动作栏上方写着这回合用掉了什么。动作用过以后，手上还有派得上用场的附赠动作（回气、喝药水、灵巧动作、治疗言语……）会停一下问你；不用就“结束回合”。喝药水现在是附赠动作。',
+      '新的标准动作：撤离（退下来不挨打）、协助（同伴下一击有优势）、躲藏（隐匿 DC 15）、擒抱、推倒、推开。从前排退下来，贴身的敌人会借机攻击；敌人吓跑的时候你也能追上去补一下。',
+      '规则：后排有前排挡着，远程和法术打它护甲 +2、敏捷豁免 +2；祝福术、猎人印记、蛛网术这类要专注，受伤要过体质豁免；优势劣势两样都有就抵消；开打前可以“先下手”偷袭；成年的龙有传奇动作和传奇抗性，大块头会把人撞倒，敌人会盯着正在专注的施法者。'
+    ]],
     ['1.9 · 好用一点', [
       '手册：状态、同伴、背包、任务、地图、人物志、收藏、帮助，都收进底部的“手册”按钮，分页签看，不再写进故事里；打这些命令也会打开它。点手册里的东西，会关掉手册、直接去做。',
       '战斗：战术建议和基本动作合成底部一条。最要紧的那条（打断、散开、掩护……）亮在第一位，其余在“战术”里（宽屏默认展开）；“轮到你了”只说别处看不到的敌人状态。',
@@ -54663,8 +55542,31 @@ img.zoomable { cursor: zoom-in; }
     var cb = S.combat, live = S.pending && S.pending.node === 'cb_menu';
     return (cb.menu || []).map(function (it, k) { return { n: k + 1, label: DL.tok.strip(it.label), cmd: live ? String(k + 1) : it.cmd }; });
   };
+  // 1.10：这一回合用掉了什么（动作、附赠动作、移动、反应），专注、藏着、揪着谁
+  UI.econHTML = function (S) {
+    var X = DL.DND, e = X && X.economy ? X.economy() : null; if (!e) return '';
+    function dot(k, used, tip) { return '<span class="eco-k' + (used ? ' used' : '') + '" title="' + esc(tip + (used ? '：这回合用过了' : '：还没用')) + '">' + k + '</span>'; }
+    var tags = [];
+    if (e.conc) tags.push('<span class="eco-t">专注：' + esc(e.conc) + '</span>');
+    if (e.hidden) tags.push('<span class="eco-t">藏着</span>');
+    if (e.grappling) tags.push('<span class="eco-t">揪着' + esc(e.grappling) + '</span>');
+    if (e.extra) tags.push('<span class="eco-t">动作如潮</span>');
+    return '<div class="dock-eco" role="status" aria-label="这回合：动作' + (e.action ? '已用' : '可用') + '，附赠动作' + (e.bonus ? '已用' : '可用') + '，移动' + (e.move ? '已用' : '可用') + '，反应' + (e.reaction ? '已用' : '可用') + (e.conc ? '，专注' + esc(e.conc) : '') + '"><span class="eco-h">这回合</span>' +
+      dot('动作', e.action, '动作（攻击、施法、防御、撤离、协助、擒抱……）') + dot('附赠', e.bonus, '附赠动作（回气、喝药水、灵巧动作、附赠法术……）') + dot('移动', e.move, '移动（上前 / 后退，一回合一次）') + dot('反应', e.reaction, '反应（护盾术、借机攻击……每轮一次）') + tags.join('') + '</div>';
+  };
+  // 动作用过了：只剩附赠动作、移动、结束回合
+  function postDock(S) {
+    var cb = S.combat, live = S.pending && S.pending.node === 'cb_menu', h = [];
+    (cb.menu || []).forEach(function (it, k) {
+      var end = it.cmd === '结束回合';
+      h.push('<button type="button" class="chip' + (end ? ' hot' : k === 0 ? ' bonus' : '') + '" data-cmd="' + esc(live ? String(k + 1) : it.cmd) + '" title="' + esc(DL.tok.strip(it.label)) + '"><b>' + (k + 1) + '</b>' + esc(shortLabel(it.label)) + '</button>');
+    });
+    if (W.has('gem')) h.push(chip(DL.drama.available() ? '戏剧效果' : '戏剧效果（已用完）', '戏剧效果', 'gemchip'));
+    return UI.econHTML(S) + h.join('');
+  }
   function dock(S) {
     var cb = S.combat, P = S.player, enc = DL.ENC[cb.id] || {}, T = DL.TACTICS, h = [], more = [];
+    if (cb.postAct) return postDock(S);
     var menu = UI.combatMenu(S);
     var foes = C.living('enemy').filter(function (u) { return !u.noFight; });
     (enc.objects || []).forEach(function (o) { if (o.plot && T && T.objAvail && T.objAvail(o, cb)) h.push(chip(DL.W.val(o.label).replace(/（[^（）]*）$/, ''), '互动 ' + o.name, 'plot')); });
@@ -54681,13 +55583,22 @@ img.zoomable { cursor: zoom-in; }
     if (P.uses.secondWind > 0) more.push(chip('回气', '回气'));
     if (P.uses.rage > 0 && !(cb.units.player && cb.units.player.cond.raging)) more.push(chip('狂暴', '狂暴'));
     C.classActions().forEach(function (a) { more.push(chip(a, a)); });
-    if (S.inv.indexOf('potion') >= 0) more.push(chip('喝药水', '用 药水'));
+    var X = DL.DND, pot = X && X.potion ? X.potion() : (S.inv.indexOf('potion') >= 0 ? 'potion' : null);
+    if (pot && !cb.bonusUsed) more.push(chip('喝药水（附赠）', '用 ' + DL.itemName(pot)));
     var me = cb.units.player;
-    more.push(chip(me && me.row === 'front' ? '后退' : '上前', me && me.row === 'front' ? '后退' : '上前'));
+    if (!cb.moveUsed) more.push(chip(me && me.row === 'front' ? '后退' : '上前', me && me.row === 'front' ? '后退' : '上前'));
+    // 1.10：标准动作
+    if (X && me) {
+      var near = me.row === 'front' && best && X.inReach && X.inReach(best) ? best : null;
+      if (me.row === 'front') more.push(chip('撤离', '撤离'));
+      if (near) { more.push(chip('协助 ' + near.name, '协助 ' + near.name)); if (!near.big) { more.push(chip('推倒 ' + near.name, '推倒 ' + near.name)); more.push(chip('擒抱 ' + near.name, '擒抱 ' + near.name)); } }
+      if (!(P.cls === 'rogue' && P.level >= 2) && !me.hidden) more.push(chip('躲藏', '躲藏'));
+    }
+    more.push(chip('结束回合', '结束回合'));
     if (cb.bench && cb.bench.length && !cb.supportUsed) more.push(chip('支援', '支援'));
     if (enc.fleeTo) more.push(chip('逃跑', '逃跑'));
     if (more.length) h.push('<button type="button" class="chip more" data-dock="more" aria-expanded="' + dockMore + '">' + (dockMore ? '收起' : '更多…') + '</button>');
-    var out = h.join('');
+    var out = UI.econHTML(S) + h.join('');
     if (dockTac && tac.length) out += '<div class="dock-sub" role="group" aria-label="这一轮的打法">' + tac.map(function (it) { return '<button type="button" class="chip tacopt" data-cmd="' + esc(it.cmd) + '"><b>' + it.n + '</b>' + esc(it.label) + '</button>'; }).join('') + '</div>';
     if (dockMore) out += '<div class="dock-sub" role="group" aria-label="更多动作">' + more.join('') + '</div>';
     return out;
@@ -54779,6 +55690,132 @@ img.zoomable { cursor: zoom-in; }
     doc.addEventListener('keydown', digitKey);
     return r;
   };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* 龙枪MUD · 1.10 界面：认路
+ * 地图画成真正的格子：去过的地方、相通的路、没去过的地方（？）、目标（★）和去目标的路线、你从哪儿来、哪里有认识的人、上下楼。
+ * 地图上面一行“下一步”：往哪个方向、去哪儿、还有几步；去过、走得到的目标可以直接“前往”。
+ * 手册的地图页用大图；侧栏的小地图用小图；“眼下”和手机状态条也带上“下一步”。
+ * “眼下”以前只看这个地方有没有提示，一走开就空了；现在这里没有提示时，接着说这一章最近的那条（里面的方向链接会去掉——那是在别处说的方向）。 */
+(function (root) {
+  'use strict';
+  var DL = root.DL, UI = DL && DL.ui, doc = root.document, UX = DL && DL.UX;
+  if (!UI || !doc || !DL.WAY) return;
+  var WF = DL.WAY, W = DL.W;
+  function $(id) { return doc.getElementById(id); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function btn(cmd, label, cls, title) { return '<button type="button" class="' + (cls || 'wf-b') + '" data-cmd="' + esc(cmd) + '"' + (title ? ' title="' + esc(title) + '"' : '') + '>' + esc(label) + '</button>'; }
+
+  // ---------- 下一步 ----------
+  UI.nextHTML = function (nx, full) {
+    if (!nx) return '';
+    if (nx.here) return '<div class="wf-next here"><span class="wf-k">★ 目标</span>就在这里：' + esc(nx.name) + '</div>';
+    var go = btn(nx.dir, '往' + nx.dir, 'wf-b hot', '往' + nx.dir + '走一步');
+    var tr = nx.seen && nx.steps > 1 && DL.game.findPlace && W.route(nx.to) ? btn('前往 ' + DL.game.travelArg(nx.to), '直接前往', 'wf-b', '沿着走过的路一口气走过去') : '';
+    return '<div class="wf-next"><span class="wf-k">下一步</span>' + go + '<span class="wf-to">去' + esc(nx.name) + (nx.steps > 1 ? '，还有 ' + nx.steps + ' 步' : '') + '</span>' + (full ? tr : '') + '</div>';
+  };
+
+  // ---------- 地图 ----------
+  UI.mapHTML = function (d, compact) {
+    if (!d) return '<div class="empty">这里没有地图。</div>';
+    var S = DL.S, cols = (d.maxX - d.minX) * 2 + 1, rows = (d.maxY - d.minY) * 2 + 1;
+    var cs = compact ? 'var(--wf-c-s)' : 'var(--wf-c)', ls = compact ? 'var(--wf-l-s)' : 'var(--wf-l)';
+    var tc = [], tr = [];
+    for (var i = 0; i < cols; i++) tc.push(i % 2 ? ls : cs);
+    for (var j = 0; j < rows; j++) tr.push(j % 2 ? ls : cs);
+    var adj = {};
+    W.edges(S.room).forEach(function (e) { adj[e.to] = e.dir; });
+    var h = '';
+    d.links.forEach(function (l) {
+      var horiz = l.y1 === l.y2;
+      var col = horiz ? (Math.min(l.x1, l.x2) - d.minX) * 2 + 2 : (l.x1 - d.minX) * 2 + 1;
+      var row = horiz ? (d.maxY - l.y1) * 2 + 1 : (d.maxY - Math.max(l.y1, l.y2)) * 2 + 2;
+      h += '<i class="wf-l ' + (horiz ? 'h' : 'v') + (l.ghost ? ' ghost' : '') + (l.door ? ' door' : '') + (l.path ? ' path' : '') + '" style="grid-column:' + col + ';grid-row:' + row + '" aria-hidden="true"></i>';
+    });
+    d.cells.forEach(function (c) {
+      var col = (c.x - d.minX) * 2 + 1, row = (d.maxY - c.y) * 2 + 1;
+      var cls = 'wf-c' + (c.cur ? ' cur' : '') + (c.target ? ' target' : '') + (c.path && !c.cur ? ' path' : '') + (c.ghost ? ' ghost' : '') + (c.prev ? ' prev' : '');
+      var tip = c.ghost ? (c.target ? c.name + '（目标，还没去过）' : '还没去过') : c.name + (c.cur ? '（你在这里）' : '') + (c.target ? '（目标）' : '') + (c.prev ? '（你从这里来）' : '') +
+        (c.people.length ? '｜有人：' + c.people.join('、') : '') + (c.unexplored ? '｜还有 ' + c.unexplored + ' 条路没走过' : '') + (c.up ? '｜可以往上' : '') + (c.down ? '｜可以往下' : '');
+      var badge = (c.up ? '<b class="wf-up">↑</b>' : '') + (c.down ? '<b class="wf-dn">↓</b>' : '') + (c.people.length ? '<b class="wf-pp" aria-hidden="true"></b>' : '') + (c.target && !c.ghost ? '<b class="wf-st">★</b>' : '') + (c.unexplored && !c.cur && !compact ? '<b class="wf-ux">+</b>' : '');
+      var st = 'grid-column:' + col + ';grid-row:' + row;
+      var inner = '<span class="wf-lab">' + esc(c.label) + '</span>' + badge;
+      var cmd = c.travel ? '前往 ' + c.travel : (c.ghost && adj[c.id] ? adj[c.id] : null);
+      if (cmd) h += '<button type="button" class="' + cls + '" style="' + st + '" data-cmd="' + esc(cmd) + '" title="' + esc(tip) + '" aria-label="' + esc((c.travel ? '前往' : '往' + adj[c.id] + '：') + tip) + '">' + inner + '</button>';
+      else h += '<div class="' + cls + '" style="' + st + '" title="' + esc(tip) + '"' + (c.cur ? ' aria-current="location"' : '') + ' aria-label="' + esc(tip) + '">' + inner + '</div>';
+    });
+    var grid = '<div class="wf-grid" style="grid-template-columns:' + tc.join(' ') + ';grid-template-rows:' + tr.join(' ') + '">' + h + '</div>';
+    var head = '<div class="wf-head">' + esc(d.area || '') + (d.zLabel ? ' · ' + d.zLabel : '') + '</div>';
+    var nxt = UI.nextHTML(d.next, !compact);
+    var more = '';
+    if (!compact) {
+      if (d.unexplored.length) more += '<div class="wf-row"><span class="wf-k">没走过</span>' + d.unexplored.map(function (e) { return btn(e.dir, e.dir); }).join('') + '</div>';
+      if (d.back) more += '<div class="wf-row"><span class="wf-k">来路</span>' + btn(d.back.dir, d.back.dir) + '<span class="wf-to">' + esc(d.back.name) + '</span></div>';
+      more += '<div class="wf-legend">★ 目标　？ 还没去过　<b class="wf-pp" aria-hidden="true"></b> 有认识的人　↑↓ 上下楼　+ 还有路没走过　点去过的地方可以直接过去</div>';
+    } else if (d.unexplored.length) more += '<div class="wf-row"><span class="wf-k">没走过</span>' + d.unexplored.map(function (e) { return btn(e.dir, e.dir); }).join('') + '</div>';
+    return head + nxt + '<div class="wf-scroll' + (compact ? ' wf-compact' : '') + '" tabindex="0" role="region" aria-label="地图">' + grid + '</div>' + more;
+  };
+
+  // 手册里的地图页、正文里的“地图”：用画好的格子图代替文字格子
+  var _build = UI.build;
+  UI.build = function (blk) {
+    if (blk && blk.cls === 'map' && DL.S && !DL.S.dream) {
+      var d = WF.mapData();
+      if (d) { var el = doc.createElement('div'); el.className = 'b b-wfmap'; el.innerHTML = UI.mapHTML(d, false); return el; }
+    }
+    return _build.apply(this, arguments);
+  };
+  // 地图下面那几行字（下一步、没走过的路、来路、“只显示去过的地方”）已经画进图里了：网页上不再重复（只有文字地图需要它们）
+  var _dec = UI.decorate;
+  UI.decorate = function (el, blk) {
+    if (blk && blk.cls === 'sys' && /^(下一步：|目标就在这里|这里没走过的路：|来路：|（只显示去过的地方)/.test(DL.tok.strip(String(blk.text || '')))) return false;
+    return _dec ? _dec.apply(this, arguments) : undefined;
+  };
+
+  // 侧栏的小地图、“眼下”、手机状态条
+  var _rs = UI.renderSide;
+  UI.renderSide = function () {
+    var r = _rs.apply(this, arguments);
+    var S = DL.S;
+    try {
+      var mp = $('mapCard');
+      if (mp && S && S.player && W.room() && !S.dream) {
+        var d = WF.mapData();
+        mp.innerHTML = '<h2>地图</h2>' + UI.mapHTML(d, true);
+      }
+      var nx = S && S.mode === 'play' && !S.combat && !S.pending ? WF.next() : null;   // 正在做选择的时候不催你走
+      var gc = $('goalCard');
+      if (gc && !gc.hidden && nx && !gc.querySelector('.wf-next')) gc.insertAdjacentHTML('beforeend', UI.nextHTML(nx, false));
+      var sb = $('statusBar');
+      if (sb && !sb.hidden && nx && !nx.here && !S.combat && !sb.querySelector('.sb-next')) sb.insertAdjacentHTML('beforeend', '<button type="button" class="sb-next" data-cmd="' + esc(nx.dir) + '" title="下一步：往' + esc(nx.dir) + '，去' + esc(nx.name) + '" aria-label="下一步：往' + esc(nx.dir) + '，去' + esc(nx.name) + '">→' + esc(nx.dir) + '</button>');
+    } catch (e) { /* 地图画不出来也不影响玩 */ }
+    return r;
+  };
+
+  // “眼下”：说这一章最近的那条提示（在别处说的，里面的方向链接去掉——那是在那儿说的方向）；
+  // 那条提示说的地方已经去过、事情也办了，就只说任务。这个地方自己写着“卡住了怎么办”的，照旧优先。
+  if (UX && UX.objective) {
+    var _obj = UX.objective;
+    UX.objective = function () {
+      var o = _obj.apply(this, arguments), S = DL.S;
+      try {
+        var r = W.room();
+        if (!S || !S.lead || S.lead.ch !== S.chapter || (r && r.stuck) || S.mode !== 'play') return o;
+        var L = WF.lead();
+        if (!L) { if (o) o.next = null; }
+        else {
+          var t = String(L.t).replace(/^\s*（/, '').replace(/）\s*$/, '');
+          o = o || { quest: null, note: null, next: null };
+          if (L.from !== S.room) { t = t.replace(/\[\[go:[^|\]]*\|([^\]]*)\]\]/g, '$1'); o.carried = true; }
+          o.next = t;
+        }
+        if (o && !o.next && !o.quest) return null;
+      } catch (e) { /* 照旧 */ }
+      return o;
+    };
+  }
 })(typeof window !== 'undefined' ? window : globalThis);
 
 </script>

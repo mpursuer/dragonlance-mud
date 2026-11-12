@@ -866,6 +866,9 @@ button.wf-c:hover { border-color: var(--ember); }
 .dock .chip.hot > b { color: var(--bg); }
 .dock .chip.bonus { border-color: var(--good); }
 
+/* 1.10.2：不是这一章的任务 */
+.qlist li.q-old { color: var(--muted); }
+
 </style>
 </head>
 <body>
@@ -1311,7 +1314,7 @@ button.wf-c:hover { border-color: var(--ember); }
 (function (root) {
   'use strict';
   var DL = root.DL;
-  DL.VERSION = '1.10.1';
+  DL.VERSION = '1.10.2';
   DL.SAVE_VERSION = 1;
 
   DL.newState = function () {
@@ -6967,10 +6970,45 @@ button.wf-c:hover { border-color: var(--ember); }
   // ---------- 记下来路、记下最近的去向提示 ----------
   var _go = W.go;
   W.go = function () {
-    var S = DL.S, from = S && S.room;
+    var S = DL.S, from = S && S.room, before = null, t0 = S && S.time;
+    try { before = S ? sig() : null; } catch (e) { before = null; }
     var r = _go.apply(this, arguments);
-    try { if (S && DL.S === S && from && S.room !== from) S.prevRoom = from; } catch (e) { /* 只是记一下 */ }
+    try {
+      if (S && DL.S === S && from && S.room !== from) {
+        S.prevRoom = from;
+        S.enterAt = { room: S.room, sig: before, t: t0, seq: S.leadSeq || 0 };   // 走进来之前的样子：进门就发生的事也算“在那里出了事”
+      }
+    } catch (e) { /* 只是记一下 */ }
     return r;
+  };
+  // 被剧情直接带走了（溜过营房、被押走、一场戏演完换了地方）：带走你的那个地方，就算办完了——不然地图会指回去
+  //   （逃跑、进出梦境不算）
+  var _enter = W.enter;
+  W.enter = function (from) {
+    var S = DL.S, prev = S && S.wfAt;
+    var r = _enter.apply(this, arguments);
+    try {
+      if (S && DL.S === S) {
+        if (!from && !WF._fleeing && prev && prev !== S.room && S.mode === 'play' && okRoom(prev) && okRoom(S.room)) WF.carried(prev);
+        S.wfAt = S.room;
+      }
+    } catch (e) { /* 只是记一下 */ }
+    return r;
+  };
+  if (DL.combat && DL.combat.playerFlee) {
+    var _flee = DL.combat.playerFlee;
+    DL.combat.playerFlee = function () { WF._fleeing = true; try { return _flee.apply(this, arguments); } finally { WF._fleeing = false; } };
+  }
+  WF.carried = function (prev) {
+    var S = DL.S;
+    [S.lead, S.qlead, S.leadPlace].forEach(function (L) {
+      if (!L || L.ch !== S.chapter || L.gone) return;
+      if (L.tg !== prev && !(L.arrAt && L.arrAt.id === prev)) return;
+      L.doneT = L.doneT || [];
+      [prev].concat(L.arrAt && L.arrAt.id === prev ? L.arrAt.before || [] : []).forEach(function (x) { if (L.doneT.indexOf(x) < 0) L.doneT.push(x); });
+      L.arrAt = null; L.tg = null;
+      L.gone = !WF.targetOf(L.t, L.from, L.doneT, L.strict);
+    });
   };
   var _rec = DL.recHint;
   DL.recHint = function (t) {
@@ -6978,14 +7016,77 @@ button.wf-c:hover { border-color: var(--ember); }
     _rec.apply(this, arguments);
     try {
       var c = S && S.chHints;
-      if (c && c.ch === S.chapter && c.list[c.list.length - 1] === t) S.lead = { t: t, from: S.room, ch: S.chapter };
+      // 1.10.2：只是说明、不叫人做什么的（“这一章里没有战斗……”）不算去向——不然它会顶掉真正的那条
+      if (c && c.ch === S.chapter && c.list[c.list.length - 1] === t && WF.actionable(t, S.room)) {
+        // 只叫你做件事、没说去哪儿的提示（营地夜谈里的“醒来以后，可以问问雷斯林”）：“眼下”说它，
+        // 可地图上的去向还是上一条说了地方的提示（不然“再从大井下去”就被顶掉了，地图上什么也没有）
+        var prev = S.lead, tg = null; try { tg = WF.targetOf(t, S.room); } catch (e) { tg = null; }
+        if (tg) S.leadPlace = null;
+        else if (prev && prev.ch === S.chapter && !prev.gone && prev.hasTg) S.leadPlace = prev;
+        S.lead = { t: t, from: S.room, ch: S.chapter, seq: WF.seq(), hasTg: !!tg };
+      }
     } catch (e) { /* 只是记一下 */ }
+  };
+  WF.seq = function () { var S = DL.S; S.leadSeq = (S.leadSeq || 0) + 1; return S.leadSeq; };
+  // 叫人做点什么的：有能点的命令 / 方向 / 人名，或者说了一个地方、一个方向
+  WF.actionable = function (t, from) {
+    t = String(t || '');
+    if (/\[\[(cmd|go|npc):/.test(t)) return true;
+    try { return !!WF.targetOf(t, from); } catch (e) { return false; }
+  };
+  // 早就过去了、却一直没收尾的任务（1.10.2 查出来的）：到了这一章以后，就算完了——任务栏和“眼下”不再挂着它们
+  WF.STALE = { home: ['epilogue', '回到了索拉斯。'], w1_orb: ['v2end', '龙珠一颗一颗都有了下落。'], w7_ship: ['s1', '派里丘号开出了弗洛萨姆。'], s6_road: ['s7', '我们到了奈拉卡。'], g4_device: ['v8end', '时间之河的事，过去了。'] };
+  WF.sweep = function () {
+    var S = DL.S; if (!S || !S.quests || !DL.CH || !DL.CH.ORDER) return;
+    var cur = DL.CH.ORDER.indexOf(S.chapter);
+    Object.keys(WF.STALE).forEach(function (id) {
+      var q = S.quests[id], st = WF.STALE[id], at = DL.CH.ORDER.indexOf(st[0]);
+      if (q && q.state === 'active' && at >= 0 && cur > at) { q.state = 'done'; q.notes.push(st[1]); }
+    });
+  };
+  if (DL.CH && DL.CH.begin) { var _begin = DL.CH.begin; DL.CH.begin = function () { var r = _begin.apply(this, arguments); try { WF.sweep(); } catch (e) { /* 照旧 */ } return r; }; }
+  var _load = G.load; G.load = function () { var r = _load.apply(this, arguments); try { WF.sweep(); } catch (e) { /* 照旧 */ } return r; };
+  // 最近有过动静的任务在前（任务栏、“眼下”都按这个）
+  WF.questsByRecent = function () {
+    var S = DL.S, ks = Object.keys(S.quests || {});
+    return ks.map(function (k, i) { return { q: S.quests[k], i: i }; }).sort(function (a, b) { return ((b.q.seq || 0) - (a.q.seq || 0)) || (b.i - a.i); }).map(function (x) { return x.q; });
+  };
+  // 任务的新记录也是去向（“去最后家园旅店：旅店就在镇子中间那棵最粗的树上”）：记下在哪儿记的
+  var _quest = DL.quest;
+  DL.quest = function (id, state, title, note) {
+    var S = DL.S, had = S && S.quests[id] ? S.quests[id].notes.length : 0;
+    var r = _quest.apply(this, arguments);
+    try {
+      var q = S && S.quests[id];
+      if (q) { q.seq = WF.seq(); q.ch = S.chapter; }
+      var qt = (q && q.title ? q.title + '：' : '') + (note || '');
+      if (q && note && q.state === 'active' && q.notes.length > had && S.room && WF.targetOf(qt, S.room, null, true)) S.qlead = { t: qt, from: S.room, ch: S.chapter, id: id, seq: q.seq, strict: true };
+    } catch (e) { /* 只是记一下 */ }
+    return r;
   };
 
   function val(x) { try { return W.val(x); } catch (e) { return null; } }
   function names(id) {
     var r = DL.ROOMS[id], out = []; if (!r) return out;
     [r.name, r.short, r.mapChar].forEach(function (n) { n = val(n); if (n && n.length >= 2 && out.indexOf(n) < 0) out.push(n); });
+    return out;
+  }
+  // 1.10.2：地名的简称。提示里常常不说全名——“去南城门”说的是“南城门外”，“去奎苏”说的是“奎苏 · 村口”。
+  //   去掉尾巴上的“外 / 里 / 上 / 下 / 边上……”（w：1，分数低一点）；“奎苏 · 村口”前面的“奎苏”（w：2，分数再低一点，而且前面得是“去 / 到 / 回……”）。
+  //   简称正好是别的地方的全名的，不算。
+  var full = null;
+  function fullNames() {
+    if (full) return full; full = {};
+    Object.keys(DL.ROOMS).forEach(function (id) { names(id).forEach(function (n) { full[n] = 1; }); });
+    return full;
+  }
+  function nameList(id) {
+    var out = names(id).map(function (n) { return { n: n, w: 0 }; }), fn = fullNames();
+    names(id).forEach(function (n) {
+      var st = n.replace(/(?:的边上|边上|外|里|内|上|下|前|边)$/, ''), hd = n.indexOf(' · ') > 0 ? n.split(' · ')[0] : '';
+      if (st !== n && st.length >= 2 && !/[的那一这些]$/.test(st) && !fn[st] && !out.some(function (o) { return o.n === st; })) out.push({ n: st, w: 1 });
+      if (hd.length >= 2 && !fn[hd] && !out.some(function (o) { return o.n === hd; })) out.push({ n: hd, w: 2 });
+    });
     return out;
   }
   function okRoom(id) { var r = DL.ROOMS[id]; return !!(r && !r.scene && !r.dream); }
@@ -7010,11 +7111,36 @@ button.wf-c:hover { border-color: var(--ember); }
   // skip：这条提示里已经去过、办完了的地方，不再算。
   var DIRW = '东北|西北|东南|西南|东|西|南|北|上|下';
   var SIDE = new RegExp('^(?:的)?(' + DIRW + ')(?:边|面|头|侧)');
+  var OUTSIDE = /^(?:的)?(?:外面|外头|外边)/;
+  var LATER = /明天|明早|明晚|天亮|醒来|睡醒|歇够|歇过来|休息好/;
   var THEN = new RegExp('^[^。；]*?(?:再|然后)往(' + DIRW + ')');
-  WF.targetOf = function (text, from, skip) {
+  var PLAIN = new RegExp('往(' + DIRW + ')(?=走|去|跑|回|进|出|到|爬|游|，|。|；|）|！|$)');
+  // “就在东边”“北边的草地”：没写“往”，也是在说方向（只在别的都对不上的时候用）
+  var PLAIN2 = new RegExp('(?:^|[在从朝向就，、。（])(' + DIRW + ')(?:边|面)(?:的|有|是|，|。|）|$)');
+  // 方向链接，连同它在去掉链接以后的那段文字里的位置（“或者”后面的链接不算）
+  function goTokens(text) {
+    var out = [], gm, gre = /\[\[go:([^|\]]+)\|/g; text = String(text || '');
+    while ((gm = gre.exec(text))) out.push({ dir: gm[1], at: DL.tok.strip(text.slice(0, gm.index)).length });
+    return out;
+  }
+  // strict（任务记录用）：只认前面带着“去 / 到 / 回 / 往 / 进 / 找”的地名和方向——任务记录多半是在说发生了什么，提到的地方不一定要去
+  WF.targetOf = function (text, from, skip, strict) { return WF.pick(text, from, skip, strict).id; };
+  // pick：目标，连同“它前面提到、算是一路上经过的”那些地方（before）——到了目标、办完了，那些也就都过去了
+  WF.pick = function (text, from, skip, strict) {
     var S = DL.S, plain = DL.tok.strip(String(text || '')), reach = WF.bfs(from, 30), cand = {};
     var opt = plain.search(/还可以|也可以|或者|不妨|顺便/), then = plain.search(/再|然后/);
-    var g = /\[\[go:([^|\]]+)\|/.exec(String(text || '')), gdir = g && g[1];
+    // 方向是“天亮了 / 明天一早”以后才走的，不拿来当眼下的方向（“今晚在营地里长休。明天一早，往北去……”）
+    function later(at) { return LATER.test(plain.slice(0, at).split(/[。；！？]/).pop()); }
+    var gts = goTokens(text).filter(function (x) { return opt < 0 || x.at < opt; });
+    gts.forEach(function (x) { x.later = later(x.at); });
+    var gnow = gts.filter(function (x) { return !x.later; }), gdir = gnow.length ? gnow[0].dir : null;
+    function res(id, at, list) {
+      var before = [];
+      (list || []).forEach(function (c) { if (c.id !== id && c.at <= at && before.indexOf(c.id) < 0) before.push(c.id); });
+      return { id: id || null, before: before };
+    }
+    // 没有链接、只写着“往北走”“往下去”的方向，也算（1.10.2）
+    if (!gdir && !gts.length) { var pd = PLAIN.exec(plain); if (pd && (opt < 0 || pd.index < opt) && !later(pd.index)) gdir = pd[1]; }
     function first(id) { var cur = id, k = 0; while (reach[cur] && reach[cur].prev && reach[cur].prev !== from && k++ < 60) cur = reach[cur].prev; return reach[cur] ? reach[cur].dir : null; }
     function add(id, sc, at) { if (!reach[id] || !okRoom(id) || (skip && skip.indexOf(id) >= 0)) return; if (gdir && id !== from && first(id) === gdir) sc += 150; if (!cand[id] || sc > cand[id].sc) cand[id] = { id: id, sc: sc, at: at }; }
     function edge(id, dir) { return W.edges(id).filter(function (e) { return e.dir === dir; })[0]; }
@@ -7022,21 +7148,35 @@ button.wf-c:hover { border-color: var(--ember); }
     var occ = [];
     Object.keys(reach).forEach(function (id) {
       if (!okRoom(id)) return;
-      names(id).forEach(function (n) { var at = -1; while ((at = plain.indexOf(n, at + 1)) >= 0) occ.push({ id: id, at: at, end: at + n.length }); });
+      nameList(id).forEach(function (o) { var n = o.n, at = -1; while ((at = plain.indexOf(n, at + 1)) >= 0) occ.push({ id: id, at: at, end: at + n.length }); });
     });
     function modifier(id, at, n) { var end = at + n.length; return occ.some(function (o) { return o.id !== id && (o.at === end || (o.at === end + 1 && plain.charAt(end) === '的')); }); }
     Object.keys(reach).forEach(function (id) {
       if (!okRoom(id)) return;
-      names(id).forEach(function (n) {
-        var at = -1;
+      nameList(id).forEach(function (o) {
+        var n = o.n, at = -1;
         while ((at = plain.indexOf(n, at + 1)) >= 0) {
           if (opt >= 0 && at > opt) break;
           if (modifier(id, at, n)) continue;
-          var sc = n.length * 100 - reach[id].d, pre = plain.slice(Math.max(0, at - 2), at), post = plain.slice(at + n.length);
+          // 全名的一部分（“南城门外”里的“南城门”）：那个全名自己会算
+          if (o.w && occ.some(function (x) { return x.at <= at && x.end >= at + n.length && x.end - x.at > n.length; })) continue;
+          // 任务记录（strict）里“走进了暗森林”“去了码头”说的是已经发生的事，不算要去
+          var motion = (strict ? /(?:[去到回往进找向]|沿着?|顺着)$/ : /(?:[去到回往进找向]了?|沿着?|顺着)$/).test(plain.slice(Math.max(0, at - 3), at));
+          if ((strict || o.w === 2) && !motion && !SIDE.exec(plain.slice(at + n.length))) continue;
+          // “去奎苏”：人已经在奎苏了，就不是在说村口那一格
+          if (o.w === 2 && DL.ROOMS[from] && DL.ROOMS[from].area === DL.ROOMS[id].area) continue;
+          var sc = n.length * 100 - reach[id].d - (o.w === 1 ? 60 : o.w === 2 ? 80 : 0), pre = plain.slice(Math.max(0, at - 2), at), post = plain.slice(at + n.length);
           if (then >= 0 && at > then) sc += 1000;
           sc -= 40 * (plain.slice(0, at).match(/[。；！？]/g) || []).length;   // 第几句
+          // 要在那里睡一觉的（“回平原。……在营地里长休”）：睡觉的地方才是这一趟的落脚处，前面说的是路过
+          if (/长休|过夜|歇一夜|歇一晚|扎营|睡一觉/.test(post.split(/[。；！]/)[0])) sc += 120;
+          // “议会明天在圣白石开”：明天的事，不是现在要去的地方（今晚先睡）
+          if (later(at)) sc -= 150;
           if (/从|离开|出了/.test(pre)) sc -= 300;
+          // “秘道一直往南，通到巢穴的前厅”：通到的那个地方，才是要去的
+          if (/通到|通向|通往|直通/.test(plain.slice(Math.max(0, at - 4), at))) sc += 60;
           var side = SIDE.exec(post);
+          if (!side && OUTSIDE.test(post)) side = [0, '出'];   // “书房外面的城里”：目标在书房出去的那边
           if (side) { var e = edge(id, side[1]); sc -= 300; if (e) add(e.to, n.length * 100 + 50 + (then >= 0 && at > then ? 1000 : 0), at); }
           // 说话的地方自己：“在营地长休”就是这里；带着方向链接、或者“出/回/从/离开”这里，就不是
           if (id === from) { if (gdir || /从|离开|出|回/.test(pre)) continue; sc -= 50; }
@@ -7046,7 +7186,7 @@ button.wf-c:hover { border-color: var(--ember); }
     });
     var list = Object.keys(cand).map(function (k) { return cand[k]; }).sort(function (a, b) { return b.sc - a.sc; });
     var best = list[0] || null;
-    if (!best) {
+    if (!best && !strict) {
       // 提到的人：他现在在哪儿（跟着你走的不算）
       Object.keys(S.npcs || {}).forEach(function (nid) {
         var n = S.npcs[nid], def = DL.NPC[nid]; if (!n || !def || n.follow || !n.loc || !reach[n.loc] || n.loc === from) return;
@@ -7055,57 +7195,134 @@ button.wf-c:hover { border-color: var(--ember); }
       list = Object.keys(cand).map(function (k) { return cand[k]; }).sort(function (a, b) { return b.sc - a.sc; });
       best = list[0] || null;
     }
-    if (!best && gdir) { var ge = edge(from, gdir); if (ge && okRoom(ge.to) && !(skip && skip.indexOf(ge.to) >= 0)) return ge.to; }
-    if (!best) return null;
+    if (!best) {
+      // 方向链接、写出来的方向，按顺序挑第一个还没办完的（“西（格拉伦的坟）；卡拉斯的墓……往北”）；“或者”后面的不算
+      var dirs = gts.slice();
+      var pre2 = new RegExp(PLAIN.source, 'g'), pm; while ((pm = pre2.exec(plain))) if (opt < 0 || pm.index < opt) dirs.push({ dir: pm[1], at: pm.index });
+      if (!strict) { var p3 = new RegExp(PLAIN2.source, 'g'), qm; while ((qm = p3.exec(plain))) if (opt < 0 || qm.index < opt) dirs.push({ dir: qm[1], at: qm.index }); }
+      // “在火边长休。天亮了往东追。”：天亮以后的方向，是睡醒了才走的；先要在这里睡（没有地名，目标就是说话的地方）
+      dirs.forEach(function (x) { x.later = later(x.at); });
+      var rIdx = plain.search(/长休|过夜|扎营|睡一觉/);
+      var rS = rIdx >= 0 ? plain.slice(0, rIdx).search(/[^。；！？]*$/) : -1;   // 睡觉那句话从哪儿开始：那句话里说了地方（“回旅店后院长休”），就不是“在这里睡”
+      if (!strict && rIdx >= 0 && (opt < 0 || rIdx < opt) && !occ.some(function (o) { return o.at >= rS && o.at < rIdx; }) && reach[from] && !(skip && skip.indexOf(from) >= 0) && !dirs.some(function (x) { return !x.later && x.at < rIdx; })) { var rr = res(from, -1, []); rr.rest = true; return rr; }
+      dirs.sort(function (a, b) { return (a.later ? 1 : 0) - (b.later ? 1 : 0); });
+      for (var di = 0; di < dirs.length; di++) { var ge = edge(from, dirs[di].dir); if (ge && okRoom(ge.to) && !(skip && skip.indexOf(ge.to) >= 0)) return res(ge.to, -1, []); }
+    }
+    if (!best) return res(null);
     // 落脚以后还有“再往北”：从那里再走一格（中间没再提到别的地方才算）
     var id = best.id, rest = plain.slice(best.at), m = THEN.exec(rest);
-    if (m && !list.some(function (c) { return c.at > best.at && c.at < best.at + m[0].length; })) { var ne = edge(id, m[1]); if (ne && okRoom(ne.to) && !(skip && skip.indexOf(ne.to) >= 0)) id = ne.to; }
-    return id;
+    if (m && !list.some(function (c) { return c.at > best.at && c.at < best.at + m[0].length; })) { var ne = edge(id, m[1]); if (ne && okRoom(ne.to) && !(skip && skip.indexOf(ne.to) >= 0)) { var r0 = res(ne.to, best.at, list); if (r0.before.indexOf(id) < 0) r0.before.push(id); return r0; } }
+    return res(id, best.at, list);
   };
   // 带过来的那条提示，走到它说的地方、那里又出了事（任务有了变化），这个地方就算办完了：走开以后不再指回去。
   // 一条提示里说了几个地方的，办完一个，接着指下一个；都办完了，这条提示才算过去。
   // “那里出了事”只看任务：任务开了、完了、多了一条记录。
   // （1.10.0 看的是所有剧情标记——在后院跟同伴说了句话、再走开，“回旅店后院长休”就被当成办完了，玩家就没了方向）
-  function sig() { var S = DL.S; return Object.keys(S.quests || {}).map(function (k) { var q = S.quests[k]; return k + ':' + q.state + ':' + ((q.notes && q.notes.length) || 0); }).join('|'); }
+  // 1.10.2：再加上“在某个地方才会发生的事”（剧情事件的条件里写着 S.room === ……）发生了几件——
+  //   大厅东边的洞里老龙死了，任务没变，可那里的事办完了。闲聊、营地夜谈、到点了的提示不算。
+  var placed = null;
+  function placedEvents() {
+    if (placed) return placed; placed = {};
+    (DL.EVENTS || []).forEach(function (e) { if (e && e.id && e.once !== false && /S\.room\s*===?/.test(String(e.when))) placed[e.id] = 1; });
+    return placed;
+  }
+  function sig() {
+    var S = DL.S, pe = placedEvents(), n = 0;
+    Object.keys(S.fired || {}).forEach(function (k) { if (S.fired[k] && pe[k]) n++; });
+    return n + '#' + Object.keys(S.quests || {}).map(function (k) { var q = S.quests[k]; return k + ':' + q.state + ':' + ((q.notes && q.notes.length) || 0); }).join('|');
+  }
   WF.sig = sig;
+  // 这条提示要你在那里“等”的（“就在这里坐一会儿……天黑以前，史东也该到了”）：
+  //   那里接了个支线、跟人说了话都不算办完，要等那里真的发生了下一件事（剧情事件）才算
+  WF.waitAt = function (text) { return /坐一会儿|等一等|等一会儿|待一会儿|多待一会儿|在这里等|等着/.test(DL.tok.strip(String(text || ''))); };
+  // 这条提示要你在那里做的是不是“睡一觉”（“回旅店后院长休”“今晚在院子里长休”）：那就要真的睡过才算办完
+  WF.restAt = function (text, id) {
+    var plain = DL.tok.strip(String(text || ''));
+    return nameList(id).some(function (o) { var n = o.n, at = -1; while ((at = plain.indexOf(n, at + 1)) >= 0) { var clause = plain.slice(at + n.length).split(/[。；！]/)[0]; if (/长休|睡|过夜|歇一夜|歇一晚|扎营/.test(clause)) return true; } return false; });
+  };
   // 用哪一条：这一章最近说的那条（不管在哪儿说的）。回到早先说过话的地方，那里的旧提示已经过时了，不拿来认路。
   // （只有老存档里没记下“最近那条”的时候，才看这个地方自己的提示。）
   function settle(L) {
     var S = DL.S;
     if (L.arr != null) delete L.arr;   // 1.10.0 的存档：那时记的“到过”不可靠（见 sig），不要了，重新算
-    if (L.arrAt && S.room !== L.arrAt.id && sig() !== L.arrAt.sig) {
-      (L.doneT = L.doneT || []).push(L.arrAt.id); L.arrAt = null;
-      L.gone = !WF.targetOf(L.t, L.from, L.doneT);
+    // 要在那里睡一觉的：睡过了就算办完，不用等走开（“在火边长休。天亮了往东追”——睡醒了，就该指东边了）
+    // 还站在那里、可进门就出了事（进门的剧情演完了，也没有给新的提示），而这条提示里还有下一个地方：这一站就算过了，接着指下一站
+    //   （“旅店的残骸在倒下的树上。镇子东边是墓地。”——看完旅店，就该指墓地，不用先走开一步）
+    var stayDone = L.arrAt && !L.arrAt.rest && !L.arrAt.wait && L.arrAt.ent && S.room === L.arrAt.id && sig() !== L.arrAt.sig &&
+      !!WF.pick(L.t, L.from, (L.doneT || []).concat([L.arrAt.id], L.arrAt.before || []), L.strict).id;
+    var changed = L.arrAt && (L.arrAt.wait ? sig().split('#')[0] !== String(L.arrAt.sig).split('#')[0] : sig() !== L.arrAt.sig);
+    if (L.arrAt && (stayDone || (L.arrAt.rest ? (S.lastLongRest || 0) > L.arrAt.t : S.room !== L.arrAt.id && changed))) {
+      // 目标办完了：提示里排在它前面的地方（一路上经过的那几站）也都过去了，不再指回去
+      L.doneT = L.doneT || [];
+      [L.arrAt.id].concat(L.arrAt.before || []).forEach(function (x) { if (L.doneT.indexOf(x) < 0) L.doneT.push(x); });
+      L.arrAt = null;
+      L.gone = !WF.targetOf(L.t, L.from, L.doneT, L.strict);
     }
   }
+  // 这一章里还算数的去向：最近的那条提示、最近的那条任务记录（1.10.2），新的在前。办完了的不算。
+  WF.leads = function () {
+    var S = DL.S, out = [];
+    [S.lead, S.qlead, S.leadPlace].forEach(function (L) {
+      if (!L || L.ch !== S.chapter) return;
+      if (L === S.qlead) { var q = S.quests[L.id]; if (!q || q.state !== 'active') return; }
+      settle(L); if (L.gone) return;
+      out.push(L);
+    });
+    out.sort(function (a, b) { return (b.seq || 0) - (a.seq || 0); });
+    return out;
+  };
+  function view(L) { var S = DL.S; return { t: L.t, from: L.from, here: L.from === S.room, carried: true, skip: L.doneT || null, quest: L === S.qlead ? L.id : null, obj: L }; }
+  function mine(S) { return !!((S.lead && S.lead.ch === S.chapter) || (S.qlead && S.qlead.ch === S.chapter) || (S.leadPlace && S.leadPlace.ch === S.chapter)); }
+  // 用哪一条：这一章最近说的那条（不管在哪儿说的）。回到早先说过话的地方，那里的旧提示已经过时了，不拿来认路。
+  // （只有老存档里没记下“最近那条”的时候，才看这个地方自己的提示。）
   WF.lead = function () {
     var S = DL.S; if (!S || !S.room) return null;
-    var L = S.lead;
-    if (L && L.ch === S.chapter) {
-      settle(L);
-      if (L.gone) return null;
-      return { t: L.t, from: L.from, here: L.from === S.room, carried: true, skip: L.doneT || null };
-    }
+    var ls = WF.leads();
+    if (ls.length) return view(ls[0]);
+    if (mine(S)) return null;
     var e = S.roomHints && S.roomHints[S.room];
     if (e && e.ch === S.chapter && e.list.length) return { t: e.list[e.list.length - 1], from: S.room, here: true };
     return null;
   };
-  WF.done = function () { var S = DL.S, L = S && S.lead; return !!(L && L.ch === S.chapter && !WF.lead()); };
+  WF.done = function () { var S = DL.S; return !!(S && mine(S) && !WF.leads().length); };
+  // 走到了提示里一路上的一站（“大堂往东进厨房，往北出后门到后廊……”），接着往下一站走；
+  // 是要在这里做事的（“回旅店后院长休”“往南（芦苇丛）走”），就停在这里。
+  var ONWARD = /^(?:里|上|下|外|门口|那儿|这儿)?(?:一直)?(?:[，、；：]|往|再|然后)/;
+  WF.onward = function (text, here, skip, strict, from0) {
+    var plain = DL.tok.strip(String(text || '')), end = -1;
+    nameList(here).forEach(function (o) { var n = o.n, at = -1; while ((at = plain.indexOf(n, at + 1)) >= 0) if (ONWARD.test(plain.slice(at + n.length))) end = Math.max(end, at + n.length); });
+    if (end < 0) return null;
+    var t = WF.targetOf(plain.slice(end), here, (skip || []).concat([here]), strict);
+    // 后半句只说了方向（“格拉伦的坟；卡拉斯的墓在谷底最深处，往北”）：方向是从说话的地方算的
+    if (!t && from0 && from0 !== here) t = WF.targetOf(plain.slice(end), from0, (skip || []).concat([here]), strict);
+    return t && t !== here ? t : null;
+  };
   var cache = { key: null, v: null };
   WF.next = function () {
     var S = DL.S; if (!S || !S.room || S.combat || S.dream || S.mode !== 'play' || !okRoom(S.room)) return null;
-    var L = WF.lead(); if (!L) return null;
-    var key = [S.room, L.from, L.t, S.time, S.chapter, sig(), (L.skip || []).join(',')].join('|');
+    var ls = WF.leads();
+    if (!ls.length) { var L0 = WF.lead(); if (!L0) return null; ls = [{ t: L0.t, from: L0.from, legacy: true }]; }
+    var key = [S.room, S.time, S.chapter, sig()].concat(ls.map(function (L) { return L.from + '|' + L.t + '|' + (L.doneT || []).join(','); })).join('|');
     if (cache.key === key) return cache.v;
-    var v = null, tgt = WF.targetOf(L.t, L.from, L.skip);
-    if (L.carried && S.lead) { S.lead.tg = tgt; if (tgt && tgt === S.room && !(S.lead.arrAt && S.lead.arrAt.id === tgt)) S.lead.arrAt = { id: tgt, sig: sig() }; }
-    if (tgt === S.room) v = { here: true, to: tgt, name: G.placeName(tgt) };
-    else if (tgt) {
-      var reach = WF.bfs(S.room, 40);
-      if (reach[tgt]) {
-        var path = [], cur = tgt, g = 0;
-        while (cur !== S.room && g++ < 80) { path.unshift({ dir: reach[cur].dir, to: cur }); cur = reach[cur].prev; }
-        v = { to: tgt, name: G.placeName(tgt), dir: path[0].dir, step: path[0].to, steps: path.length, path: path.map(function (p) { return p.to; }), seen: !!S.seen[tgt] };
+    var v = null;
+    for (var i = 0; i < ls.length && !v; i++) {
+      var L = ls[i], pk = WF.pick(L.t, L.from, L.doneT, L.strict), tgt = pk.id;
+      if (tgt === S.room) {
+        var on = WF.onward(L.t, S.room, L.doneT, L.strict, L.from);
+        // 一路上的一站（“……进厨房，往北出后门到后廊”）：走到了就算过了，接着指下一站（不然到了下一站，又会指回这里）
+        if (on) { if (!L.legacy) { L.doneT = L.doneT || []; [S.room].concat(pk.before).forEach(function (x) { if (L.doneT.indexOf(x) < 0) L.doneT.push(x); }); } tgt = on; pk = { id: on, before: [] }; }
+      }
+      // 进门那一刻的样子：只对“进门之前就有了”的提示算（进门才冒出来的提示，冒出来之前的事不算在它头上）
+      var ent = S.enterAt && S.enterAt.room === S.room && (L.seq || 0) <= (S.enterAt.seq || 0) ? S.enterAt : null;
+      if (!L.legacy) { L.tg = tgt; if (tgt && tgt === S.room && !(L.arrAt && L.arrAt.id === tgt)) L.arrAt = { id: tgt, before: pk.id === tgt ? pk.before : [], sig: ent ? ent.sig : sig(), t: ent ? ent.t : S.time, ent: !!ent, rest: WF.restAt(L.t, tgt) || !!pk.rest, wait: WF.waitAt(L.t) }; }
+      if (tgt === S.room) v = { here: true, to: tgt, name: G.placeName(tgt) };
+      else if (tgt) {
+        var reach = WF.bfs(S.room, 40);
+        if (reach[tgt]) {
+          var path = [], cur = tgt, g = 0;
+          while (cur !== S.room && g++ < 80) { path.unshift({ dir: reach[cur].dir, to: cur }); cur = reach[cur].prev; }
+          v = { to: tgt, name: G.placeName(tgt), dir: path[0].dir, step: path[0].to, steps: path.length, path: path.map(function (p) { return p.to; }), seen: !!S.seen[tgt] };
+        }
       }
     }
     cache = { key: key, v: v };
@@ -10449,7 +10666,8 @@ button.wf-c:hover { border-color: var(--ember); }
   // 第一次进旅店
   E.push({ id: 'inn_first', when: function (S) { return S.room === 'inn'; }, run: function (S) {
     DL.out.narr('一个红发雀斑的姑娘端着托盘从你身边挤过去，回头冲你一笑：“欢迎来到最后家园！随便坐，土豆马上就好！”她上下打量你一眼，“你这身衣服是哪儿买的？”');
-    DL.out.hint('【提示】试试' + DL.tok.cmd('交谈 蒂卡') + '，或者' + DL.tok.cmd('看 雷斯林') + '。想知道能问什么，可以先和人交谈。');
+    // 1.10.2：以前只有一句“试试交谈”，“眼下”是空的——第一次玩的人常常走出去逛，不知道故事要在旅店里等
+    DL.out.hint('（老朋友们约好今晚在旅店里聚。就在这里坐一会儿：试试' + DL.tok.cmd('交谈 蒂卡') + '，或者' + DL.tok.cmd('看 雷斯林') + '。想知道能问什么，可以先和人交谈。天黑以前，史东也该到了。）');
     W.meet('tika', true); W.meet('caramon', true); W.meet('raistlin', true); W.meet('otik', true);
     DL.quest('inn', 'done', null, '到了最后家园旅店。');
     DL.journal('最后家园旅店。整个旅店是围着一棵树建的。这里的每个人，我好像都在哪里读到过。');
@@ -12296,6 +12514,7 @@ button.wf-c:hover { border-color: var(--ember); }
     DL.out.say('tanis', '我知道。所以它们不会追进去。');
     DL.quest('haven_road', 'done', '去避风港', '往避风港的路被一支军队截断了。');
     DL.quest('darkwood', 'active', '走进暗森林', '回到岔路口，往东进入暗森林。');
+    DL.out.hint('（往' + DL.tok.go('南') + '回岔路口，再往东走进暗森林。）');
   };
 
   // =========================== 事件 ===========================
@@ -12324,6 +12543,7 @@ button.wf-c:hover { border-color: var(--ember); }
     DL.out.narr('早上的湖面笼着一层白雾。卡拉蒙用昨晚剩下的火烤热了干粮，雷斯林捧着一杯热水，咳得比昨晚轻了些。');
     DL.out.say('tanis', '往北翻过山脊就是去避风港的大路。到了避风港，也许有人知道那根杖是怎么回事。');
     DL.quest('haven_road', 'active', '去避风港', '翻过北边的山脊，沿大路去避风港。');
+    DL.out.hint('（往' + DL.tok.go('北') + '翻过山脊，沿着大路去避风港。）');
   });
   ev({ id: 'c2_hunter', when: function (S) { return S.room === 'c2_hillpath' && F('renegade_mage'); }, run: function () { W.place('hunter', 'c2_hillpath'); D.show('c2_hunter'); } });
   ev({ id: 'c2_hunter_gone', when: function (S) { return S.room !== 'c2_hillpath' && npc('hunter').loc === 'c2_hillpath'; }, run: function () { W.place('hunter', null); } });
@@ -12991,6 +13211,7 @@ button.wf-c:hover { border-color: var(--ember); }
     DL.out.narr('她没有等任何人，提起裙摆就往东跑去。河风追了上去。');
     W.enter();
     DL.out.hint('（这一章里没有战斗。在这里，宝石不会让人做出荒唐的事。）');
+    DL.out.hint('（金月往' + DL.tok.go('东') + '跑了。顺着草原小路往东，就是奎苏的村口。）');
   };
 
   // =========================== 固定节点：抵达奎苏废墟 ===========================
@@ -13019,6 +13240,7 @@ button.wf-c:hover { border-color: var(--ember); }
     options: [{ label: '站起来', go: function () {
       DL.quest('que_shu', 'done', '去奎苏', '奎苏已经被烧毁了。');
       DL.quest('survivor', 'active', '幸存者', '在村子里找一找，也许还有人活着。火没有烧到的地方，最可能有人躲着。');
+      DL.out.hint('（村子的祖灵祭坛在广场' + DL.tok.go('东', '东边') + '，酋长大厅在' + DL.tok.go('北', '北边') + '。看看还有没有人活着。）');
       DL.journal('奎苏没了。整个村子只剩下焦土和一片被什么东西融化的石板。原著里写的就是这样——我早就知道。可“知道”和“站在这里”，是两回事。宝石在我口袋里发抖。');
       return null;
     } }]
@@ -13451,6 +13673,7 @@ button.wf-c:hover { border-color: var(--ember); }
     DL.out.cut('你们在沼泽里走了大半天。泥水没到膝盖，雾浓得看不见三步外的人，只能一个拉着一个的斗篷往前挪。\n雷斯林的咳嗽越来越重了。卡拉蒙一路扶着他，一句话也没说。\n宝石在你口袋里，一直指着前方。');
     DL.out.say('raistlin', '（喘着气）札克萨洛斯……大灾变之前，这里是全克莱恩最美的城市之一。（他咳了几声）神发怒的那一天，它沉进了大地。');
     W.enter();
+    DL.out.hint('（宝石一直指着' + DL.tok.go('北') + '边。断柱之间那条沉在泥里的古道，一直通到城里的广场。）');
   };
 
   // =========================== 法师议会的追捕者（再次现身） ===========================
@@ -13547,6 +13770,8 @@ button.wf-c:hover { border-color: var(--ember); }
     DL.out.narr('黑龙在井口上方盘旋了一圈，发出一声震耳的长啸，然后收起翅膀，一头扎回了井底的黑暗里。地面又震了几下，才渐渐平静下来。');
     if (here('tanis')) DL.out.say('tanis', rwDown() ? '把他抬起来。去神殿，快！' : '……它就住在下面。我们要去的地方，就是它的家。');
     DL.journal(rwDown() ? '黑龙从大井里升起来，酸液落在了河风身上。原著里就是这样写的。我知道，可我什么也没做成。金月要把他抬去米莎凯神殿。' : '黑龙从大井里升起来。河风还活着——这一次，是我改的。');
+    // 1.10.2：河风没倒下的时候，以前这里什么提示也没有
+    if (!rwDown()) DL.out.hint('（金月一直望着广场西边那座白色的神殿。井口吊着的那两口大锅，也许能把人送下去——可以' + DL.tok.cmd('研究 锅') + '。）');
     return null;
   };
 
@@ -13669,7 +13894,7 @@ button.wf-c:hover { border-color: var(--ember); }
     W.place('bupu', DL.S.room); npc('bupu').follow = true; npc('bupu').met = true;
     DL.out.narr('噗噗跑到窝棚东边，在一堆破木板后面摸索了一阵，“咔哒”一声，一道暗门打开了。“秘密的路！”她骄傲地说，“绕过龙人的房子。只有沟矮人知道。”');
     if (here('flint')) DL.out.say('flint', '（低声嘟囔）沟矮人。矮人里的耻辱。……不过，她认路。');
-    DL.out.hint('（暗门在' + DL.tok.go('东') + '。）');
+    DL.out.hint('（暗门在' + DL.tok.go('东') + '。秘道一直往南，通到巢穴的前厅。）');
     return null;
   };
   // 噗噗被哄好了以后也会露面
@@ -13702,7 +13927,7 @@ button.wf-c:hover { border-color: var(--ember); }
     party: function () { return fighters(); },
     intro: '龙人头目一拍桌子站了起来，巴兹们抓起武器，嘶吼着扑了上来！',
     fleeTo: 'c5_streets',
-    onWin: function () { set('c5_barracks_clear'); DL.out.narr('营房里只剩下一地的沙子、碎骨和翻倒的赌桌。后门开着。'); },
+    onWin: function () { set('c5_barracks_clear'); DL.out.narr('营房里只剩下一地的沙子、碎骨和翻倒的赌桌。后门开着。'); DL.out.hint('（后门开着：往' + DL.tok.go('南') + '，是巢穴的前厅。）'); },
     onFlee: function () { DL.out.narr('你们退回了街道上。营房里传来一阵阵嘶叫，可龙人们没有追出来——它们好像不敢离开那扇后门。'); }
   };
 
@@ -13887,7 +14112,7 @@ button.wf-c:hover { border-color: var(--ember); }
       DL.out.narr('就在这时，你看见雷斯林蹲在宝藏堆的另一边，从一堆金币底下抽出了一本黑色封皮的书。他飞快地把书塞进了袍子里，抬起头，正好对上你的目光。他什么也没说。');
       if (P.cls === 'wizard') DL.out.hint('（你认出来了：那是一本法术书。很旧，很黑，比你见过的任何法术书都要黑。）');
     }
-    DL.out.hint('（快走！往' + DL.tok.go('南', '南（裂缝）') + '。）');
+    DL.out.hint('（快走！往' + DL.tok.go('南', '南（裂缝）') + '，再往西进竖井，往上爬出去！）');
   };
   var COLLAPSE_ROOMS = ['c5_lair', 'c5_hoard', 'c5_crack', 'c5_shaft'];
   var E = DL.EVENTS;
@@ -13909,14 +14134,19 @@ button.wf-c:hover { border-color: var(--ember); }
     if (here('tas')) DL.out.say('tas', '那是什么？是孩子吗？不对，是胡子很多的孩子！');
     if (here('flint')) DL.out.say('flint', '（脸一下子黑了）……沟矮人。');
     DL.quest('disks', 'active', null, '你们下到了地底的城。龙的巢穴在更深的地方。');
+    DL.out.hint('（井底只有一条路：往' + DL.tok.go('西') + '，是下城的街道。）');
   } });
-  ev({ id: 'c5_streets', when: function (S) { return S.room === 'c5_streets'; }, run: function () { DL.out.narr('街道深处传来一阵沉重的呼吸声，一下，又一下。每呼吸一次，地面就跟着轻轻地颤一下。'); } });
+  ev({ id: 'c5_streets', when: function (S) { return S.room === 'c5_streets'; }, run: function () {
+    DL.out.narr('街道深处传来一阵沉重的呼吸声，一下，又一下。每呼吸一次，地面就跟着轻轻地颤一下。');
+    DL.out.hint('（呼吸声是从' + DL.tok.go('南', '南边') + '大路那头传过来的。也可以往' + DL.tok.go('北', '北边') + '的窄巷里看看。）');
+  } });
   ev({ id: 'c5_warren', when: function (S) { return S.room === 'c5_warren' && !F('bupu_met'); }, run: function () { W.place('bupu', 'c5_warren'); W.place('gullies', 'c5_warren'); D.show('c5_bupu'); } });
   ev({ id: 'c5_barracks', when: function (S) { return S.room === 'c5_barracks' && !F('c5_barracks_clear') && !S.pending && !S.combat; }, once: false, run: function () { D.show('c5_barracks'); } });
   ev({ id: 'c5_ante', when: function (S) { return S.room === 'c5_ante'; }, run: function () {
     DL.out.narr('你们在铜门前停了下来。门缝里的热风一阵一阵地扑在脸上，带着金子和腐烂的味道。');
     if (here('bupu')) { DL.out.say('bupu', '龙在里面。（她拽了拽雷斯林的袍子，声音在发抖）噗噗不进去。噗噗在这里等你。'); npc('bupu').follow = false; }
     DL.out.say('tanis', '（他回头看了看每一个人）……准备好了吗？');
+    DL.out.hint('（龙就在' + DL.tok.go('南', '南边') + '那两扇铜门后面。准备好了再进去。）');
     if (DL.S.player.cls === 'wizard') DL.out.hint('（进门之前，可以检查一下' + DL.tok.cmd('状态') + '，或者' + DL.tok.cmd('施法 法师护甲') + '。）');
   } });
   ev({ id: 'c5_deal', when: function (S) { return S.room === 'c5_ante' && F('raist_targets_gem') && !F('raist_gem_offer') && here('raistlin'); }, run: function () { D.show('c5_deal'); } });
@@ -14093,6 +14323,7 @@ button.wf-c:hover { border-color: var(--ember); }
     if (S.flags.finale === 'flee') DL.out.cut('这四天里，每到夜里，东边的天空都会传来一声很远很远的龙吟。每一次，金月都会醒过来，握紧手里的蓝水晶杖。');
     DL.out.say('tika', '我想回去看看最后家园。奥蒂克一定急坏了。（她笑了笑）他肯定又让谁赊账了。');
     W.enter();
+    DL.out.hint('（索拉斯就在' + DL.tok.go('北') + '边。翻过坡顶，就是索拉斯南路。）');
   };
 
   // =========================== 事件 ===========================
@@ -14106,15 +14337,18 @@ button.wf-c:hover { border-color: var(--ember); }
     DL.out.say('flint', '（他的声音哑了）我在这里住了一百年。');
     DL.out.say('tanis', '下去看看。小心点，镇上肯定有他们的人。');
     DL.out.narr('你的口袋里，宝石轻轻地动了一下。不是发烫，是一种……警惕。');
+    DL.out.hint('（往' + DL.tok.go('北') + '下坡，进镇子。）');
   } });
   ev({ id: 'ep_townsman', when: function (S) { return S.room === 'ep_southroad'; }, run: function () {
     W.place('townsman', 'ep_southroad');
     DL.out.narr('一堵塌墙后面探出一个脑袋，看见你们，吓得缩了回去，过了一会儿又探了出来：“……坦尼斯？是你们？”');
+    DL.out.hint('（可以和' + DL.tok.npc('townsman') + '说说话。树下广场在' + DL.tok.go('北', '北边') + '。）');
   } });
   ev({ id: 'ep_plaza', when: function (S) { return S.room === 'ep_plaza'; }, run: function () {
     W.place('ep_guards', 'ep_plaza');
     DL.out.narr('你们贴着树根的阴影摸进了广场。看守们背对着你们，谁也没回头。');
     DL.out.say('tika', '（她死死咬着嘴唇，盯着北边）……旅店。');
+    DL.out.hint('（最后家园在广场' + DL.tok.go('北', '北边') + '。）');
   } });
   ev({ id: 'ep_inn', when: function (S) { return S.room === 'ep_inn'; }, run: function () { EVT.epAmbush(); } });
   ev({ id: 'ep_plaza_count', once: false, when: function (S) { return S.room === 'ep_plaza' && !S.fired.ep_inn; }, run: function () { DL.count('epPlazaTurns'); } });
@@ -17017,6 +17251,7 @@ button.wf-c:hover { border-color: var(--ember); }
     DL.out.cut('你们在山里走了一整天。路越走越陡，树越走越少，最后只剩下灰色的石头和灰色的天。\n傍晚，吉尔赛那斯带着你们钻进了一道狭窄的山谷。');
     if (F('elf_archers')) DL.out.narr('精灵弓箭手们在山口和你们分开了。他们要绕过山脊，到帕克斯·塔卡斯的城墙外面去埋伏。为首的弓箭手对你说：“等城里乱起来，我们就动手。”');
     DL.out.say('gilthanas', '入口就在这道山谷的尽头。今晚在这里歇一夜，明天一早进去。');
+    DL.out.hint('（今晚就在营地里' + DL.tok.cmd('长休') + '。明天一早，往' + DL.tok.go('北') + '去找斯拉莫瑞的入口。）');
     W.enter();
   };
 
@@ -17102,11 +17337,12 @@ button.wf-c:hover { border-color: var(--ember); }
     }
     DL.out.narr('吉尔赛那斯把手掌按进凹槽里，用精灵语低声说了一句什么。石壁深处传来一阵很沉的“咔嗒”声，一扇石门慢慢地往里转开了。一股又干又冷的风从门里吹了出来，带着几百年的灰尘味。');
     if (here('raistlin')) DL.out.say('raistlin', '（他举起法杖）光。（杖头的水晶球亮了起来）');
-    DL.out.hint('（往' + DL.tok.go('进') + '走进斯拉莫瑞。）');
+    DL.out.hint('（石门开了。' + DL.tok.go('进', '进去') + '，走进斯拉莫瑞。）');
   };
   ev({ id: 'c8_tunnel_first', when: function (S) { return S.room === 'c8_tunnel'; }, run: function () {
     if (here('flint')) DL.out.say('flint', '（他伸手摸着墙上的浮雕，声音一下子低了下来）……看看这个。精灵和矮人。一起干活。（他清了清嗓子）哼，那时候的精灵，起码还知道怎么用凿子。');
     if (here('tas')) DL.out.say('tas', '这里一个脚印都没有！我们是第一个！我要在地图上写：“泰索何夫·柏伏特，第一个走进斯拉莫瑞的坎德人。”');
+    DL.out.hint('（石道往' + DL.tok.go('北') + '，通到一座大厅。）');
     if (here('gilthanas')) DL.out.say('gilthanas', '前面是祖先大厅。奇斯-凯南的卫队还在那里守着。不管看见什么，都别碰。');
   } });
   ev({ id: 'c8_hall', when: function (S) { return S.room === 'c8_hall'; }, run: function () { D.show('c8_hall'); } });
@@ -17200,6 +17436,7 @@ button.wf-c:hover { border-color: var(--ember); }
   // ---------- 石室：雷斯林 ----------
   ev({ id: 'c8_crypt', when: function (S) { return S.room === 'c8_crypt'; }, run: function () {
     DL.out.narr('大家在石室里坐了下来。卡拉蒙分干粮，泰斯翻木箱，佛林特靠着墙打起了呼噜。');
+    DL.out.hint('（歇一会儿，就接着往' + DL.tok.go('北') + '走。）');
     if (here('raistlin') && (F('raist_knows_graygem') || F('raist_tasted_chaos') || F('raist_targets_gem') || F('raist_gem_deal'))) { D.show('c8_raist'); return; }
     if (here('raistlin')) DL.out.narr('雷斯林坐在离大家最远的角落里，闭着眼睛。他一直在咳嗽。');
   } });
@@ -22474,12 +22711,13 @@ button.wf-c:hover { border-color: var(--ember); }
     W.place('w3_icefolk', 'w3_village'); W.place('raggart', 'w3_longhouse');
     DL.out.narr('冰原人看见你们，先是拿起了鱼叉，然后看见了骑士们胸甲上的纹章，又放下了。一个孩子跑进了长屋。过了一会儿，一个白胡子的老人走了出来，看了你们很久。');
     DL.out.say('raggart', '索兰尼亚人。（他的通用语说得很生硬）很久以前，索兰尼亚的骑士也来过冰原。他们帮我们打过白龙。（他转身往长屋走）进来吧。外面冷。');
+    DL.out.hint('（拉加特进了' + DL.tok.go('进', '长屋') + '。）');
   } });
   ev({ id: 'w3_lh_first', when: function (S) { return S.room === 'w3_longhouse'; }, run: function () {
     set('w3_village_seen');
     DL.out.narr('长屋里很暖和。冰原人把锅里最好的肉分给了你们。德瑞克向老人说明了来意：龙珠，冰墙城堡。');
     DL.out.narr('老人听完，沉默了很久。然后他指着墙上那面绣着白斧头的旗子，说了一个名字：冰裂斧。');
-    DL.out.hint('（可以' + DL.tok.cmd('问 拉加特 关于 冰裂斧', '问问拉加特冰裂斧的事') + '，或者问问他城堡里的情况。）');
+    DL.out.hint('（可以' + DL.tok.cmd('问 拉加特 关于 冰裂斧', '问问拉加特冰裂斧的事') + '，或者问问他城堡里的情况。问完了，就' + DL.tok.go('出', '出去') + '回到村子里。）');
     if (SG.carrying().length) DL.out.hint('（你身上还带着话——' + DL.tok.cmd('转告') + '。）');
   } });
   // 海象人袭村：问过冰裂斧以后，夜里
@@ -23851,7 +24089,10 @@ button.wf-c:hover { border-color: var(--ember); }
     W.place('w4_greenman', 'w7_deck');
     DL.out.say('maquesta', '我的舵手。（她压低了声音）别跟他说话，他什么都不记得。可他掌舵的时候，大漩涡都要让他三分。');
     set('w7_berem_hired');
-    DL.out.hint('（可以' + DL.tok.go('上', '上船') + '看看。）');
+    // 1.10.2：船定好了以后，接下来要做的事也说出来（以前只说“可以上船看看”，看完了就没了方向）
+    if (F('w7_wait')) DL.out.hint('（船定好了。回旅店后院' + DL.tok.cmd('长休') + '，等坦尼斯，等开船。睡前也可以' + DL.tok.go('上', '上船') + '看看。）');
+    else if (F('w7_fest')) DL.out.hint('（船定好了。也可以' + DL.tok.go('上', '上船') + '看看。）');
+    else DL.out.hint('（船定好了。庆典今晚开始，天黑以后去鱼市广场。也可以先' + DL.tok.go('上', '上船') + '看看。）');
     return null;
   };
   ev({ id: 'w7_deck', when: function (S) { return S.room === 'w7_deck'; }, run: function () {
@@ -24030,7 +24271,7 @@ button.wf-c:hover { border-color: var(--ember); }
     set('w7_wait');
     DL.out.narr('那一夜，大篷车里谁也没有睡着。楼上，雷斯林的窗户一直亮到天亮。');
     EVT.w7Goldmoon();
-    if (!F('w7_passage')) DL.out.hint('（明天去' + DL.tok.go('北', '码头') + '找玛奎斯塔，把船钱定下来。坦尼斯回来了，我们就走。）');
+    if (!F('w7_passage')) DL.out.hint('（去' + DL.tok.go('北', '码头') + '找' + DL.tok.npc('maquesta') + '，把船钱定下来。坦尼斯回来了，我们就走。）');
     else DL.out.hint('（船已经定好了。累了就' + DL.tok.cmd('长休') + '。）');
     return null;
   };
@@ -24038,7 +24279,7 @@ button.wf-c:hover { border-color: var(--ember); }
   DL.REST_HOOKS.push(function (S, phase) {
     if (S.chapter !== 'w7' || phase !== 'before' || !F('w7_wait') || F('w7_end')) return true;
     if (!F('w7_passage')) {
-      if (!F('w7_nopass_warned')) { set('w7_nopass_warned'); DL.out.narr('你躺下了，可你睡不着——船钱还没定下来。卡拉蒙说，玛奎斯塔的船第三天早上就走，不管谁在不在船上。'); DL.out.hint('（去码头找玛奎斯塔。或者再' + DL.tok.cmd('长休') + '一次——由卡拉蒙去谈。）'); return false; }
+      if (!F('w7_nopass_warned')) { set('w7_nopass_warned'); DL.out.narr('你躺下了，可你睡不着——船钱还没定下来。卡拉蒙说，玛奎斯塔的船第三天早上就走，不管谁在不在船上。'); DL.out.hint('（去码头找' + DL.tok.npc('maquesta') + '。或者再' + DL.tok.cmd('长休') + '一次——由卡拉蒙去谈。）'); return false; }
       set('w7_passage'); DL.out.narr('你睡不着，卡拉蒙也睡不着。最后是他一个人去了码头，回来的时候，钱袋空了一大半，可他说：“船定好了。”');
       DL.S.money = Math.max(0, DL.S.money - 150);
     }
@@ -24296,7 +24537,7 @@ button.wf-c:hover { border-color: var(--ember); }
     DL.out.say('sturm', '（他走过来，握住了你的手。他的手在抖）……我希望你在那里。你在那里。');
     if (F('w1_kept_hammer') || F('dd_swap')) DL.out.narr('史东背上还背着那个用毯子包着的长包裹。卡拉斯之锤。他一路从塔西斯背到了这里。');
     if (SG.carrying().length) DL.out.hint('（你身上还带着话——' + DL.tok.cmd('转告') + '。）');
-    DL.out.hint('（议会明天在' + DL.tok.go('北', '圣白石') + '开。今晚在院子里' + DL.tok.cmd('长休') + '。）');
+    DL.out.hint('（今晚在城堡的院子里' + DL.tok.cmd('长休') + '。议会明天在北边的圣白石开。）');
     if (F('w8_flint_walking')) { npc('flint').loc = 'w8_castle'; npc('flint').follow = true; DL.out.narr('天黑的时候，佛林特一瘸一拐地走进了城门，满身是土，胡子上还挂着一片树叶。他瞪着每一个人：“谁也别说一个字。”'); }
     return null;
   };
@@ -25409,7 +25650,7 @@ button.wf-c:hover { border-color: var(--ember); }
       DL.out.narr('坦尼斯看着卡拉蒙，嘴唇动了动。最后他只是点了点头。');
     }
     DL.quest('s1_sea', 'active', null, '我们离开了弗洛萨姆。玛奎斯塔说，要绕开大漩涡，往北走到卡拉曼。累了就去船舱里睡一觉。');
-    DL.out.hint('（' + (SG.carrying().length ? '你身上还带着话——' + DL.tok.cmd('转告') + '。' : '') + '舵手在船尾的' + DL.tok.go('东', '舵台') + '上。累了就去' + DL.tok.go('下', '船舱') + DL.tok.cmd('长休') + '。）');
+    DL.out.hint('（' + (SG.carrying().length ? '你身上还带着话——' + DL.tok.cmd('转告') + '。' : '') + '船要往北走好几天。去' + DL.tok.go('下', '船舱') + DL.tok.cmd('长休') + '。睡前也可以去船尾的' + DL.tok.go('东', '舵台') + '上看看舵手。）');
     set('s1_truth_done');
     return null;
   };
@@ -25706,7 +25947,7 @@ button.wf-c:hover { border-color: var(--ember); }
     DL.out.say('raistlin', '（他没有看你）你跟着来了。……宝石。（他轻轻地笑了一下，又咳了起来）我以为龙珠只能带一个人。我错了。我很少错。');
     if (F('s1_asked_caramon')) DL.out.say('raistlin', '你让我带上卡拉蒙。（他闭上了眼睛）如果我带上了他，我们都会死在半路上。龙珠只够一个人的意志。……你身上那块石头，不靠意志。它靠别的东西。');
     set('s2_raist_settled');
-    DL.out.hint('（雷斯林要在这里养病、读书。可以去' + DL.tok.go('出', '书房') + '外面的城里看看，也可以在书库里' + DL.tok.cmd('长休') + '。）');
+    DL.out.hint('（雷斯林要在这里养病、读书。今晚就在书库里' + DL.tok.cmd('长休') + '。睡前也可以' + DL.tok.go('出', '出去') + '，到帕兰萨斯城里看看。）');
   } });
   function ev(o) { o.chapter = 's2'; DL.EVENTS.push(o); }
 
@@ -34699,7 +34940,7 @@ button.wf-c:hover { border-color: var(--ember); }
     set('x4_night_ready');
     DL.untilHour(21);
     DL.quest('x4_army', 'active', null, '山丘矮人雷加·火炉带着他的人来了，加里克的表兄麦可带着骑士来了。天黑了。在营地里睡一觉。');
-    DL.out.hint('（夜深了。在营地里' + DL.tok.cmd('长休') + '。也可以先和' + DL.tok.npc('garic') + '、' + DL.tok.npc('reghar') + '说说话，或者去' + DL.tok.go('进', '将军的帐篷') + '。）');
+    DL.out.hint('（夜深了。在军营里' + DL.tok.cmd('长休') + '。也可以先和' + DL.tok.npc('garic') + '、' + DL.tok.npc('reghar') + '说说话，或者去' + DL.tok.go('进', '将军的帐篷') + '。）');
     return null;
   };
 
@@ -53619,8 +53860,9 @@ button.wf-c:hover { border-color: var(--ember); }
     }
     party.innerHTML = '<h2>' + (S.combat ? '战斗' : '同行') + '</h2>' + (rows.length ? '<div class="plist">' + rows.join('') + '</div>' : '<div class="empty">暂时没有人和你同行。</div>');
     // 任务
-    var act = Object.keys(S.quests).map(function (k) { return S.quests[k]; }).filter(function (q) { return q.state === 'active'; });
-    qs.innerHTML = '<h2>任务</h2>' + (act.length ? '<ul class="qlist">' + act.map(function (q) { return '<li>' + esc(q.title) + (q.notes.length ? '<div class="qn">' + esc(q.notes[q.notes.length - 1]) + '</div>' : '') + '</li>'; }).join('') + '</ul>' : '<div class="empty">没有进行中的任务。</div>');
+    // 1.10.2：最近有过动静的在前；不是这一章的，颜色淡一点（另一路人的事、以前留下的）
+    var act = (DL.WAY && DL.WAY.questsByRecent ? DL.WAY.questsByRecent() : Object.keys(S.quests).map(function (k) { return S.quests[k]; })).filter(function (q) { return q.state === 'active'; });
+    qs.innerHTML = '<h2>任务</h2>' + (act.length ? '<ul class="qlist">' + act.map(function (q) { var old = q.ch && q.ch !== S.chapter; return '<li' + (old ? ' class="q-old" title="不是这一章的事"' : '') + '>' + esc(q.title) + (q.notes.length ? '<div class="qn">' + esc(q.notes[q.notes.length - 1]) + '</div>' : '') + '</li>'; }).join('') + '</ul>' : '<div class="empty">没有进行中的任务。</div>');
     // 小地图
     var r = DL.W.room(); if (!r || !r.pos) { mp.innerHTML = ''; return; }
     var z = r.pos[2], cells = {}, minX = 99, maxX = -99, minY = 99, maxY = -99;
@@ -54028,7 +54270,8 @@ button.wf-c:hover { border-color: var(--ember); }
     // 只有一个“去哪里”的链接、几乎没有字的提示（比如“（塔里。）”）：补成一句话
     var gm = next && /^\[\[go:([^|\]]*)\|([^\]]*)\]\][。！!]?$/.exec(next);
     if (gm) next = '去[[go:' + gm[1] + '|' + gm[2] + ']]。';
-    var act = Object.keys(S.quests).map(function (k) { return S.quests[k]; }).filter(function (q) { return q.state === 'active'; });
+    // 1.10.2：挑最近有过动静的那个任务（以前挑的是最后建的那个——弗洛萨姆里会挂着另一路人的“冰墙的龙珠”）
+    var act = (DL.WAY && DL.WAY.questsByRecent ? DL.WAY.questsByRecent().reverse() : Object.keys(S.quests).map(function (k) { return S.quests[k]; })).filter(function (q) { return q.state === 'active'; });
     var q = S.uxQ && S.quests[S.uxQ] && S.quests[S.uxQ].state === 'active' ? S.quests[S.uxQ] : act[act.length - 1];
     if (!next && !q) return null;
     return { quest: q ? q.title : null, note: q && q.notes.length ? q.notes[q.notes.length - 1] : null, next: next };
@@ -54605,6 +54848,13 @@ button.wf-c:hover { border-color: var(--ember); }
   // 更新说明、试玩记录
   // =====================================================================
   UX.NOTES = [
+    ['1.10.2 · 一路都认得', [
+      '照着屏幕走的测试玩家把 120 章每章走了好几遍，只做“眼下”和“下一步”说了的事。第一轮有 12 章走不到章末；同一类毛病（指引没了、地图指错地方、该做的事没人提）一处一处查出来，都修了。',
+      '营地夜里一句“醒来以后可以问问雷斯林”不会再把“再从大井下去”顶掉：“眼下”说新的那句，地图还指着大井。任务里新记的去向（“回到岔路口，往东进暗森林”）也算数；任务栏按最近有动静的排，上一章留下的任务是灰的，早就过去的任务会自己收尾。',
+      '要你在那里睡一觉的（“在火边长休，天亮了往东追”），睡过了才算办完，睡醒了就指下一站；要你在那里等的（第一章的旅店），接了支线、跟人说了话都不算；被剧情直接带走的（溜过龙人营房），带走你的地方算过了，不再指回去；一站看完、提示里还有下一站的，不用先走开一步。',
+      '读提示更准了：睡觉的地方才是落脚处，“明天”“天亮以后”的地方不是眼下要去的，“或者”后面的方向不算，“书房外面”“通到前厅”“去南城门”（南城门外）都认得。',
+      '改了、补了三十来处提示：第一章旅店里要等大家到齐；第二章睡醒以后往北翻山脊、军队截断以后回岔路口进暗森林；第四章进村和祭坛；第五章的古道、井底、街道、营房后门、秘道、前厅和逃出去的路；尾声回索拉斯的一路；第八章的营地、石门、石室；冰原人的长屋；弗洛萨姆定船以后；圣白石、派里丘号、大图书馆、石榴石城外几处“先睡一觉”的提示，以前地图指的都是别的地方。'
+    ]],
     ['1.10.1 · 别把路标擦掉', [
       '修了“下一步”的一个毛病：走到提示说的地方，跟同伴说了句话再走开，那条提示就被当成办完了，“眼下”和“下一步”一起没了（弗洛萨姆演出以后“回旅店后院长休”就是这样丢的）。现在只有任务真的有了变化，才算办完；一条提示里说了几个地方的，办完一个接着指下一个。',
       '提示里前一句说的是正事、后一句是顺带一提的，“下一步”跟着前一句走。',
@@ -55839,9 +56089,17 @@ button.wf-c:hover { border-color: var(--ember); }
       var o = _obj.apply(this, arguments), S = DL.S;
       try {
         var r = W.room();
-        if (!S || !S.lead || S.lead.ch !== S.chapter || (r && r.stuck) || S.mode !== 'play') return o;
+        var mine = (S && S.lead && S.lead.ch === S.chapter) || (S && S.qlead && S.qlead.ch === S.chapter);
+        if (!S || !mine || (r && r.stuck) || S.mode !== 'play') return o;
         var L = WF.lead();
         if (!L) { if (o) o.next = null; }
+        else if (L.quest) {
+          // 最近的去向是一条任务记录：“眼下”就说那个任务、那一条（不再拿更早的提示来顶）
+          var q = S.quests[L.quest];
+          o = o || { quest: null, note: null, next: null };
+          if (q) { o.quest = q.title; o.note = q.notes[q.notes.length - 1] || null; }
+          o.next = null; o.carried = L.from !== S.room;
+        }
         else {
           var t = String(L.t).replace(/^\s*（/, '').replace(/）\s*$/, '');
           o = o || { quest: null, note: null, next: null };

@@ -833,7 +833,8 @@ button.wf-c:hover { border-color: var(--ember); }
 .wf-up { right: 2px; top: 1px; } .wf-dn { right: 2px; bottom: 1px; }
 .wf-st { left: 2px; top: 1px; color: var(--gem); }
 .wf-ux { left: 2px; bottom: 1px; color: var(--ember); }
-.wf-pp, .wf-legend .wf-pp { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--good); }
+.wf-pp, .wf-legend .wf-pp { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--muted); }   /* 1.10.1：灰色——绿色看着像“去这里” */
+.wf-legend-s { margin-top: 6px; font-size: 11px; }
 .wf-c .wf-pp { position: absolute; left: 50%; bottom: 2px; transform: translateX(-50%); }
 .wf-l { display: block; align-self: center; justify-self: center; background: var(--line-strong, var(--line)); }
 .wf-l.h { width: 100%; height: 2px; }
@@ -1310,7 +1311,7 @@ button.wf-c:hover { border-color: var(--ember); }
 (function (root) {
   'use strict';
   var DL = root.DL;
-  DL.VERSION = '1.10.0';
+  DL.VERSION = '1.10.1';
   DL.SAVE_VERSION = 1;
 
   DL.newState = function () {
@@ -7004,25 +7005,36 @@ button.wf-c:hover { border-color: var(--ember); }
   //   “X 东边的 Y”“Y 在 X 的北边”“X 下面”：X 只是参照，目标是 X 那个方向上的那一格；
   //   “从 X …”“离开 X”：X 是起点，不是目标；
   //   提示里方向链接指的那条路，算加分（从说话的地方往那边走，正好通向这个地方）；
-  //   落脚以后还有“再往北”，就从那里再往北走一格。
+  //   落脚以后还有“再往北”，就从那里再往北走一格；
+  //   前面的句子说的是正事，后面的句子多半是顺带一提（“回旅店后院长休。码头那边，好像有人在找……”）。
+  // skip：这条提示里已经去过、办完了的地方，不再算。
   var DIRW = '东北|西北|东南|西南|东|西|南|北|上|下';
   var SIDE = new RegExp('^(?:的)?(' + DIRW + ')(?:边|面|头|侧)');
   var THEN = new RegExp('^[^。；]*?(?:再|然后)往(' + DIRW + ')');
-  WF.targetOf = function (text, from) {
+  WF.targetOf = function (text, from, skip) {
     var S = DL.S, plain = DL.tok.strip(String(text || '')), reach = WF.bfs(from, 30), cand = {};
     var opt = plain.search(/还可以|也可以|或者|不妨|顺便/), then = plain.search(/再|然后/);
     var g = /\[\[go:([^|\]]+)\|/.exec(String(text || '')), gdir = g && g[1];
     function first(id) { var cur = id, k = 0; while (reach[cur] && reach[cur].prev && reach[cur].prev !== from && k++ < 60) cur = reach[cur].prev; return reach[cur] ? reach[cur].dir : null; }
-    function add(id, sc, at) { if (!reach[id] || !okRoom(id)) return; if (gdir && id !== from && first(id) === gdir) sc += 150; if (!cand[id] || sc > cand[id].sc) cand[id] = { id: id, sc: sc, at: at }; }
+    function add(id, sc, at) { if (!reach[id] || !okRoom(id) || (skip && skip.indexOf(id) >= 0)) return; if (gdir && id !== from && first(id) === gdir) sc += 150; if (!cand[id] || sc > cand[id].sc) cand[id] = { id: id, sc: sc, at: at }; }
     function edge(id, dir) { return W.edges(id).filter(function (e) { return e.dir === dir; })[0]; }
+    // “旅店后院”：前面的“旅店”只是在修饰后面的“后院”，不单算
+    var occ = [];
+    Object.keys(reach).forEach(function (id) {
+      if (!okRoom(id)) return;
+      names(id).forEach(function (n) { var at = -1; while ((at = plain.indexOf(n, at + 1)) >= 0) occ.push({ id: id, at: at, end: at + n.length }); });
+    });
+    function modifier(id, at, n) { var end = at + n.length; return occ.some(function (o) { return o.id !== id && (o.at === end || (o.at === end + 1 && plain.charAt(end) === '的')); }); }
     Object.keys(reach).forEach(function (id) {
       if (!okRoom(id)) return;
       names(id).forEach(function (n) {
         var at = -1;
         while ((at = plain.indexOf(n, at + 1)) >= 0) {
           if (opt >= 0 && at > opt) break;
+          if (modifier(id, at, n)) continue;
           var sc = n.length * 100 - reach[id].d, pre = plain.slice(Math.max(0, at - 2), at), post = plain.slice(at + n.length);
           if (then >= 0 && at > then) sc += 1000;
+          sc -= 40 * (plain.slice(0, at).match(/[。；！？]/g) || []).length;   // 第几句
           if (/从|离开|出了/.test(pre)) sc -= 300;
           var side = SIDE.exec(post);
           if (side) { var e = edge(id, side[1]); sc -= 300; if (e) add(e.to, n.length * 100 + 50 + (then >= 0 && at > then ? 1000 : 0), at); }
@@ -7043,24 +7055,36 @@ button.wf-c:hover { border-color: var(--ember); }
       list = Object.keys(cand).map(function (k) { return cand[k]; }).sort(function (a, b) { return b.sc - a.sc; });
       best = list[0] || null;
     }
-    if (!best && gdir) { var ge = edge(from, gdir); if (ge && okRoom(ge.to)) return ge.to; }
+    if (!best && gdir) { var ge = edge(from, gdir); if (ge && okRoom(ge.to) && !(skip && skip.indexOf(ge.to) >= 0)) return ge.to; }
     if (!best) return null;
     // 落脚以后还有“再往北”：从那里再走一格（中间没再提到别的地方才算）
     var id = best.id, rest = plain.slice(best.at), m = THEN.exec(rest);
-    if (m && !list.some(function (c) { return c.at > best.at && c.at < best.at + m[0].length; })) { var ne = edge(id, m[1]); if (ne && okRoom(ne.to)) id = ne.to; }
+    if (m && !list.some(function (c) { return c.at > best.at && c.at < best.at + m[0].length; })) { var ne = edge(id, m[1]); if (ne && okRoom(ne.to) && !(skip && skip.indexOf(ne.to) >= 0)) id = ne.to; }
     return id;
   };
-  // 带过来的那条提示，走到它说的地方、那里又出了事（多了剧情标记、任务有了变化），就算办完了：走开以后不再指回去
-  function sig() { var S = DL.S, n = 0; Object.keys(S.flags || {}).forEach(function (k) { if (S.flags[k] && !/_turn$|^rom_|^morning/.test(k)) n++; }); return n + '|' + Object.keys(S.quests || {}).map(function (k) { return S.quests[k].state; }).join(''); }
+  // 带过来的那条提示，走到它说的地方、那里又出了事（任务有了变化），这个地方就算办完了：走开以后不再指回去。
+  // 一条提示里说了几个地方的，办完一个，接着指下一个；都办完了，这条提示才算过去。
+  // “那里出了事”只看任务：任务开了、完了、多了一条记录。
+  // （1.10.0 看的是所有剧情标记——在后院跟同伴说了句话、再走开，“回旅店后院长休”就被当成办完了，玩家就没了方向）
+  function sig() { var S = DL.S; return Object.keys(S.quests || {}).map(function (k) { var q = S.quests[k]; return k + ':' + q.state + ':' + ((q.notes && q.notes.length) || 0); }).join('|'); }
   WF.sig = sig;
   // 用哪一条：这一章最近说的那条（不管在哪儿说的）。回到早先说过话的地方，那里的旧提示已经过时了，不拿来认路。
   // （只有老存档里没记下“最近那条”的时候，才看这个地方自己的提示。）
+  function settle(L) {
+    var S = DL.S;
+    if (L.arr != null) delete L.arr;   // 1.10.0 的存档：那时记的“到过”不可靠（见 sig），不要了，重新算
+    if (L.arrAt && S.room !== L.arrAt.id && sig() !== L.arrAt.sig) {
+      (L.doneT = L.doneT || []).push(L.arrAt.id); L.arrAt = null;
+      L.gone = !WF.targetOf(L.t, L.from, L.doneT);
+    }
+  }
   WF.lead = function () {
     var S = DL.S; if (!S || !S.room) return null;
     var L = S.lead;
     if (L && L.ch === S.chapter) {
-      if (L.arr != null && S.room !== L.tg && sig() !== L.arr) return null;
-      return { t: L.t, from: L.from, here: L.from === S.room, carried: true };
+      settle(L);
+      if (L.gone) return null;
+      return { t: L.t, from: L.from, here: L.from === S.room, carried: true, skip: L.doneT || null };
     }
     var e = S.roomHints && S.roomHints[S.room];
     if (e && e.ch === S.chapter && e.list.length) return { t: e.list[e.list.length - 1], from: S.room, here: true };
@@ -7071,10 +7095,10 @@ button.wf-c:hover { border-color: var(--ember); }
   WF.next = function () {
     var S = DL.S; if (!S || !S.room || S.combat || S.dream || S.mode !== 'play' || !okRoom(S.room)) return null;
     var L = WF.lead(); if (!L) return null;
-    var key = [S.room, L.from, L.t, S.time, S.chapter, sig()].join('|');
+    var key = [S.room, L.from, L.t, S.time, S.chapter, sig(), (L.skip || []).join(',')].join('|');
     if (cache.key === key) return cache.v;
-    var v = null, tgt = WF.targetOf(L.t, L.from);
-    if (L.carried && S.lead) { S.lead.tg = tgt; if (tgt && tgt === S.room && S.lead.arr == null) S.lead.arr = sig(); }
+    var v = null, tgt = WF.targetOf(L.t, L.from, L.skip);
+    if (L.carried && S.lead) { S.lead.tg = tgt; if (tgt && tgt === S.room && !(S.lead.arrAt && S.lead.arrAt.id === tgt)) S.lead.arrAt = { id: tgt, sig: sig() }; }
     if (tgt === S.room) v = { here: true, to: tgt, name: G.placeName(tgt) };
     else if (tgt) {
       var reach = WF.bfs(S.room, 40);
@@ -22921,6 +22945,9 @@ button.wf-c:hover { border-color: var(--ember); }
     DL.out.narr('你的口袋里，宝石忽然烫得像一块炭。');
     DL.out.gem('宝石认得那颗绿色的石头。或者说——它认得那颗石头背后的东西。很老，很深，很冷。');
     set('w4_saw_berem');
+    // 1.10.1：这一场只有走过去跟他说话才会开始——以前没有提示，玩家在码头上问完水手就不知道该干什么了
+    DL.out.hint('（那个补帆的男人，就是龙军在找的人。想管这件事，就' + DL.tok.cmd('交谈 补帆的男人', '过去跟他说话') + '；不想惹麻烦，' +
+      (F('w4_show_done') ? '就回旅店后院' + DL.tok.cmd('长休') + '。）' : '演出还是在晚上，在鱼市广场。）'));
   } });
   N.w4_greenman.talk = function (S) {
     if (S.chapter === 'w4' && !F('w4_berem_scene')) return 'w4_berem';
@@ -54578,6 +54605,12 @@ button.wf-c:hover { border-color: var(--ember); }
   // 更新说明、试玩记录
   // =====================================================================
   UX.NOTES = [
+    ['1.10.1 · 别把路标擦掉', [
+      '修了“下一步”的一个毛病：走到提示说的地方，跟同伴说了句话再走开，那条提示就被当成办完了，“眼下”和“下一步”一起没了（弗洛萨姆演出以后“回旅店后院长休”就是这样丢的）。现在只有任务真的有了变化，才算办完；一条提示里说了几个地方的，办完一个接着指下一个。',
+      '提示里前一句说的是正事、后一句是顺带一提的，“下一步”跟着前一句走。',
+      '弗洛萨姆的码头：看见那个补帆的男人以后，会提示你可以过去跟他说话（以前什么也不说）。',
+      '地图上“有认识的人”的点改成了灰色，侧栏的小地图也加了图例——它不是任务提示，★ 才是。'
+    ]],
     ['1.10 · 认得路，按规矩打', [
       '地图画成了格子：去过的地方、相通的路、旁边还没去过的地方（？）、目标（★）和去目标的路线、你从哪儿来、哪里有认识的人、上下楼和门。去过的格子点一下就直接过去，旁边没去过的点一下就往那边走。',
       '“下一步”：最近那条提示说的是哪儿，从你现在的地方往哪个方向走、还有几步。手册的地图页、右边的“眼下”、手机顶上的状态条都有，点一下就走。走开以后“眼下”接着说那条提示；那里的事办完了，就不再指回去。',
@@ -55754,7 +55787,11 @@ button.wf-c:hover { border-color: var(--ember); }
       if (d.unexplored.length) more += '<div class="wf-row"><span class="wf-k">没走过</span>' + d.unexplored.map(function (e) { return btn(e.dir, e.dir); }).join('') + '</div>';
       if (d.back) more += '<div class="wf-row"><span class="wf-k">来路</span>' + btn(d.back.dir, d.back.dir) + '<span class="wf-to">' + esc(d.back.name) + '</span></div>';
       more += '<div class="wf-legend">★ 目标　？ 还没去过　<b class="wf-pp" aria-hidden="true"></b> 有认识的人　↑↓ 上下楼　+ 还有路没走过　点去过的地方可以直接过去</div>';
-    } else if (d.unexplored.length) more += '<div class="wf-row"><span class="wf-k">没走过</span>' + d.unexplored.map(function (e) { return btn(e.dir, e.dir); }).join('') + '</div>';
+    } else {
+      if (d.unexplored.length) more += '<div class="wf-row"><span class="wf-k">没走过</span>' + d.unexplored.map(function (e) { return btn(e.dir, e.dir); }).join('') + '</div>';
+      // 小地图也写上图例：灰点是“这里有认识的人”，不是“去这里”（有玩家把它当成了任务提示）
+      more += '<div class="wf-legend wf-legend-s">★ 目标　？ 没去过　<b class="wf-pp" aria-hidden="true"></b> 有认识的人</div>';
+    }
     return head + nxt + '<div class="wf-scroll' + (compact ? ' wf-compact' : '') + '" tabindex="0" role="region" aria-label="地图">' + grid + '</div>' + more;
   };
 

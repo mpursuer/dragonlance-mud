@@ -1314,7 +1314,7 @@ button.wf-c:hover { border-color: var(--ember); }
 (function (root) {
   'use strict';
   var DL = root.DL;
-  DL.VERSION = '1.10.2';
+  DL.VERSION = '1.10.3';
   DL.SAVE_VERSION = 1;
 
   DL.newState = function () {
@@ -4596,8 +4596,11 @@ button.wf-c:hover { border-color: var(--ember); }
       DL.out.narr(bed ? '这里不适合睡觉。要睡，就回' + DL.tok.cmd('前往 ' + G.travelArg(bed), G.placeName(bed)) + '。' : '这里不适合睡觉，而且现在还不是睡觉的时候。');
       return;
     }
-    if (S.time - S.lastLongRest < 16 * 60) { DL.out.narr('你上一次睡下还没多久，现在根本睡不着。'); return; }
-    G.longRest();
+    // 1.10.3：离上次长休不到 16 小时，以前直接拒绝（“现在根本睡不着”）。可剧情常常就靠这一觉往下走——
+    //   弗洛萨姆白天睡过一觉，庆典那一夜“回后院长休，等开船”就睡不了，卡住了。
+    //   现在不拒绝：先熬到能睡的时候（和营地的守夜一样），再睡。剧情要接管这一觉的（钩子在睡前就把事办了），不用熬。
+    var need = S.lastLongRest + 16 * 60 - S.time;
+    G.longRest(false, need > 0 ? need : 0);
   };
   // 去过的、走得到的地方里，最近的一个能睡觉的（营地、旅店）
   G.nearestBed = function () {
@@ -4611,11 +4614,19 @@ button.wf-c:hover { border-color: var(--ember); }
     });
     return best && reach[best].d <= 8 ? best : null;
   };
-  G.longRest = function (quiet) {
+  G.longRest = function (quiet, wait) {
     var S = DL.S, P = S.player;
     var hooks = (DL.REST_HOOK ? [DL.REST_HOOK] : []).concat(DL.REST_HOOKS || []);
     if (S.night) hooks = hooks.filter(function (h) { return h.sys; });     // 章间夜：只跑系统的钩子（营地夜谈、入梦、法术位），不跑各章自己的
     for (var hi = 0; hi < hooks.length; hi++) if (hooks[hi](S, 'before') === false) return;
+    // 刚睡过不久：先熬到能睡的时候
+    if (wait > 0) {
+      DL.advance(wait);
+      var vg = W.val(W.room() && W.room().vigil);
+      DL.out.narr(wait >= 4 * 60
+        ? '你上一次睡下还没多久，还不困。' + (vg || '你就在这里待着，看着天色一点一点地变了。') + '到了' + DL.dayPart(S.time) + '，你才睡着。'
+        : '你上一次睡下还没多久，一时睡不着。' + (vg || '你躺着，听着外面的动静，翻来覆去。') + '到了' + DL.dayPart(S.time) + '，才终于睡着。');
+    }
     var startH = Math.floor((S.time % 1440) / 60);
     DL.advance(8 * 60);
     // 夜里睡下的，天亮才醒
@@ -20329,7 +20340,7 @@ button.wf-c:hover { border-color: var(--ember); }
   var _rest = G.rest;
   G.rest = function (long) { if (!DR._entering && DL.S) DL.S.dreamQueued = false; return _rest.apply(this, arguments); };
   var _longRest = G.longRest;
-  G.longRest = function (quiet) { return _longRest.call(this, quiet || !!(DL.S && DL.S.dreamQueued)); };
+  G.longRest = function (quiet, wait) { return _longRest.call(this, quiet || !!(DL.S && DL.S.dreamQueued), wait); };
   DL.REST_HOOKS.push(DL.sysHook(function (S, phase) {
     if (phase !== 'after') return true;
     if (S.dreamQueued) {
@@ -53734,14 +53745,12 @@ button.wf-c:hover { border-color: var(--ember); }
   function chip(label, cmd, cls) { return '<button type="button" class="chip ' + (cls || '') + '" data-cmd="' + esc(cmd) + '">' + esc(label) + '</button>'; }
   UI.chip = chip;
   // 这里是不是睡觉的地方（只看房间本身，不去问房间的规则——有些规则一问就会推时间、出事件）：
-  // 营地、旅店、写明可以睡的地方；离上次长休满 16 小时，或者营地会自己熬到能睡的时候
+  // 营地、旅店、写明可以睡的地方（1.10.3 起刚睡过也能点：会先熬到能睡的时候）
   UI.canSleep = function () {
     var S = DL.S, r = DL.W.room();
     if (!S || !r || S.combat || S.dream || S.pending || S.flags.escaping || r.noRest || !r.longRest) return false;
     var inn = (r.tags || []).indexOf('inn') >= 0;
-    if (!r.camp && !inn && r.longRest !== true) return false;
-    var nt = DL.NIGHT && DL.NIGHT.CAMPS && DL.NIGHT.CAMPS[S.room];
-    return S.time - S.lastLongRest >= 16 * 60 || !!r.vigil || !!nt;
+    return !!(r.camp || inn || r.longRest === true);
   };
   UI.renderChips = function () {
     var S = DL.S, h = [];
@@ -54848,6 +54857,11 @@ button.wf-c:hover { border-color: var(--ember); }
   // 更新说明、试玩记录
   // =====================================================================
   UX.NOTES = [
+    ['1.10.3 · 困了就能睡', [
+      '修了一个卡关：离上次长休不到 16 小时，“长休”会被一口回绝（“你上一次睡下还没多久，现在根本睡不着”）。可剧情常常就靠这一觉往下走——弗洛萨姆白天睡过一觉，庆典那一夜“回后院长休，等开船”就睡不了，卡在后院。',
+      '现在能睡的地方随时都能“长休”：剧情要接管这一觉的，当场就接着往下走；没有剧情的，先熬到能睡的时候（离上次满 16 小时），再睡 8 小时，跟营地里守夜一样。按钮栏上的“长休”也不再因为刚睡过就藏起来。',
+      '测试玩家又把 120 章走了一遍，每一次睡觉都当作“刚睡过没多久”，全部走到章末，没有再遇到“叫你睡却睡不了”。'
+    ]],
     ['1.10.2 · 一路都认得', [
       '照着屏幕走的测试玩家把 120 章每章走了好几遍，只做“眼下”和“下一步”说了的事。第一轮有 12 章走不到章末；同一类毛病（指引没了、地图指错地方、该做的事没人提）一处一处查出来，都修了。',
       '营地夜里一句“醒来以后可以问问雷斯林”不会再把“再从大井下去”顶掉：“眼下”说新的那句，地图还指着大井。任务里新记的去向（“回到岔路口，往东进暗森林”）也算数；任务栏按最近有动静的排，上一章留下的任务是灰的，早就过去的任务会自己收尾。',

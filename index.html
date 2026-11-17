@@ -869,6 +869,14 @@ button.wf-c:hover { border-color: var(--ember); }
 /* 1.10.2：不是这一章的任务 */
 .qlist li.q-old { color: var(--muted); }
 
+/* 1.11：从某一卷开始 */
+.sv-list { display: grid; gap: 10px; margin-top: 12px; }
+.sv-item { display: grid; gap: 3px; text-align: left; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel-2); color: var(--ink); cursor: pointer; font: inherit; }
+.sv-item:hover, .sv-item:focus-visible { border-color: var(--ember); }
+.sv-s { font-size: 12px; color: var(--muted); letter-spacing: 0.06em; }
+.sv-n { font-family: var(--font-display); font-size: 17px; color: var(--ember); }
+.sv-b { font-size: 14px; line-height: 1.6; }
+
 </style>
 </head>
 <body>
@@ -1314,7 +1322,7 @@ button.wf-c:hover { border-color: var(--ember); }
 (function (root) {
   'use strict';
   var DL = root.DL;
-  DL.VERSION = '1.10.3';
+  DL.VERSION = '1.11.0';
   DL.SAVE_VERSION = 1;
 
   DL.newState = function () {
@@ -4832,7 +4840,7 @@ button.wf-c:hover { border-color: var(--ember); }
       '同伴：谈心 人物（每天一次，好感度越高聊得越深；好感度 5 时会交给你个人任务）；给 人物 物品（送礼）；切磋、打猎、找枫树、找野玫瑰、找银叶草、找橡树、找白鸟（个人任务里会用到，侧栏点托付人能看到下一步）。成为知己后，每次长休醒来会有一位知己来示好。',
       '营地：在野外过夜的地方可以长休；睡前输入“坦白”，可以把宝石的事告诉同伴。做饭：用打猎、探索得到的食材做菜，第二天有小增益。',
       '夜里：营地夜谈在睡下之前，谈完接着睡，照样算长休；知己示好、入梦在醒来以后。有几夜原著里就没睡成（你刚躺下，剧情就来了），那一夜不算长休，会提示你。',
-      '旧书：翻书（看现在这个版本的书页，标 ※ 的是被你改写过的地方）、翻书 第三章、往后翻（偷看下一章原来的样子）。预言：把书里的事说给身边的人听。',
+      '旧书：翻书（看现在这个版本的书页，标 ※ 的是被你改写过的地方）、翻书 第三章、往后翻（偷看下一章原来的样子）。预言：把书里的事说给身边的人听。。宝石凉下来的那一章，书上写着要走的人在你身边时，可以“书上写着”：把那一页念给他听、陪着他，或者替他做一件小事——事情照样发生，变的是他怎么面对',
       '手机：拍照（在名场面拍照，或者“拍照 人物”）、相册。没电了？雷斯林好像一直在偷偷看你的手机（问 雷斯林 关于 小石板）；之后可以“充电”。月亮：看三个月亮的盈亏（法师在自己的月亮满月时更强）。',
       '消遣（旅店、营地）：掰手腕 人物、拼酒 人物、猜谜、讲故事、赌骰子 钢币数（出千 需要灌铅骰子）。',
       '收集：收集（一览）、图鉴、称号（戴称号 名字、摘下称号）、收藏、见闻、人物志（人物志 名字、人物志 地方、人物志 神）。搜索时留意旧地图的碎片。',
@@ -5066,7 +5074,15 @@ button.wf-c:hover { border-color: var(--ember); }
     var S = DL.S, P = S.player, q = S.lv;
     while (q && P.level < q.to) {
       var need = LV.gain(P);
-      if (need) { DL.D.show(need); return; }
+      // 1.11：要选的这一项，可能一个能选的都没有（比如法术书里已经抄满了）。以前这里停住，整个升级就卡住了，
+      //   这一章也就开不了。现在没得选的就跳过，接着选下一项、升下一级。
+      while (need) {
+        DL.D.show(need);
+        if (S.pending) return;
+        var pk = S.lvPick; if (!pk) break;
+        if (need === 'lv_asi') pk.asi = false; else if (need === 'lv_cantrip') pk.cantrip = 0; else if (need === 'lv_learn') pk.learn = 0; else break;
+        need = LV.nextPick();
+      }
     }
     S.lv = null;
     if (q && q.next && DL.CH) DL.CH.run(q.next);
@@ -5160,11 +5176,10 @@ button.wf-c:hover { border-color: var(--ember); }
       };
     })
   };
-  DLG.lv_learn = {
-    noCancel: true,
-    text: function () { return '你在法术书里抄录新的法术（还能选 ' + DL.S.lvPick.learn + ' 个）：'; },
-    options: R.WIZ_SPELLS.map(function (sid) {
-      return {
+  LV.cont = function () { return cont(); };
+  // 抄录一个法术的选项（后来加进来的高环法术，也用这个补进选项里）
+  LV.learnOpt = function (sid) {
+      return { sid: sid,
         label: function () { var s = R.SPELLS[sid]; return s.cn + '（' + s.lvl + ' 环）——' + s.desc; },
         cond: function (S) { return LV.learnable().indexOf(sid) >= 0; },
         go: function (S) {
@@ -5173,7 +5188,16 @@ button.wf-c:hover { border-color: var(--ember); }
           return cont();
         }
       };
-    })
+  };
+  DLG.lv_learn = {
+    noCancel: true,
+    text: function () { return '你在法术书里抄录新的法术（还能选 ' + DL.S.lvPick.learn + ' 个）：'; },
+    options: R.WIZ_SPELLS.map(LV.learnOpt)
+  };
+  // 法术表后来又加了法术（epic.js 的七环以上）：选项跟着补上
+  LV.syncLearn = function () {
+    var have = {}; DLG.lv_learn.options.forEach(function (o) { have[o.sid] = 1; });
+    R.WIZ_SPELLS.forEach(function (sid) { if (!have[sid]) DLG.lv_learn.options.push(LV.learnOpt(sid)); });
   };
 
   // ---------- 准备法术（取代第一章里固定 4 个的版本） ----------
@@ -5240,6 +5264,8 @@ button.wf-c:hover { border-color: var(--ember); }
   };
   Object.keys(NEW).forEach(function (k) { R.SPELLS[k] = NEW[k]; });
   ['delayed_blast_fireball', 'finger_of_death', 'sunburst', 'incendiary_cloud', 'power_word_stun', 'meteor_swarm', 'power_word_kill'].forEach(function (k) { if (R.WIZ_SPELLS.indexOf(k) < 0) R.WIZ_SPELLS.push(k); });
+  // 1.11：升级时“抄录法术”的选项，是 levelup.js 按当时的法术表做好的——这几个高环法术不在里面，13 级的法师升级会卡住
+  if (DL.LV && DL.LV.syncLearn) DL.LV.syncLearn();
   function addDiv(cls, list) { R.DIVINE[cls] = R.DIVINE[cls] || []; list.forEach(function (k) { if (R.DIVINE[cls].indexOf(k) < 0) R.DIVINE[cls].push(k); }); }
   addDiv('cleric', ['fire_storm', 'divine_word', 'holy_aura', 'mass_heal']);
   addDiv('druid', ['fire_storm', 'sunburst', 'storm_of_vengeance']);
@@ -50509,7 +50535,7 @@ button.wf-c:hover { border-color: var(--ember); }
 <script>
 /* 龙枪MUD · 命运之书（1.5）
  * 走完第一卷以后出现（输入“命运之书”，标题画面上也有）。按三部曲分五部分，列出：
- *   改写节点（62 个）、各卷的结局、感情线、宝石名字的四条暗线，和第十三卷店主的最后一个问题。
+ *   改写节点（1.11 起 79 个）、各卷的结局、感情线、宝石名字的四条暗线，和第十三卷店主的最后一个问题。
  * 走过的点亮；没走过的显示“？”和一句模糊的提示。每一周目走过的都记下来（跨周目，存在二周目记录里）。
  * 还没读到的卷不显示内容，只写“还没有读到”——不剧透。 */
 (function (root) {
@@ -52102,6 +52128,96 @@ button.wf-c:hover { border-color: var(--ember); }
   B('v12_alone', ['mina', 'rhys'], [12, 13], 'any', [
     'mina>（看着里斯）你的神，会原谅你吗？', 'rhys>马哲理不原谅，也不惩罚。他只是看着。', 'mina>（轻声）……那一定很孤独。']);
 
+  // ---------- 1.11 · 后半部的路上（每卷补到五段以上，都按这一卷真的走在一起的人来写） ----------
+  // 第六卷
+  B('v6_where', ['tas', 'caramon'], ['q1', 'q2'], 'out', [
+    'tas>卡拉蒙，你说这里的人都去哪儿了？', 'caramon>……别问了。', 'tas>我只是想知道，他们走的时候，有没有带上一个坎德人。'], { when: function () { return /索拉斯|灰/.test(W.val(W.room().area) || ''); } });
+  B('v6_young', ['tas', 'caramon'], ['q1', 'q2'], 'night', [
+    'tas>卡拉蒙，你记不记得，我们小时候——', 'caramon>你比我大一百岁，泰斯。', 'tas>那就是你小时候。', '卡拉蒙笑了。这是你这些天第一次看见他笑。']);
+  B('v6_front', ['raistlin', 'crysania'], ['q3'], 'any', [
+    'crysania>你一直走在我前面。', 'raistlin>在这里，走在前面的人死得快。', 'crysania>所以你走在前面。', '雷斯林没有回答。他的脚步慢了一点，慢到她跟得上。']);
+  B('v6_sober', ['tanis', 'caramon'], ['q6', 'q7'], 'any', [
+    'tanis>你瘦了。', 'caramon>我戒酒了。', 'tanis>（他看了卡拉蒙很久）……我看出来了。', 'caramon>（挠了挠头）蒂卡也这么说。她说完就哭了。']);
+  B('v6_hair', ['tanis', 'tas'], ['q4', 'q5', 'q6'], 'town', [
+    'tas>坦尼斯，你的胡子里有一根白的！', 'tanis>两根。', 'tas>我只看见一根。', 'tanis>另一根，是你上次走丢的时候白的。']);
+  // 第七卷
+  B('v7_sons', ['caramon', 'tanis'], ['f1'], 'any', [
+    'caramon>我三个儿子，两个想当骑士，一个想当法师。', 'tanis>哪一个让你睡不着？', 'caramon>（他想了想）……三个都是。']);
+  B('v7_staff', ['palin', 'steel'], ['f3', 'f4', 'f5', 'f6'], 'night', [
+    'steel>你握法杖的样子，像握着一把剑。', 'palin>这是我舅舅的法杖。', 'steel>我知道。所以我才看着它。']);
+  B('v7_dice', ['dougan', 'tas'], ['f7', 'f8'], 'any', [
+    'dougan>坎德人，把我的骰子还给我。', 'tas>我没拿——哦，这个？它自己掉进我口袋里的。', '道根接过骰子，眯着眼看了看，又塞回了泰斯手里。', 'dougan>……灌了铅的。你拿走吧。']);
+  B('v7_uncle', ['usha', 'tas'], ['f6', 'f7'], 'any', [
+    'usha>你真的认识他？那个穿黑袍的？', 'tas>认识！他咳嗽得很厉害，脾气很坏，可他请我吃过一次饭。', 'usha>……他是个好人吗？', 'tas>（他想了很久）他是个很难懂的人。']);
+  B('v7_afraid', ['palin', 'tas'], ['f7', 'f8'], 'out', [
+    'palin>泰斯，你怕死吗？', 'tas>我死过一次了。……不对，那次是差一点。', 'palin>那你怕吗？', 'tas>我怕的是，死了以后没有下一个地方可去。']);
+  // 第八卷
+  B('v8_age', ['tas', 'gerard'], ['g3', 'g4'], 'out', [
+    'gerard>你多大了？', 'tas>看从哪一年算起。', 'gerard>从今年算。', 'tas>那我刚到。']);
+  B('v8_bright', ['laurana', 'tas'], ['g4', 'g5'], 'any', [
+    'laurana>泰斯。你一点也没变。', 'tas>你变了。你的头发——', 'laurana>（她笑了）白了？', 'tas>更亮了。']);
+  B('v8_old', ['palin', 'laurana'], ['g4'], 'any', [
+    'laurana>你爸爸好吗？', 'palin>他……老了。', 'laurana>我们都老了。精灵老得慢一点，可也会老。']);
+  B('v8_king', ['gilthas', 'laurana'], ['g4', 'g5'], 'night', [
+    'laurana>你该睡了。', 'gilthas>我是国王，姑姑。', 'laurana>国王也该睡觉。', '吉尔萨斯没有再争。可是你看见他的灯，一直亮到了后半夜。']);
+  B('v8_sick', ['silvan'], ['g6', 'g7'], 'forest', [
+    'silvan>（他摸着一棵树的树皮）……它们在生病。', 'silvan>我母亲说，树生病，是因为种树的人心里生了病。', '他没有说是谁的心。']);
+  // 第九卷
+  B('v9_hands', ['goldmoon', 'tas'], ['l1', 'l2'], 'any', [
+    'tas>金月，你变年轻了！', 'goldmoon>（她低头看着自己的手）……这不是我的手。', 'tas>那是谁的？', 'goldmoon>我不知道。']);
+  B('v9_true', ['dalamar', 'palin'], ['l2'], 'any', [
+    'dalamar>你舅舅会为你骄傲的。', 'palin>你是真心这么说的吗？', 'dalamar>（他笑了）我从来不说真心话。所以这一句，你可以当真。']);
+  B('v9_count', ['kerian', 'gilthas'], ['l3'], 'under', [
+    'kerian>你在数人。', 'gilthas>一个也不能少。', 'kerian>数到多少了？', 'gilthas>……还没有数完。']);
+  B('v9_follow', ['laurana', 'gilthas'], ['l3'], 'any', [
+    'gilthas>姑姑，你跟我们一起走。', 'laurana>我会跟上的。', '她说得很轻，很快，像是怕说慢了，自己就会反悔。']);
+  B('v9_sword', ['tas', 'gerard'], ['l7'], 'out', [
+    'tas>杰拉德，你相信有神吗？', 'gerard>我相信我的剑。', 'tas>剑又不会听你说话。', 'gerard>所以我才信它。']);
+  // 第十卷
+  B('v10_device', ['dalamar', 'tas'], ['n1'], 'any', [
+    'dalamar>坎德人，你知道你那个装置要是坏了，会怎么样吗？', 'tas>会变成很多很多小零件！', 'dalamar>会变成一个没有坎德人的世界。', 'tas>（他想了想）那太无聊了。']);
+  B('v10_name', ['mirror', 'tas'], ['n6'], 'any', [
+    'tas>明镜，你为什么叫明镜？', 'mirror>因为我以前能照出别人的样子。', 'tas>现在呢？', 'mirror>现在，是别人照出我的样子。']);
+  B('v10_boring', ['odila', 'gerard'], ['n7'], 'any', [
+    'odila>等打完了，你想干什么？', 'gerard>回索拉斯，当警长。', 'odila>那多无聊。', 'gerard>对。我就想要无聊。']);
+  B('v10_mother', ['silvan', 'gerard'], ['n7'], 'out', [
+    'silvan>你为什么救我？', 'gerard>因为你妈妈会伤心。', 'silvan>你又不认识我妈妈。', 'gerard>每个妈妈都会伤心。']);
+  B('v10_miss', ['palin', 'tas'], ['n1', 'n2'], 'any', [
+    'palin>泰斯，你会回去吗？回到你该死的那一天？', 'tas>（他摸着装置上的宝石）……我还在想。', 'palin>想什么？', 'tas>想那一天，会不会有人想我。']);
+  // 第十一卷
+  B('v11_bowl', ['rhys', 'atta'], ['a3', 'a4', 'a5', 'a6'], 'night', [
+    '里斯把碗里的饭拨了一半给阿塔。阿塔不吃，一直等着他先吃。', 'rhys>（低声）……你比我还讲规矩。']);
+  B('v11_why', ['nightshade', 'rhys'], ['a5', 'a6'], 'out', [
+    'nightshade>你为什么要当修士？', 'rhys>因为有一件事，我想不明白。', 'nightshade>现在想明白了吗？', 'rhys>没有。所以还在当。']);
+  B('v11_loud', ['nightshade'], ['a5', 'a6'], 'night', [
+    'nightshade>（他捂着耳朵）……今天晚上，他们说话很大声。', 'nightshade>（过了一会儿，他放下了手）不过有一个老太太在唱歌。挺好听的。']);
+  B('v11_cake', ['nightshade', 'atta'], ['a5', 'a6'], 'out', [
+    '阿塔一直跟在夜影后面，闻他的口袋。', 'nightshade>里面没有吃的！……好吧，有一块饼。只有一块。', '阿塔得到了那块饼。']);
+  B('v11_dark', ['rhys'], ['a4', 'a5', 'a6'], 'night', [
+    'rhys>（他看着火）卢小的时候，最怕黑。', 'rhys>我每天晚上都在他门口坐一会儿，等他睡着。', '他没有说下去。']);
+  // 第十二卷
+  B('v12_know', ['gerard', 'rhys'], ['i1', 'i2'], 'town', [
+    'gerard>修士，你知道你弟弟干了什么吗？', 'rhys>知道。', 'gerard>那你还要找他？', 'rhys>就是因为知道。']);
+  B('v12_cold', ['nightshade', 'rhys'], ['i4', 'i5', 'i6'], 'out', [
+    'nightshade>海里的死人，比陆上的多。', 'rhys>你听得见？', 'nightshade>一直听得见。他们很冷。']);
+  B('v12_water', ['atta', 'rhys'], ['i4', 'i5', 'i6'], 'any', [
+    '阿塔不肯靠近水边。里斯蹲下来，摸了摸它的头。', 'rhys>我也不喜欢。']);
+  B('v12_one', ['nightshade'], ['i3', 'i4', 'i5', 'i6'], 'night', [
+    'nightshade>我以前什么都怕。', 'nightshade>现在只怕一样东西。', '他没有说是什么。他往里斯那边靠了靠。']);
+  B('v12_goddess', ['nightshade', 'rhys'], ['i4', 'i5', 'i6'], 'night', [
+    'nightshade>那个女神喜欢你。', 'rhys>她喜欢的是她自己。', 'nightshade>那她为什么总跟着你？', 'rhys>……我也想知道。']);
+  // 第十三卷
+  B('v13_say', ['mina', 'nightshade'], ['b3', 'b6'], 'any', [
+    'mina>你能听见死人说话？', 'nightshade>能。', 'mina>他们会说起我吗？', 'nightshade>（很久）……会。', 'mina>说什么？', 'nightshade>说你很好看。还说，你很吓人。']);
+  B('v13_ring', ['jenna', 'gerard'], ['b4'], 'any', [
+    'jenna>警长，你一直盯着我的戒指。', 'gerard>我在想它值多少钱。', 'jenna>（她笑了）比你的命贵。', 'gerard>那我不看了。']);
+  B('v13_sniff', ['mina', 'atta'], ['b3', 'b6'], 'any', [
+    '阿塔走到米娜身边，闻了闻她的手。米娜一动也不敢动。', 'mina>（很小声）……它不怕我。', '里斯看了她一眼，没有说话。']);
+  B('v13_learn', ['rhys', 'mina'], ['b6', 'b7'], 'night', [
+    'mina>如果我是神，我该做什么？', 'rhys>先学会做一个人。', 'mina>怎么学？', 'rhys>跟我们一起走一段路。']);
+  B('v13_hungry', ['valthonis', 'mina'], ['b7'], 'any', [
+    'mina>你也是神？', 'valthonis>曾经是。', 'mina>那现在呢？', 'valthonis>现在我会饿，会累，会疼。（他笑了）……还挺好的。']);
+
   // ---------- 接线 ----------
   BT.GAP_STEPS = 8; BT.GAP_MIN = 60;
   function inWin(b) {
@@ -52119,13 +52235,15 @@ button.wf-c:hover { border-color: var(--ember); }
   };
   // fight：只挑打完仗说的那几段；否则挑别的
   BT.pick = function (fight) {
-    for (var i = 0; i < LIST.length; i++) if ((LIST[i].place === 'fight') === !!fight && BT.ready(LIST[i])) return LIST[i];
+    // 1.11：写给这一章的先说，写给好几卷的后说
+    for (var pass = 0; pass < 2; pass++)
+      for (var i = 0; i < LIST.length; i++) if (!!LIST[i].ch === (pass === 0) && (LIST[i].place === 'fight') === !!fight && BT.ready(LIST[i])) return LIST[i];
     return null;
   };
   BT.play = function (b) {
     var S = DL.S, st = S.bt = S.bt || {};
     st.seen = st.seen || {}; st.seen[b.id] = S.time || 1;
-    st.steps = 0; st.at = S.time;
+    st.steps = 0; st.at = S.time; st.chSaid = S.chapter;
     if (b.place === 'fight') st.fought = null;
     DL.out.sep();
     (b.lines || []).forEach(function (l) {
@@ -52142,13 +52260,30 @@ button.wf-c:hover { border-color: var(--ember); }
       if (!ok || !S || W.mute) return ok;
       var st = S.bt = S.bt || {};
       st.steps = (st.steps || 0) + 1;
+      // 1.11：这一章走了几步。后面几卷的章节很短，一章常常只走两三个地方——攒满 8 步之前，这一章就过去了，同伴一路上一句话也没说。
+      //   所以这一章还没有人说过话的时候，走过两个地方就可以说了。
+      if (st.stepCh !== S.chapter) { st.stepCh = S.chapter; st.chSteps = 0; }
+      st.chSteps = (st.chSteps || 0) + 1;
       if (S.pending || S.combat || S.dream || r.scene || r.dream || S.night) return ok;
       var b = null;
       if (PLACE.fight()) b = BT.pick(true);
-      if (!b && st.steps >= BT.GAP_STEPS && (st.at == null || S.time - st.at >= BT.GAP_MIN)) b = BT.pick(false);
+      var firstHere = st.chSaid !== S.chapter && st.chSteps >= 2;
+      if (!b && (firstHere || (st.steps >= BT.GAP_STEPS && (st.at == null || S.time - st.at >= BT.GAP_MIN)))) b = BT.pick(false);
       if (b) BT.play(b);
     } catch (e) { /* 只是几句闲话 */ }
     return ok;
+  };
+  // 1.11：坐下来歇一会儿的时候，也是说话的时候（短休，离上一段至少一个时辰）
+  var G = DL.game, _rest = G && G.rest;
+  if (_rest) G.rest = function (long) {
+    var S0 = DL.S, t0 = S0 && S0.time, r0 = _rest.apply(this, arguments);
+    try {
+      var S = DL.S, st = S.bt = S.bt || {}, r = W.room();
+      if (long || S !== S0 || S.time === t0 || S.pending || S.combat || S.dream || r.scene || r.dream || S.night || W.mute) return r0;
+      if (st.at != null && S.time - st.at < BT.GAP_MIN) return r0;
+      var b = BT.pick(false); if (b) BT.play(b);
+    } catch (e) { /* 只是几句闲话 */ }
+    return r0;
   };
   // 打完一仗：记下来，下一次走动时可能有人说一句
   var C = DL.combat, _fin = C && C.finish;
@@ -53337,6 +53472,1224 @@ button.wf-c:hover { border-color: var(--ember); }
     try { NS.check(); } catch (e) { /* 只是一句话 */ }
     return r;
   };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* 龙枪MUD · 收线（1.11）
+ * 戏剧效果留下的记号，以前有 44 个设了以后再也没有人读：德瑞克向史东行礼、亚兰说出预感、布莱恩念情书、
+ * 达拉马说漏嘴、米娜梦见了海……这里给每一个在后面接一处具体的后果。
+ *
+ * 规矩：
+ *   - 只改说法，不改结果。原著的节点照旧发生，多出来的是一句话、一个动作、一个细节。
+ *   - 每一处都挂在“那件事发生的那一章”：记号设得晚、那一章已经过去了的，不会在别的地方冒出来。
+ *   - 当事人在场才让他自己说；不在场，用旁白。
+ *   - 收到的线记在 S.threads 里，卷末总结、命运之书可以数（TH.count）。 */
+(function (root) {
+  'use strict';
+  var DL = root.DL, W = DL.W, G = DL.game;
+  var F = function (k) { return !!(DL.S && DL.S.flags && DL.S.flags[k]); };
+  var here = function (id) { return W.present(id); };
+  var say = function (id, t) { DL.out.say(id, t); };
+  var narr = function (t) { DL.out.narr(t); };
+  var TH = DL.THREADS = { LIST: [] };
+  function mark(flag) { var S = DL.S; S.threads = S.threads || {}; S.threads[flag] = S.time; }
+  TH.count = function () { return Object.keys((DL.S && DL.S.threads) || {}).length; };
+  TH.done = function (flag) { return !!(DL.S && DL.S.threads && DL.S.threads[flag]); };
+  // th(记号, 章, 触发条件, 内容)：那一章里，记号在、触发条件也成立了，说一次
+  function th(flag, ch, cond, run) {
+    var chs = Array.isArray(ch) ? ch : [ch], any = ch === '*';
+    TH.LIST.push({ flag: flag, ch: chs });
+    DL.EVENTS.push({ id: 'th_' + flag, when: function (S) {
+      return (any || chs.indexOf(S.chapter) >= 0) && F(flag) && !TH.done(flag) && cond(S);
+    }, run: function (S) { mark(flag); run(S); } });
+  }
+
+  // ===================== 第一卷 =====================
+  th('seeker_doubt', 'ch9', function () { return F('elistan_healed'); }, function () {
+    narr('围在门口的人里，有一个你在索拉斯见过的寻求者。他看着伊力斯坦怀里的圣碟，嘴唇动了动：“我每天祈祷三次……”\n他没有说完，慢慢地跪了下去。这一次，有人回答了。');
+  });
+  th('khisanth_lullaby', 'ch5', function () { return F('khisanth_dead'); }, function () {
+    narr('黑龙倒下去的时候，喉咙里滚出了几个很轻的音，像那支摇篮曲的最后一句。没有人听懂。只有你听出来了。');
+  });
+  th('khisanth_gentle_moment', 'ch5', function () { return F('khisanth_dead'); }, function () {
+    narr('碎石堆后面，那个被它掸过灰的沟矮人探出头来，看了很久。所有的沟矮人都在欢呼，只有它没有。');
+  });
+  th('gully_trust', 'ch5', function () { return F('c5_collapse'); }, function () {
+    narr('塌下来的轰响里，那个说“我们什么都怕”的沟矮人从你身边跑了过去——跑反了，往里面跑。过了一会儿，它又跑了回来，手里拖着一个摔倒的同伴。\n它什么都怕。它还是回去了。');
+  });
+  th('spirit_forgot', 'ch3', function () { return F('spirits_allowed'); }, function () {
+    narr('雾里的人影让开了一条路。领头的那一个在你面前停了一下，声音像风吹过空心的树干：“你问过我，为什么要守在这里。……我想起来了。为了让对的人过去。”');
+  });
+  th('branda_sale', 'epilogue', function (S) { return S.room === 'ep_plaza'; }, function () {
+    narr('布兰妲大婶的铺子烧成了一个黑框子。她站在门口，看见你，愣了一下，然后笑了，笑着笑着就哭了：“那天我三折甩卖，一铺子的东西全卖出去了——一样也没让龙烧着！”');
+  });
+  th('sestun_brave', 'ch9', function () { return here('sestun'); }, function () {
+    say('sestun', '（他挺起瘦小的胸脯）赛斯顿挡过鞭子！车上的人说，赛斯顿是……是……（他想不起那个词了）是好的！');
+    narr('他转过身去上油的时候，你看见他背上还有一道鞭痕。');
+  });
+  th('speaker_apology', 'ch8', function () { return here('gilthanas') && here('tanis'); }, function () {
+    say('gilthanas', '（他走在坦尼斯旁边，过了很久才开口）父亲从来没有向谁道过歉。一次也没有。（他看着前面的黑暗）……那天他向你道歉，我站在旁边。我不知道该怎么看你。');
+  });
+  th('gil_confessed', 'w8', function () { return F('gil_with_silvara') && here('gilthanas'); }, function () {
+    say('gilthanas', '（他对坦尼斯说，声音很低）我说过我嫉妒你。（他看了一眼西悠瓦拉）……现在不了。');
+  });
+  th('gil_hugged_tanis', ['w1', 'w3', 'w5'], function () { return here('gilthanas') && here('tanis'); }, function () {
+    say('gilthanas', '（他用胳膊肘碰了碰坦尼斯）在奎灵那斯提那天，我抱你，是真心的。你别想太多。（他别过脸去）也别跟罗拉娜说。');
+  });
+  th('laurana_outburst', ['w1', 'w3', 'w5'], function () { return here('laurana') && here('tanis'); }, function () {
+    say('tanis', '（他走到罗拉娜身边，很久才开口）那天你当着大家说的话，我一直在想。你说得对。我走的时候，应该留一句话的。');
+    say('laurana', '（她没有回头）……现在说，也不算晚。');
+  });
+  th('hunter_lost', 'm2', function () { return F('m2_conclave') && !F('hunter_fought'); }, function () {
+    narr('议会厅的角落里，有一个灰袍法师冲你点了点头。你认出了他——在林子里转了三天、迷了路的那一个。他用口型说：“那一次，我回去说没找到你。”');
+  });
+  th('bupu_lizard', 't2', function () { return here('bupu'); }, function () {
+    say('bupu', '（她看见你，眼睛一下子亮了）你！你认识漂亮的法师！噗噗给过他蜥蜴。治咳嗽的。最好的。（她压低了声音）……他还留着吗？');
+  });
+  th('gully_gift', 'q5', function () { return here('q_gully'); }, function () {
+    say('q_gully', '（他凑过来，使劲闻了闻你）你身上有老鼠的味道。沟矮人送的老鼠。（他一下子挺直了腰）沟矮人只把老鼠送给朋友。你是沟矮人的朋友！');
+  });
+  th('traveler_trick', [], function () { return false; }, function () {});   // 在骰子赌局里收（见下面）
+  th('traveler_cheats', [], function () { return false; }, function () {});
+
+  // ===================== 第二、三卷 =====================
+  th('lorac_loosened', 'w2', function () { return F('lorac_lives') || F('lorac_dead'); }, function () {
+    narr(F('lorac_lives') ? '罗拉克的手一直是松开的。从你让他松开的那一下起，就再也没有握紧过。' : '他的手是松开的。至少最后，他不是抓着那颗龙珠走的。');
+  });
+  th('w3_song', 'w3', function () { return F('w3_got_axe'); }, function () {
+    narr('斧头冻在冰里，就在歌里唱的那个地方。你不知不觉哼了半句——拉加特在长屋里唱过的那一句。冰的深处，好像有什么东西应了一声。');
+  });
+  th('heard_eggs', 'w6', function () { return F('silvara_revealed') && !F('eggs_told_early'); }, function () {
+    narr('你想起那个奥拉克说过的话：“我们是从蛋里来的。金色的、银色的、铜色的蛋。”\n西悠瓦拉说出来的，和它说的一个字也不差。');
+  });
+  th('silvara_almost', 'w6', function () { return F('silvara_revealed') && here('silvara'); }, function () {
+    say('silvara', '（她看着吉尔赛那斯）那天在火边，我差一点就告诉你了。……我真希望那天我说了。');
+  });
+  th('silvara_roared', 'w6', function () { return F('silvara_revealed') && here('gilthanas'); }, function () {
+    say('gilthanas', '（他看着那条银色的龙，忽然笑了一下，又不笑了）……那一声吼。我早该知道的。');
+  });
+  th('porthios_hugged', 'w8', function () { return F('w8_council_done'); }, function () {
+    narr('议会上，波修斯一眼也没有看罗拉娜。可你见过他抱她的样子——抱得那么紧，紧得她的脚都离开了地面。');
+  });
+  th('derek_saluted', 'w8', function () { return F('w8_trial_done'); }, function () {
+    narr('审判散了以后，德瑞克一个人走到史东面前，右手握拳，很快地在胸口按了一下，转身就走了。谁也没有看见。只有你。');
+  });
+  th('derek_ambition', 'w9', function () { return F('w9_charge'); }, function () {
+    narr('德瑞克举起剑，喊：“为了骑士团！”\n你听见的是另一个词。他对你说过的：大骑士。');
+  });
+  th('aran_foreboding', 'w9', function () { return F('w9_charge') && (F('w9_done') || F('aran_lives')); }, function () {
+    if (F('aran_lives') && here('aran')) say('aran', '（他摘下头盔，喘着气，笑了）我说错了。三个人里……这一次，我说错了。');
+    else narr('亚兰冲出去之前，回头看了你一眼。他说过：这一趟，三个人里，不是每个人都能回去。');
+  });
+  th('brian_letter', 'w9', function () { return F('w9_charge') && (F('w9_done') || F('brian_lives')); }, function () {
+    narr(F('brian_lives') ? '布莱恩活着回来了。他做的第一件事，是把那封信从胸甲里掏出来，看了看，又小心地放了回去。'
+      : '布莱恩倒下的地方，胸甲里掉出来一封信。风把它吹开了一个角：“亲爱的布莱恩，你走了以后，院子里的苹果树开花了……”');
+  });
+  th('alhana_confessed', 'w9', function () { return F('sturm_died'); }, function () {
+    narr('他胸口的星钻亮了一下。很远很远的地方，有一个精灵公主说过：我想念他。');
+  });
+  th('bakaris_boast', 's5', function () { return F('bakaris_dead'); }, function () {
+    narr('巴卡瑞斯倒在地上。他当着一城墙的人说过，总有一天，坐在蓝龙女士位子上的人是他。');
+  });
+  th('kit_ambition', 's8', function () { return F('ariakas_dead'); }, function () {
+    narr('阿里阿卡斯的王冠滚到了地上。奇蒂拉看着它，嘴角动了一下。你知道她在想什么——她跟你说过的：总有一天，坐在那里的会是她。');
+  });
+
+  // ===================== 第四到六卷 =====================
+  th('denubis_doubt', 't6', function () { return F('denubis_taken'); }, function () {
+    narr('丹纽比斯说过，他夜里梦见火，从天上落下来的火。……他不见了。他的梦是真的，有人先一步把他接走了。');
+  });
+  th('kingpriest_afraid', 't7', function () { return F('t7_quake'); }, function () {
+    narr('神殿那边的光，一下子全灭了。黑暗落下来之前，你好像听见一个孩子的声音，很小：把灯点亮。再亮一点。');
+  });
+  th('arack_hate', 't7', function () { return F('t7_quake'); }, function () {
+    narr('地动起来的时候，亚拉克站在竞技场的门口，看着神殿的方向。你看见他笑了一下。每一个钢币，都是他从神王嘴里抠出来的。');
+  });
+  th('kiiri_shown', 't7', function () { return F('t7_friends_live') || F('t7_friends_half') || F('t7_friends_dead'); }, function () {
+    narr(F('t7_friends_dead') ? '水退下去以后，你在竞技场的水池边找到了一片银绿色的鳞。她说过：这就是我。'
+      : '奇莉跳进水里之前，回头看了你一眼。那个样子——有蹼的手，银绿色的鳞——她只给你看过。');
+  });
+  th('parsalian_regret', 'q2', function (S) { return S.room === 'q2_hall'; }, function () {
+    narr('帕-萨理安一半已经成了石头。他看见你，眼珠动了动：“我说过，我是一个自以为是的老人。……你看，这就是自以为是的下场。”');
+  });
+  th('dalamar_spy_known', 'q4', function () { return F('q4_meeting'); }, function () {
+    narr('“我是法师议会放在他身边的眼睛。”——你想起他在塔里说漏的那半句话。原来那时候，他就差一点告诉你了。');
+  });
+  th('crysania_lonely', 'q7', function () { return F('q7_crys'); }, function () {
+    narr('深渊里没有人跟她说话。她说过，小时候也是这样，家里有很多仆人，没有一个人跟她说话。\n这一次，她回过头来的时候，看见了你。');
+  });
+  th('kit_softened', 'q6', function () { return F('q6_kit_dead'); }, function () {
+    narr('她闭上眼睛之前，嘴里说了一个词。不是龙军，不是王座。是“树洞”。');
+  });
+  th('gully_bupu', 'q7', function () { return F('q7_closed'); }, function () {
+    narr('门关上了。你忽然想起那个沟矮人说的话：噗噗给过那个穿红袍的法师一只治咳嗽的死蜥蜴。法师收下了。\n你不知道他后来还留不留着。你希望他留着。');
+  });
+
+  // ===================== 第七卷以后 =====================
+  th('dougan_fire', 'f8', function () { return F('f8_dragons'); }, function () {
+    narr('道根冲你们挥手的时候，手心里闪了一下——锻炉的火。你以前就看见过。\n一个矮人的手心里，为什么会有锻炉的火？');
+  });
+  th('mina_softened', 'v9end', function () { return F('v9_goldmoon_dead'); }, function () {
+    narr('很远的地方，光之城堡的海边，有一块涨潮时会被淹掉一半的石头。有一个琥珀色眼睛的姑娘在上面坐过。她说过：我很想她。');
+  });
+  th('odila_prayer', 'v10end', function () { return F('v10_forge') || F('v10_twins'); }, function () {
+    narr(here('odila') ? '奥迪拉跪在地上，肩膀一抽一抽的。三十八年，每天晚上。这一次，有人回答了。'
+      : '你想起奥迪拉说过：每天晚上都祈祷，三十八年，没有一个回答。……今天晚上，她该听见了。');
+  });
+  th('mina_asked_who', 'b7', function () { return F('b7_goddess'); }, function () {
+    narr('“如果有一天，祂不再需要我了——我会是谁？”她跪在那里问过你。\n现在她知道了。');
+  });
+  th('mina_dreamt_sea', 'b7', function () { return F('b7_goddess'); }, function () {
+    narr('梦里有人在后面喊她，喊的不是米娜，是另一个名字。她醒过来就忘了。\n这一次，她没有忘。');
+  });
+
+  // ===================== 别的地方收的 =====================
+  // 达拉马的黑袍：林子里那个法师说过，别让黑袍的人看见它
+  th('hunter_warned', '*', function (S) { return here('dalamar') && S.mode === 'play'; }, function () {
+    narr('达拉马的黑袍从你身边擦了过去。你想起林子里那个法师的话——别让黑袍的人看见它——下意识地按住了口袋。达拉马的眼睛在你的手上停了一下，又移开了。');
+  });
+  // 戴宽檐帽的旅人：骰子
+  if (DL.FUN && DL.FUN.dice) {
+    var _dice = DL.FUN.dice;
+    DL.FUN.dice = function (a, cheat) {
+      var S = DL.S;
+      if (F('traveler_trick') && !TH.done('traveler_trick') && S.chapter !== 'ch1') {
+        mark('traveler_trick');
+        narr('你想起戴宽檐帽的旅人教你的那一招，手腕一抖——' + (F('traveler_cheats') ? '骰子一点也不听你的。你想起来了：他的骰子是灌了铅的。那一招，只对灌了铅的骰子管用。' : '骰子一点也不听你的。'));
+        if (F('traveler_cheats')) mark('traveler_cheats');
+      } else if (F('traveler_cheats') && !TH.done('traveler_cheats') && cheat) {
+        mark('traveler_cheats');
+        narr('你摸到口袋里那几颗灌了铅的骰子，忽然想起那个旅人摘下帽子叹的那口气。');
+      }
+      return _dice.apply(this, arguments);
+    };
+  }
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* 龙枪MUD · 书上写着（1.11）
+ * 你读过他们的结局。以前这只是读：往后翻、宝石凉了、页角折了起来——知道了，什么也做不了。
+ * “预言”（book.js）能把书里的事说给身边的人听，可是说完就完了，他走的那一刻什么也不记得。
+ * 现在，宝石凉下来的那一章（还有它前面一章），书上写着要走的那个人在你身边的时候，可以“书上写着”：
+ *   - 告诉他：把那一页念给他听。
+ *   - 陪着他：什么也不说，陪他走完最后这一段。
+ *   - 替他做一件小事：每个人各有一件。
+ * 事情照样发生——变的是他怎么面对。选了什么，记在 S.bk 里：
+ *   - 他走的那一刻多一句（那一章，或者下一章刚开头）；
+ *   - 命运之书“他们走的时候”的“这一次”里多一句；
+ *   - 偏离度 +2（告诉他）或 +1，他对你的关系 +1。
+ * 提示不说是谁（宝石凉的时候本来就不说），打开书才知道。 */
+(function (root) {
+  'use strict';
+  var DL = root.DL, W = DL.W, D = DL.D, DLG = DL.DLG, G = DL.game, CH = DL.CH, FW = DL.FW;
+  if (!FW) return;
+  var F = function (k) { return !!(DL.S && DL.S.flags && DL.S.flags[k]); };
+  var set = DL.setFlag;
+  var here = function (id) { return W.present(id); };
+  var BK = DL.BOOKWRIT = {};
+
+  // 每个人：告诉他以后他怎么说；陪着他是怎样的一段；替他做的那件小事；他走的那一刻多出来的那一句
+  BK.DATA = {
+    sturm: { warn: '（他听你念完，很久没有说话。然后他把手按在剑柄上）书上写的是一个骑士站在那里。它没有写他怕不怕。（他看着你）我不怕。就让它这么写吧。',
+      stay: '那一夜，你坐在城垛下面的台阶上，陪他把那副旧盔甲擦了一遍又一遍。他一句话也没有说。天快亮的时候，他说：谢谢。',
+      errand: ['替他给阿尔瀚娜写几句话', '他说，你写。只有三行。他让你把那张纸和星钻放在一起，不要念给任何人听。', '替他给阿尔瀚娜写了三行字'],
+      atWarn: '他站在城垛上，没有回头。他知道你念给他的那一页。他还是站在了那里。', atErrand: '那张写着三行字的纸，你一直带在身上。' },
+    flint: { warn: '（他哼了一声，把胡子一甩）书？书都是瞎编的。（他低头看了一眼自己的手，那只手在抖）……那就让我把那块木头刻完。',
+      stay: '那一路你都走在他旁边，听他骂天气、骂坎德人、骂骑龙这件事。他骂得很起劲。你一句也没有劝。',
+      errand: ['帮他把那个木雕刻完最后几刀', '他的手抖得握不住刀了。他把木头递给你，告诉你在哪里下刀：“轻一点。那是翅膀。”', '帮他把木雕刻完了最后几刀'],
+      atWarn: '他坐在水池边，像是早就知道的。他把木雕放进你手里的时候，一点也不意外。', atErrand: '那只木雕的翅膀上，有几刀是你刻的。他摸了摸，说：还行。' },
+    elistan: { warn: '（他笑了，一点也不意外）我知道。我已经老了，孩子。我只是不知道是哪一天。（他合上了手里的书）谢谢你告诉我是哪一天。',
+      stay: '你在神殿的病房里坐了一个下午，听他讲年轻的时候在寻求者里找神的那些年。他讲到一半，睡着了。',
+      errand: ['替他把一封信带给克丽珊娜', '他写了一封很短的信，封好了交给你：“等她回来。等她回来再给她。”', '替他带了一封信给克丽珊娜'],
+      atWarn: '那天夜里，他是笑着走的。他知道是哪一天，他等到了。', atErrand: '你口袋里那封信还封着。等她回来。' },
+    kitiara: { warn: '（她听完，笑了，笑得很好看）书上写我死在这里？（她把剑抽出来一半）书上也写过我会当女王。你看，书上写的，不一定都会发生。',
+      stay: '你站在她旁边，没有走开。她瞥了你一眼：“你不怕我？”你没有回答。她也没有再赶你。',
+      errand: ['替她把一句话带给卡拉蒙', '她看了你很久，压低了声音：“告诉我小弟……算了。告诉他，索拉斯的树洞，我还记得。”', '替她给卡拉蒙带了一句话'],
+      atWarn: '她倒下去的时候，看了你一眼。书上写的，这一次也发生了。', atErrand: '你把她的话带给了卡拉蒙。他看着那个方向，很久没有说话。' },
+    raistlin: { warn: '（他听你念完，嘴角弯了一下）我也读过很多书。（他咳了几声）书上写的，大多是写书的人想要的结局。（他看着卡拉蒙的背影）……这一次，我想要的，和它一样。',
+      stay: '你在门边站着，陪他看着那片死去的世界。他没有赶你走。过了很久，他说：别学我。',
+      errand: ['替他给马哲理家以后的孩子留一句话', '他想了很久，说：“告诉他——魔法不是用来当神的。”', '替他给马哲理家的孩子留了一句话'],
+      atWarn: '门关上之前，他没有回头。他走的那条路，和你念给他的一模一样。是他自己选的。', atErrand: '“魔法不是用来当神的。”你把这句话记在了书页的空白处。' },
+    sons: { warn: '（坦宁拍了拍剑，咧嘴一笑）书上写的？我爸那一代的书都写完了。骑士不会因为知道了明天，就不去。（他把帕林往身后推了推）你说的，我记着。',
+      stay: '那一夜你在营火边陪着兄弟俩，听坦宁吹他打过的仗，听小史东一遍一遍地纠正他。帕林在旁边看书，假装没在听。',
+      errand: ['替他们给蒂卡写一封家信', '坦宁口述，小史东一句一句地改。最后一行是：“妈，别担心，帕林有我们看着。”', '替他们给蒂卡写了一封家信'],
+      atWarn: '太阳出来的时候，坦宁站在最前面。他记得你说的话。他还是站在了最前面。', atErrand: '那封家信，你后来交给了蒂卡。她看到最后一行，捂住了嘴。',
+      warnFlag: 'f3_warned' },
+    tanis: { warn: '（他抬手拦住了你）……别念。（他笑了一下，有点累）我知道你知道。别告诉我。我这一辈子，书上写的我都走过了。',
+      stay: '你们在城墙上站了一夜。他给你讲索拉斯的大树，讲那一年他们几个人约好五年以后在旅店见面。讲到史东的时候，他停了很久。',
+      errand: ['替他给罗拉娜写一封信', '他写了很长，又撕了，最后只留下一句。他把信折好交给你：“如果我回不去。”', '替他给罗拉娜带了一封信'],
+      atWarn: '他冲向门洞的时候，回头看了你一眼。他知道。他还是冲过去了——为了史钢。', atErrand: '你口袋里那封信只有一句话。你没有拆开。',
+      warnFlag: 'f5_warned' },
+    tas7: { warn: '（他的眼睛一下子亮了）书上写我？我？写我做什么？（他听完，安静了一会儿）……那我得做得漂亮一点。不能让写书的人失望。',
+      stay: '你一路都牵着他的手——不然他就要去摸巨人的脚指头了。他一直在说话。你一直在听。',
+      errand: ['替他保管那个装满东西的口袋', '他把口袋翻过来，倒出一地的东西：一根羽毛，一块会唱歌的石头，半张地图……“你替我拿着。我回来再要。”', '替他保管了那个口袋'],
+      atWarn: '他举起兔子杀手的时候，冲你眨了眨眼。他做得很漂亮。', atErrand: '那个口袋还在你身上。他说过，他回来再要。' },
+    steel: { warn: '（他听完，脸上什么也没有）骑士的结局，不是书写的，是剑写的。（他顿了一下）……谢谢。我会让它写得好一点。',
+      stay: '那一夜你守在他的营帐外面。天亮之前，他出来看了你一眼，没有说话，把自己的斗篷披在了你身上。',
+      errand: ['替他擦一擦他父亲的剑', '他把那把剑递给你：史东·布莱特布雷德的剑。“我父亲的。你替我擦一擦。”你擦了很久。', '替他擦了他父亲的剑'],
+      atWarn: '他倒下之前，看起来一点也不意外。剑写的，写得很好。', atErrand: '你在裂谷边找到他的时候，他手里还握着那把剑。剑是你擦过的。' },
+    caramon: { warn: '（他哈哈大笑，笑得肚子都在抖）我？今天晚上？（他想了想，不笑了，拍了拍你的肩膀）……那好。今天晚上我多喝一杯。蒂卡不会骂我的。',
+      stay: '你陪他在旅店里坐了一整个下午。他给你讲雷斯林小时候怕黑，讲他怎么每天晚上给弟弟留一盏灯。',
+      errand: ['替他去后院看看蒂卡种的花', '后院的花开得很好。你回来告诉他，他笑了：“她种的。每年都开。”', '替他去看了蒂卡种的花'],
+      atWarn: '他在台阶上倒下的时候，脸上是笑着的。他多喝了那一杯。', atErrand: '后院那些花，第二天早上还开着。' },
+    medan: { warn: '（他修剪着一株玫瑰，没有停手）一个骑士，死在自己的花园里。（他想了想）比死在战场上好。书写得不错。',
+      stay: '你在花园里帮他浇了一下午的水。他一句军事都没有提，只讲哪一株是精灵的，哪一株是他从家乡带来的。',
+      errand: ['替他记下那几株花的名字', '他一株一株地告诉你名字，你一个一个记在书页的空白处。“这样就有人知道了。”', '替他记下了花园里那些花的名字'],
+      atWarn: '他倒在花园里，倒在那几株花中间。他知道是在这里的。', atErrand: '那些花的名字，你还记在书页的空白处。' },
+    laurana: { warn: '（她听完，没有说话，转过身去看着窗外的太阳之塔）……我一直都知道的。从坦尼斯走的那天起，我就知道会有这么一天。（她回过头来，对你笑了一下）谢谢你，让我知道是今天。',
+      stay: '你陪她在塔下站了很久。她讲她第一次见坦尼斯，在奎灵那斯提的花园里。那时候她还是个小姑娘，偷偷往他的靴子里放花瓣。',
+      errand: ['替她把一句话带给吉拉斯', '她想了很久：“告诉他——他父亲会为他骄傲。我也是。”', '替她给吉拉斯带了一句话'],
+      atWarn: '她从塔上跳下去的时候，没有一点犹豫。她一直都知道。', atErrand: '那句话，你后来带给了吉拉斯。年轻的王听完，背过身去。' },
+    goldmoon: { warn: '（她握住了你的手，她的手已经很老了）我等这一天，等了很多年了。河风在等我。（她笑了）他一向等得不耐烦。',
+      stay: '你陪她在窗边坐了一会儿。她讲平原上的风，讲河风第一次替她挡箭。讲着讲着，她手里那根旧杖亮了一下——很淡。',
+      errand: ['替她去找那个琥珀色眼睛的姑娘', '她说：“告诉米娜……告诉她，我从来没有生过她的气。”你答应了。', '替她给米娜带了一句话'],
+      atWarn: '她倒下的时候，变回了她自己的样子。她是笑着的——有一个很高的平原人在等她。', atErrand: '“我从来没有生过她的气。”这句话，你还没有带到。' },
+    tas: { warn: '（他听完，挠了挠头）我知道。我早就知道了——我上一次就是在那儿死的。（他咧嘴一笑）这一次我不会迷路了。',
+      stay: '你陪他在墓地里坐了一会儿。他给你讲他去过的月亮。讲完了，他问你：“你说，人死了以后，会去冒险吗？”',
+      errand: ['替他把墓门的锁修好', '你和杰拉德一起把那把锁修好了。泰斯在旁边指挥，指挥得一点也不对。', '替他把墓门的锁修好了'],
+      atWarn: '他按下装置之前，回头冲你挥了挥手。他一点也没有迷路。', atErrand: '墓门的锁是好的。他说过的最后一件事，你已经做完了。' },
+    nightshade: { warn: '（他盯着你看了很久）……你也看得见死人吗？（他摇了摇头）不，你看的是书。（他把手揣进口袋里）那就让米娜看着我。她会想起来的。',
+      stay: '你陪他在废墟里走了一圈。他给你指哪里站着死人，死人在说什么。说到最后，他说：他们都走了，只剩下我。',
+      errand: ['替他把那些死人的话记下来', '他一句一句地念，你一句一句地写。有一个死人只说了一句：“告诉我妈，我不冷。”', '替他记下了那些死人的话'],
+      atWarn: '他挡在瓦索尼斯前面的时候，看着米娜。他说过：她会想起来的。', atErrand: '那些死人的话，你都记在书页的空白处了。最后一句是：“告诉我妈，我不冷。”' }
+  };
+
+  // 已经有的“预言”（book.js）：对要走的那个人本人说过他的结局，就算“告诉过他”，不再重复
+  BK.PROPH = { sturm: 'sturm_dawn', elistan: 'elistan_end', tanis: 'f_tanis', tas7: 'f_tas', medan: 'l_garden', laurana: 'l_beryl', tas: 'n_tas', nightshade: 'dd_ns', caramon: 'g_stairs' };
+  function told(id) { var p = BK.PROPH[id], S = DL.S; return !!(p && S && S.proph && S.proph[p]); }
+  function st() { var S = DL.S; S.bk = S.bk || {}; return S.bk; }
+  // 选了什么；没在这里选、可是用“预言”告诉过他本人的，算“告诉过他”
+  BK.choice = function (id) { return st()[id] || (told(id) ? 'warn' : null); };
+  // 他在哪几章里可以：宝石凉下来的那一章，和它前面那一章
+  BK.windowOf = function (e) { var i = CH.ORDER.indexOf(e.ch); return [CH.ORDER[i - 1], e.ch].filter(Boolean); };
+  BK.active = function () {
+    var S = DL.S; if (!S || !S.player || S.mode !== 'play' || S.dream) return [];
+    if (!W.has('novel')) return [];
+    return FW.LIST.filter(function (e) {
+      return BK.DATA[e.id] && !st()[e.id] && BK.windowOf(e).indexOf(S.chapter) >= 0 && !FW.isDead(e) && here(e.who);
+    });
+  };
+  function pickNode(es) { return es.length === 1 ? 'bk_' + es[0].id : 'bk_pick'; }
+  function open() {
+    var es = BK.active();
+    if (!es.length) { DL.out.sys('（宝石凉下来的那一章里，书上写着要走的那个人在你身边的时候，才可以这样做。）'); return; }
+    D.show(pickNode(es));
+  }
+  G.cmd(['书上写着', '书上写的', '照书上写的', '翻到那一页'], function () { open(); });
+
+  DLG.bk_pick = {
+    text: '你翻到折了角的那几页。上面写着的人，有不止一个就在你身边。',
+    prompt: '你先找谁？',
+    options: FW.LIST.map(function (e) {
+      return { label: e.name, cond: function () { return BK.active().indexOf(e) >= 0; }, go: function () { return 'bk_' + e.id; } };
+    }).concat([{ label: '合上书', go: function () { return null; } }])
+  };
+  function choose(e, how) {
+    var d = BK.DATA[e.id], S = DL.S;
+    st()[e.id] = how;
+    if (how === 'warn') {
+      DL.out.narr('你把那一页念给' + e.name + '听。');
+      DL.out.say(e.who, d.warn);
+      if (d.warnFlag) set(d.warnFlag);
+      var pid = BK.PROPH[e.id];
+      if (pid) { S.proph = S.proph || {}; if (!S.proph[pid]) S.proph[pid] = { ch: S.chapter, t: S.time, res: null }; }   // 算作说过这个预言：章末照样揭晓，预言里不再重复
+      DL.diverge(2, '你把书上写的告诉了' + e.name);
+    } else if (how === 'stay') {
+      DL.out.narr(d.stay);
+      DL.advance(60);
+      DL.diverge(1, '最后那一段，你陪着' + e.name);
+    } else {
+      DL.out.narr(d.errand[1]);
+      DL.advance(30);
+      DL.diverge(1, '你' + d.errand[2]);
+    }
+    DL.addRel(e.who, 'player', 1, null, true);
+    DL.journal(how === 'warn' ? '我把书上写着' + e.name + '的那一页念给了他听。事情不会变。可他知道了。'
+      : how === 'stay' ? '书上写着' + e.name + '的那一页，我没有念。我陪着他。' : '我' + d.errand[2] + '。书上没有写这一件。');
+    return null;
+  }
+  FW.LIST.forEach(function (e) {
+    var d = BK.DATA[e.id]; if (!d) return;
+    DLG['bk_' + e.id] = {
+      text: function () { return '你把书翻到折了角的那一页。\n“' + e.book + '”\n' + e.name + '就在你身边。'; },
+      prompt: '你要怎么做？',
+      options: [
+        { label: '［书上写着］把这一页念给' + e.name + '听', cond: function () { return !(d.warnFlag && F(d.warnFlag)) && !told(e.id); }, go: function () { return choose(e, 'warn'); } },
+        { label: '［书上写着］什么也不说，陪着' + e.name, go: function () { return choose(e, 'stay'); } },
+        { label: '［书上写着］' + d.errand[0], go: function () { return choose(e, 'errand'); } },
+        { label: '合上书', go: function () { DL.out.narr('你合上了书。页角还折着。'); return null; } }
+      ]
+    };
+    // 和他说话的时候，话题里也有这一条
+    var N = DL.NPC[e.who];
+    if (N) {
+      N.topics = N.topics || {};
+      if (!N.topics['书上写着']) {
+        var t = function () { var es = BK.active().filter(function (x) { return x.who === e.who; }); return es.length ? { node: 'bk_' + es[0].id } : '……'; };
+        t.cond = function () { return BK.active().some(function (x) { return x.who === e.who; }); };
+        N.topics['书上写着'] = t;
+      }
+    }
+    // 他走的那一刻（这一章，或者下一章刚开头）多一句
+    var i = CH.ORDER.indexOf(e.ch), chs = [e.ch, CH.ORDER[i + 1]].filter(Boolean);
+    DL.EVENTS.push({ id: 'bk_at_' + e.id, when: function (S) {
+      return chs.indexOf(S.chapter) >= 0 && !!BK.choice(e.id) && FW.isDead(e) && !FW.isSaved(e);
+    }, run: function () {
+      var how = BK.choice(e.id);
+      DL.out.narr(how === 'warn' ? d.atWarn : how === 'errand' ? d.atErrand : '你想起最后那一段路。你陪他走过。');
+    } });
+  });
+  // 提示：宝石凉的这一章，书上写着的那个人到了你身边（不说是谁）
+  DL.EVENTS.push({ id: 'bk_hint', once: false, when: function (S) {
+    if (!BK.active().length) return false;
+    S.bkHint = S.bkHint || {};
+    return !S.bkHint[S.chapter];
+  }, run: function (S) {
+    S.bkHint[S.chapter] = 1;
+    DL.out.aside('（书上的这一章里，有人会走。你读过那一页。想做点什么，可以' + DL.tok.cmd('书上写着') + '。）');
+  } });
+  // 命运之书“他们走的时候”：这一次里多一句
+  var _row = FW.row;
+  FW.row = function (e) {
+    var r = _row.apply(this, arguments), how = DL.S && BK.choice(e.id), d = BK.DATA[e.id];
+    if (how && d) r.now = (r.now ? r.now + ' ' : '') + (how === 'warn' ? '你把书上的那一页念给' + e.name + '听过。' : how === 'stay' ? '最后那一段，你陪着' + e.name + '。' : '你' + d.errand[2] + '。');
+    return r;
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* 龙枪MUD · 后半部的边上的事（1.11）
+ * 第六卷以后，命运之书里能点亮的改写节点每卷只剩 0～3 个，第十卷一个也没有；剧情选择带来的偏离，连“涟漪”都够不着。
+ * 这里给第六到十二卷每卷补到 4 个。都是“边上的事”：大事照书走，旁边多活下来一个人、少一个人看见最难看的那一幕。
+ *
+ * 每一处：
+ *   - 一个场面，一次检定（这几卷以前大多没有检定）；不想管也可以“顾不上了”。
+ *   - 成了：标记 mg_<id>，偏离度 +2，日志一句，在场的同伴当场说一句；
+ *     章末的“这一章”里多一行；命运之书多一个节点（没走过的给一句模糊的提示）；这一卷的卷末那一章，回头再提一句（回响）。
+ *   - 没成：标记 mg_<id>_tried，写清楚后来怎么样了。只有一次机会。
+ * 场面挂在两种地方：
+ *   - host：这一章已有的一个选择上，多一个“［边上的事］”选项；做完以后，接着走原来那一个选项（只多一件事，后面照旧）。
+ *   - room：走进某个地方、某件事发生以后；要排在那里原来的剧情前面的，用 first。 */
+(function (root) {
+  'use strict';
+  var DL = root.DL, W = DL.W, D = DL.D, DLG = DL.DLG, CH = DL.CH;
+  var F = function (k) { return !!(DL.S && DL.S.flags && DL.S.flags[k]); };
+  var set = DL.setFlag;
+  var here = function (id) { return W.present(id); };
+  var MG = DL.MARGINS = { LIST: [] };
+
+  MG.LIST = [
+    // ---------------- 第六卷 · 双子试炼 ----------------
+    { id: 'q4_knight', vol: 6, ch: 'q4', host: { node: 'q4_gunthar', use: 1 },
+      rw: '法王之塔上，一个年轻的骑士没有追着飞行城堡冲下城墙', hint: '法王之塔的城墙上，有一张很新的脸。',
+      act: '走到城墙上那个最年轻的骑士身边，跟他说几句话', sk: 'persuasion', dc: 13,
+      ok: '他的手一直在抖。他告诉了你他的名字——一个很普通的名字，你后来一直记得。你跟他说：飞行城堡从头顶过去的时候，别追。守住门，就是守住了塔。他看着你，点了点头。',
+      fail: '他很有礼貌地听你说完，眼睛却一直看着北边的天。你知道，城堡飞过去的时候，他会追的。',
+      react: [['tanis', '（他看了一眼那个年轻的骑士，又看着你）……史东那时候，也是这么年轻。']],
+      end: '你劝住了法王之塔上一个年轻的骑士。',
+      echo: '两天以后，飞行城堡从法王之塔上空飞了过去。好几个年轻的骑士追着它冲下了城墙。有一个没有——他一直守着那扇门，守到了战争结束。' },
+    { id: 'q5_alley', vol: 6, ch: 'q5', host: { node: 'q5_chase', use: 0 },
+      rw: '帕兰萨斯着火的小巷里，一家人从塌下来的房子里被拖了出来', hint: '泰斯钻进去的那条着火的小巷里，有人在喊。',
+      act: '小巷深处有人在喊——先去把那一家人拖出来', sk: 'athletics', dc: 13,
+      ok: '房梁塌下来一半，压住了门。你用肩膀顶开它，把一个女人和两个孩子从烟里拖了出来。她抱着孩子跪在街上，一句话也说不出来。\n你回过头来，坦尼斯和泰斯已经跑出去很远了。你追了上去。',
+      fail: '房梁比你想的重。你顶了两次，它一动也不动。街坊们拎着水桶冲了进去。你不知道他们后来怎么样了。你转身去追坦尼斯。',
+      react: [['tas', '（他从前面跑回来一截，看见那两个孩子，冲他们挥了挥手）你们好！我在逃跑！'], ['tanis', '（他喘着气停下来，看着你满脸的灰）……你总是这样。']],
+      end: '你从着火的小巷里拖出了一家人。',
+      echo: '帕兰萨斯烧过的那条小巷里，有一户人家后来在门上画了一只坎德人的口袋。他们说，那天先跑过去的是一个坎德人，后面跟着救他们的人。' },
+    // ---------------- 第七卷 · 夏焰之巨龙 ----------------
+    { id: 'f5_stable', vol: 7, ch: 'f5', room: 'f5_yard', first: true, when: function () { return !F('f5_fight'); },
+      rw: '法王之塔陷落的那一天，马厩里的仆人和孩子从侧门出去了', hint: '法王之塔的大院里，马厩那边有人还没走。',
+      text: '天还没有亮透。大院里全是跑来跑去的骑士。马厩那边，几个仆人和他们的孩子缩在草堆后面——没有人告诉他们该往哪里跑。\n塔的侧门还开着。再过一会儿，就开不了了。',
+      act: '带他们贴着墙根，从侧门出去', sk: 'stealth', dc: 13,
+      ok: '你带着他们贴着墙根走，一直走到侧门。最后一个孩子跑出去的时候，回头冲你摆了摆手。门在你身后关上了。\n然后，号角响了。',
+      fail: '你们走到一半，一队骑士跑过来，把侧门关上了。仆人们只好又缩回了草堆后面。你只能希望塔马克人顾不上马厩。',
+      skip: '顾不上了——号角就要响了',
+      react: [['steel', '（他从你身边走过去，看了一眼侧门，什么也没说。走出几步，他回过头）……做得对。']],
+      end: '你把马厩里的仆人和孩子从侧门送了出去。',
+      echo: '法王之塔陷落以后，有几个从侧门逃出去的仆人，一直跟人说：那天有一个外乡人带着我们走。' },
+    { id: 'f7_apprentice', vol: 7, ch: 'f7', room: 'f7_sewer', when: function () { return F('f7_usha'); },
+      rw: '道根的酒馆打起来的那一夜，一个帕兰萨斯学徒没有被骑士团抓走', hint: '道根的酒馆打起来的时候，角落里有一个吓呆了的人。',
+      text: '下水道里又黑又臭。跑出去好一截，你才发现后面还跟着一个人——酒馆里那个替人抄信的学徒，十四五岁，吓得直哆嗦。骑士团的巡逻队在上面喊。他们在找所有在酒馆里的人。',
+      act: '带上他，找一条骑士团不知道的出口', sk: 'investigation', dc: 13,
+      ok: '你摸着墙，找到了一架往上的旧梯子，通到一条小巷里。学徒爬出去，回头看着你：“我叫——”你让他别说。不知道名字，就没有人能从你嘴里问出来。他点点头，跑了。',
+      fail: '你们在黑暗里转了好一会儿，还是只找到来的那条路。最后他咬了咬牙，一个人往回跑了。你不知道他有没有跑出去。',
+      react: [['dougan', '（他用袖子擦了擦胡子上的泥）小家伙心肠倒是好。（他压低了声音）……心肠好的人，我一向记得。']],
+      end: '你带着酒馆里的学徒从下水道逃了出去。',
+      echo: '帕兰萨斯有一个替人抄信的学徒，后来在每一封信的末尾，都画一颗小小的、灰色的石头。' },
+    // ---------------- 第八卷 · 落日之巨龙 ----------------
+    { id: 'g1_branch', vol: 8, ch: 'g1', room: 'g1_road', when: function () { return F('g1_open'); },
+      rw: '风暴之夜，大树下一个被树枝压住的孩子被拖了出来', hint: '风暴之夜，索拉斯的大树下面。',
+      text: '雨大得睁不开眼。一道闪电劈在大树上，一根比人腰还粗的树枝砸了下来。树枝底下，有一只小手在动。',
+      act: '用背顶起那根树枝', sk: 'athletics', dc: 14,
+      ok: '你蹲下去，用背顶住树枝，一点一点地直起腰。孩子从底下爬了出来，满脸都是泥。他的妈妈冲过来，一把把他抱走了。\n雨还在下。',
+      fail: '树枝太重了。你喊人——旅店里冲出来几个人，大家一起才把它抬起来。孩子的腿伤了。你不知道那条腿还好不好得了。',
+      react: [['caramon', '（他站在旅店的台阶上看着你，笑了）……我年轻的时候，也干过这种事。（他揉了揉膝盖）现在干不动了。']],
+      end: '风暴之夜，你从大树底下拖出了一个孩子。',
+      echo: '索拉斯那个风暴之夜被树枝压住的孩子，后来长大了。他跟人说起那一夜，总是说：有一个外乡人，背上全是雨。' },
+    { id: 'g3_flower', vol: 8, ch: 'g3', room: 'g3_city', first: true, when: function () { return here('gerard'); },
+      rw: '奎灵诺斯城门口，一个卖花的老精灵没有被奈拉卡士兵带走', hint: '奎灵诺斯的城门里面，有一篮子花。',
+      text: '城门里面，两个奈拉卡士兵把一个卖花的老精灵推倒在地上，花撒了一地。“没有许可证，”一个士兵说，“跟我们走。”老精灵没有争，只是一朵一朵地捡她的花。',
+      act: '让杰拉德穿着那身黑铠甲过去，你在旁边圆话', sk: 'deception', dc: 13,
+      ok: '杰拉德的脸红了——他还是不会撒谎。可那身黑铠甲比他的脸管用。“元帅的人，”你在旁边说，“她是给元帅送花的。”两个士兵对看了一眼，走开了。\n老精灵把最好的一朵塞给了杰拉德。他拿着它，不知道往哪里放。',
+      fail: '士兵眯着眼睛看了杰拉德很久：“哪个营的？”杰拉德答不上来。你们只好赶紧走开。回头的时候，老精灵已经被带走了。',
+      react: [['tas', '（他看着杰拉德手里那朵花）你脸红了！你又脸红了！']],
+      end: '你和杰拉德替城门口那个卖花的老精灵解了围。',
+      echo: '奎灵诺斯城门口那个卖花的老精灵，后来每天都给一个穿黑铠甲的骑士留一朵花。他一次也没有来拿。' },
+    // ---------------- 第九卷 · 陨星之巨龙 ----------------
+    { id: 'l1_chapel', vol: 9, ch: 'l1', room: 'l1_dock', first: true, when: function () { return !F('l1_boat'); },
+      rw: '光之城堡的穹顶碎掉那天，礼拜堂里的孩子们上了船', hint: '光之城堡碎掉的那一天，礼拜堂里还有孩子。',
+      text: '码头上全是人。你回头看了一眼：礼拜堂的门还关着，里面有孩子在哭——是城堡里收养的那些孤儿。贝瑞尔的影子，又从碎了的穹顶上扫了过去。',
+      act: '冲回去，把孩子们带到码头上', sk: 'athletics', dc: 13,
+      ok: '你踢开门。孩子们缩在祭坛后面，一个也不敢动。你一手抱起一个，让大的牵着小的，跑过满地的碎水晶，跑上了码头。最后一条渔船正在解缆绳，船上的人伸出手，把他们一个一个拉了上去。',
+      fail: '你跑到一半，一大块水晶从穹顶上砸下来，挡住了路。等你绕过去，礼拜堂的门已经被撞开了——城堡里的人正带着孩子往山上跑。你不知道他们跑没跑掉。',
+      react: [['goldmoon', '（她站在小船上，看着那条渔船，眼睛湿了）……谢谢你。那些孩子，是我收的。']],
+      end: '光之城堡碎掉的那天，你把礼拜堂里的孩子们送上了船。',
+      echo: '光之城堡的那些孤儿，后来在一个渔村里长大了。他们每年都往海里扔一朵花，给一个只见过一面的人。' },
+    { id: 'l3_elder', vol: 9, ch: 'l3', room: 'l3_tunnel', when: function () { return F('l3_tunnel_done'); },
+      rw: '奎灵诺斯撤离的那一天，地道里走丢的老人跟上了队伍', hint: '奎灵诺斯城底下的地道，岔路很多。',
+      text: '撤离的队伍在地道里排成了一条长龙，一直排到看不见的地方。你听见左边那条岔路里有人在敲墙——很慢，很轻，一下，又一下。',
+      act: '顺着敲墙的声音找过去', sk: 'perception', dc: 12,
+      ok: '岔路的尽头，一个很老很老的精灵坐在地上，拿拐杖一下一下地敲着墙。他的眼睛看不见了。“我走错了，”他说，很平静，“我想，总会有人听见的。”你扶着他，回到了队伍的最后面。',
+      fail: '岔路太多了。敲墙的声音一会儿在左边，一会儿在右边，后来不响了。矮人在前面催：快走。',
+      react: [['l_dwarf', '（矮人看着那个老精灵，哼了一声）这条地道，我们挖了二十年。（他把自己的灯塞给了老人）……就是为了这个。']],
+      end: '你在地道里找回了一个走丢的老精灵。',
+      echo: '奎灵诺斯沉进湖里以后，撤出来的精灵里有一个最老的，眼睛看不见了。他逢人就说：有人听见了我敲墙。' },
+    { id: 'l6_nomads', vol: 9, ch: 'l6', room: 'l6_dunes', when: function () { return F('l6_guards'); },
+      rw: '史凯的荒漠里，一群游牧人找到了有水的路', hint: '玻璃荒漠里，有人在找水。',
+      text: '沙丘后面有一串乱七八糟的脚印。脚印的尽头，一群游牧人围着一口干了的井。米娜的军队从他们的绿洲经过，把水都拿走了。一个女人抱着孩子，嘴唇裂开了口子。',
+      act: '替他们找一找哪里还有水', sk: 'survival', dc: 13,
+      ok: '你看了看风吹沙子的方向，又看了看几只往东飞的鸟。往东，过两道沙丘，石头底下有湿的沙子。他们挖下去，挖出了水。\n那个女人把第一口水喂给了孩子，第二口递给了你。',
+      fail: '你找了很久。沙子底下还是沙子。最后是他们自己的老人带着大家往南走了——你不知道南边有没有水。',
+      react: [['mirror', '（他偏着头，听着孩子喝水的声音）……我看不见。可是我听得见。（他的嘴角动了一下）你替他们看了路。']],
+      end: '你替荒漠里的游牧人找到了水。',
+      echo: '史凯的荒漠里，有一口新挖的井。游牧人给它起了一个名字，意思是“外乡人的眼睛”。' },
+    // ---------------- 第十卷 · 逝月之巨龙 ----------------
+    { id: 'n4_smith', vol: 10, ch: 'n4', room: 'n4_camp', when: function () { return F('n4_open'); },
+      rw: '米娜的行军营地里，一个被抓来修车的铁匠走掉了', hint: '米娜的营地里，有人在修车，修得很慢。',
+      text: '营地边上，一个老铁匠在修一辆断了轴的车。他的脚上拴着链子。他修得很慢，每敲一下，就往营地外面的林子看一眼。',
+      act: '趁换岗的时候，撬开他脚上的锁', sk: 'sleight', dc: 13,
+      ok: '换岗的号角响了。你蹲下去，装着帮他扶车轴，手指摸到了链子上的锁。锁很旧。咔哒一声。\n他看了你一眼，放下锤子，走进了林子——没有跑。跑会被看见；走，就只是一个去解手的人。',
+      fail: '锁比你想的结实。号角一停，新的看守就走了过来。你只好站起来，拍了拍手上的灰。老铁匠又敲了一下车轴。',
+      react: [['gerard', '（他压低了声音，脸有点红）……你差点把我们都暴露了。（停了一下）下次叫上我。']],
+      end: '你在米娜的营地里放走了一个被抓来修车的铁匠。',
+      echo: '桑克申城外的一个小村子里，有一家铁匠铺的门上，挂着一截断了的链子。' },
+    { id: 'n4_girl', vol: 10, ch: 'n4', room: 'n4_cage', when: function () { return F('n4_tas'); },
+      rw: '米娜的囚车里，一个精灵小姑娘没有被带到桑克申', hint: '囚车里，除了那个坎德人，还有一个人。',
+      text: '囚车的角落里，还缩着一个精灵小姑娘，最多十岁，是在西瓦那斯提的路上被抓来的。她一直看着你，不哭，也不说话。',
+      act: '后半夜，撬开她那一头的栏杆', sk: 'sleight', dc: 13,
+      ok: '后半夜，看守打起了瞌睡。你摸到囚车后面，撬开了那一头的栏杆。小姑娘钻了出来，光着脚，一声不响地跑进了黑暗里。跑之前，她用精灵语说了一个词。你后来才知道，那是“谢谢”。',
+      fail: '栏杆卡得太死。看守翻了个身，你只好缩回去。小姑娘看着你，摇了摇头，像是在说：没关系。',
+      react: [['tas', '（他扒着栏杆，眼睛发亮）你撬锁的手艺不错！不过还是差我一点点。（他压低了声音）……她跑掉了吗？跑掉了就好。']],
+      end: '你从米娜的囚车里放走了一个精灵小姑娘。',
+      echo: '西瓦那斯提的精灵回到他们的森林以后，有一个小姑娘每天都到边境上去等。她说，有一个人会从那边来。' },
+    { id: 'n5_militia', vol: 10, ch: 'n5', room: 'n5_wall', first: true, when: function () { return !F('n5_malys'); },
+      rw: '桑克申的城墙上，一队民兵在死亡之龙来之前下了城墙', hint: '桑克申的城墙上，有一队拿着锄头的人。',
+      text: '城墙上站着一队民兵——拿着锄头、拿着叉子的城里人。他们不知道等一会儿要飞过来的是什么。你知道。',
+      act: '劝他们下城墙，去守城里的水井', sk: 'persuasion', dc: 14,
+      ok: '你跟领头的那个说：龙来的时候，城墙上一个人也挡不住；城里的水井，你们挡得住。他看了你很久，看见了你眼睛里的东西，一挥手，带着他的人下去了。\n过了一会儿，天黑了下来。',
+      fail: '“我们是桑克申人，”领头的说，“桑克申人不下城墙。”他们没有下去。',
+      react: [['silvan', '（他看着那队人走下城墙，声音很轻）……我的人民，我一个也没有劝住过。']],
+      end: '你劝一队民兵在死亡之龙来之前下了城墙。',
+      echo: '桑克申城里，有一口水井旁边立着一块小牌子，上面写着一队民兵的名字。他们都活到了战争结束。' },
+    { id: 'n5_guard', vol: 10, ch: 'n5', room: 'n5_camp', when: function () { return F('n5_elves'); },
+      rw: '桑克申城外，一个年轻的精灵侍卫没有一个人冲进城里', hint: '精灵营地里，有人在磨刀，磨了一整夜。',
+      text: '精灵营地的边上，一个年轻的侍卫在磨刀。他是西瓦诺西的侍卫。西瓦诺西进了城，他没有跟上——他要一个人冲进去。',
+      act: '在他身边坐下来，拦住他', sk: 'persuasion', dc: 13,
+      ok: '你在他身边坐下来，跟他说了很久：他的王要的不是一个死了的侍卫，是一个活着回到西瓦那斯提的人。天亮的时候，他把刀插回了鞘里。',
+      fail: '他听你说完，站起来，对你行了一个精灵的礼，转身走进了黑暗里。',
+      react: [['alhana', '（她站在帐篷门口，看着那个侍卫，很久）……谢谢你。我的儿子，已经够了。']],
+      end: '你拦住了一个要一个人冲进桑克申的精灵侍卫。',
+      echo: '西瓦那斯提重新长出森林的那一年，有一个精灵侍卫守在西瓦诺西的墓前，守了很多年。' },
+    // ---------------- 第十一卷 · 琥珀与灰烬 ----------------
+    { id: 'a4_mother', vol: 11, ch: 'a4', room: 'a4_cairn', when: function () { return F('a4_met') && here('nightshade'); },
+      rw: '旧战场上，一个找了三十八年儿子的老妇人找到了他', hint: '旧战场上，有一个老人一直在翻石头。',
+      text: '石堆边上，一个很老的女人在翻石头，翻了一块又一块。她的儿子三十八年前死在这里，混沌之战的时候。她每年都来，一直找不到。',
+      act: '帮她问对问题，请夜影问一问那些死人', sk: 'insight', dc: 12,
+      ok: '夜影闭上眼睛，听了很久。然后他走到第三堆石头前面，蹲了下来：“在这儿。他说，他一直知道你会来。”\n老妇人跪了下去。她没有哭，只是把手放在了石头上。',
+      fail: '夜影听了很久，摇了摇头：“死的人太多了，他们都在说话。我听不出哪个是他。”老妇人点了点头，像是早就习惯了，又去翻下一块石头。',
+      react: [['rhys', '（他走过去，在老妇人身边跪下，替她把石头一块一块地垒好）马哲理说，记得，比找到更难。（他看了你一眼）……可你让她找到了。']],
+      end: '你请夜影替一个老妇人找到了她儿子的坟。',
+      echo: '海文城外的旧战场上，有一堆石头垒得很整齐，上面放着一枝野花，每年都换。' },
+    // ---------------- 第十二卷 · 琥珀与钢铁 ----------------
+    { id: 'i1_mother', vol: 12, ch: 'i1', room: 'i1_forge', first: true, when: function () { return F('i1_talk') && !F('i1_cam'); },
+      rw: '索拉斯的铁匠铺外面，卡姆的妈妈没有看见他最后的样子', hint: '去铁匠铺的路上，有一个女人一直跟着警长。',
+      text: '铁匠铺外面，一个女人拉住了杰拉德的袖子。“卡姆在里面吗？”她问，“他好几天没回家了。我给他带了饭。”杰拉德看着那扇门，没有说话。',
+      act: '接过她的饭篮子，把她劝回家', sk: 'persuasion', dc: 13,
+      ok: '你接过她的饭篮子，说你会替她带进去，让她回家等着。她犹豫了一下，点了点头，走了。走到街角的时候，她回过头来看了一眼。\n你提着那只饭篮子，推开了铁匠铺的门。',
+      fail: '她不肯走：“他是我儿子。”她跟在你们后面，一直走到了门口。',
+      react: [['gerard', '（他看着那个女人走远，声音很哑）……卡姆小时候，我抱过他。（他推开了门）谢谢你。']],
+      end: '你把卡姆的妈妈劝回了家。',
+      echo: '索拉斯有一个女人，一直以为她的儿子是去新港当学徒了。她每年都给他寄一件冬衣。杰拉德每年都替他收下。' },
+    { id: 'i4_boat', vol: 12, ch: 'i4', wrap: 'i4End',
+      rw: '新港的风暴里，一条渔船上的人被拉上了岸', hint: '新港的码头上，风暴掀翻了一条船。',
+      text: '风暴还没有停。码头边上，一条小渔船被浪掀翻了，三个渔夫抱着翻过来的船底。一个浪打过来，就少一个人的声音。\n泽波因看着他们，像看着几片树叶。',
+      act: '把缆绳绕在桩子上，另一头扔过去', sk: 'athletics', dc: 13,
+      ok: '你把缆绳在桩子上绕了两圈，另一头使劲扔了出去。第一次没够着。第二次，一只手抓住了它。你和码头上的人一起往回拉：一个，两个，三个。',
+      fail: '浪太大了。缆绳扔出去两次，都被风吹了回来。等风小下来，码头上的人划着另一条船出去了。他们只捞回来两个。',
+      react: [['rhys', '（他的僧袍全湿了，站在你旁边，看着那三个渔夫）……泽波因要的是我。不该是他们。']],
+      end: '你把新港风暴里的三个渔夫拉上了岸。',
+      echo: '新港的渔夫们后来在船头上刻一个小小的绳结。他们说，那是一个外乡人扔给他们的。' },
+    { id: 'i6_girl', vol: 12, ch: 'i6', room: 'i6_cliff', first: true, when: function () { return F('i6_free') && !F('i6_out'); },
+      rw: '泽波因的神殿下面，一个要被献给海的姑娘被解开了绳子', hint: '泽波因神殿的悬崖底下，绑着一个人。',
+      text: '悬崖底下的礁石上，绑着一个渔家的姑娘。泽波因的信徒说，海神发怒了，要一个人。潮水已经涨到了她的腰。',
+      act: '爬下去，割断她的绳子', sk: 'athletics', dc: 14,
+      ok: '礁石又湿又滑。你爬下去，割断了绳子，把她背了上来。刚上来，一个浪就打在你们刚才待的地方，碎成了白沫。\n她浑身发抖，一句话也说不出来。夜影把自己的斗篷给了她。',
+      fail: '你爬到一半，脚下一滑，摔回了上面的石头上。浪打了过来。等它退下去，礁石上已经空了。',
+      react: [['nightshade', '（他看着那个姑娘，又看着海）……海里有很多死人。今天少了一个。']],
+      end: '你从泽波因的悬崖下面救回了一个要被献给海的姑娘。',
+      echo: '弗洛萨姆附近的一个渔村里，有一个姑娘再也不肯下海。她说，海神要过她一次，没有要成。' }
+  ];
+  MG.BY = {}; MG.LIST.forEach(function (m) { MG.BY[m.id] = m; });
+  MG.flag = function (m) { return 'mg_' + m.id; };
+  MG.tried = function (m) { return F('mg_' + m.id) || F('mg_' + m.id + '_tried'); };
+
+  // 做一次：掷检定，写结果
+  function attempt(m) {
+    var r = DL.check('player', m.sk, m.dc, { label: m.act });
+    if (r && r.ok) {
+      set(MG.flag(m));
+      DL.out.narr(m.ok);
+      DL.diverge(2, '改写：' + m.rw);
+      DL.journal(m.end + '书上没有写这件事。');
+      var rx = (m.react || []).filter(function (x) { return here(x[0]); })[0];
+      if (rx) { DL.out.say(rx[0], rx[1]); DL.addRel(rx[0], 'player', 1, null, true); }
+    } else {
+      set(MG.flag(m) + '_tried');
+      DL.out.narr(m.fail);
+    }
+  }
+  var SKCN = function (sk) { return (DL.R && DL.R.SKILLS && DL.R.SKILLS[sk] && DL.R.SKILLS[sk].cn) || sk; };
+
+  MG.LIST.forEach(function (m) {
+    var check = SKCN(m.sk) + ' DC ' + m.dc;
+    if (m.wrap) {
+      // 挂在这一章收尾之前：先有这一幕，再接着收尾
+      var E2 = DL.EVT2, fn = E2 && E2[m.wrap];
+      if (typeof fn !== 'function') return;
+      E2[m.wrap] = function () {
+        var self = this, args = arguments;
+        if (MG.tried(m)) return fn.apply(self, args);
+        MG.after = function () { return fn.apply(self, args); };
+        D.show('mg_' + m.id); return null;
+      };
+    }
+    if (m.host) {
+      // 挂在已有的选择上：多一个选项，做完以后接着走原来那一个
+      var node = DLG[m.host.node];
+      if (!node || !Array.isArray(node.options) || !node.options[m.host.use]) return;
+      var orig = node.options[m.host.use];
+      node.options.push({ label: '［边上的事］' + m.act, checkLabel: check, cond: function (S, a) { return !MG.tried(m) && (!orig.cond || orig.cond(S, a)); },
+        go: function (S, a) { attempt(m); return orig.go ? orig.go.apply(this, arguments) : null; } });
+    } else {
+      var next = function () { if (!m.wrap) return null; var f = MG.after; MG.after = null; return f ? f() : null; };
+      DLG['mg_' + m.id] = {
+        text: m.text, prompt: '你……', noCancel: !!m.wrap,
+        options: [
+          { label: m.act, checkLabel: check, go: function () { attempt(m); return next(); } },
+          { label: m.skip || '顾不上了', go: function () { set(MG.flag(m) + '_tried'); DL.out.narr('你移开了眼睛。有些事，书上没有写，就没有人知道。'); return next(); } }
+        ]
+      };
+    }
+    if (m.room) {
+      var ev = { id: 'mg_' + m.id, when: function (S) { return S.chapter === m.ch && S.room === m.room && !MG.tried(m) && m.when(S); }, run: function () { D.show('mg_' + m.id); } };
+      // 要排在那里原来的剧情前面的，放在最前面检查
+      if (m.first) DL.EVENTS.unshift(ev); else DL.EVENTS.push(ev);
+    }
+    // 命运之书：节点和没走过时的提示
+    if (DL.FATE && DL.FATE.RW) DL.FATE.RW[m.rw] = [m.vol, m.hint];
+    DL.REWRITES.push([function () { return F(MG.flag(m)); }, m.rw]);
+    // 这一卷的卷末那一章：回头再提一句
+    var endCh = 'v' + m.vol + 'end';
+    DL.EVENTS.push({ id: 'mg_echo_' + m.id, when: function (S) { return S.chapter === endCh && F(MG.flag(m)); }, run: function () { DL.out.narr(m.echo); } });
+  });
+  // 章末的“这一章”里多一行
+  var _end = CH.end;
+  CH.end = function (id, opts) {
+    try {
+      var add = MG.LIST.filter(function (m) { return m.ch === id; }).map(function (m) { return [MG.flag(m), m.end]; });
+      if (add.length) { opts = opts || {}; opts.events = (opts.events || []).concat(add); }
+    } catch (e) { /* 只是一行字 */ }
+    return _end.call(this, id, opts);
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* 龙枪MUD · 第二、三卷和插章的梦（1.11）
+ * 第一卷有 30 扇手写的门、10 个前路之影；第二、三卷和插章一扇也没有——在那里入梦，推开的都是“梦的碎片”。
+ * 这里补上：
+ *   - 未走之路：这几卷里分量最重的那些岔路口，没走的那一边，手写一段。
+ *   - 前路之影：每卷 3～4 个，在事情发生之前梦见。看清了，到了那一刻，那一次检定有优势（梦痕）。
+ *   - 第一卷末尾那个“冬天的影子”（雪中的塔、会哭的森林），第二卷里真的走到了，会认出来。 */
+(function (root) {
+  'use strict';
+  var DL = root.DL, DR = DL.DREAM, W = DL.W;
+  if (!DR) return;
+  var F = function (k) { return !!(DL.S && DL.S.flags && DL.S.flags[k]); };
+  var here = function (id) { return W.present(id); };
+
+  // =========================== 未走之路 ===========================
+  DR.DOORS.push(
+    // ---- 第二卷 ----
+    { id: 'd_w1_hammer', node: 'w1_hammer2', match: '坚持', title: '没有交出锤子的那一天', who: ['sturm', 'tanis'], place: '索巴丁的大门外',
+      text: '门后，锤子还在史东的手里。矮人的大门关上了，关得严严实实。\n雪下了一整个冬天。难民们挤在山脚下的岩洞里，一个接一个地病倒。春天来的时候，第一把屠龙枪打出来了——可是来领它的人，少了一半。\n史东站在那些坟前面，很久很久。',
+      tell: { sturm: '（史东低下头，看着自己的手）……我想过那个冬天。（他的声音很低）锤子是用来打枪的。枪是用来护着人的。如果护的人都不在了——（他没有说下去）', tanis: '（坦尼斯揉了揉额头）我那天跟他吵得很凶。……你梦见的，就是我怕的。' } },
+    { id: 'd_w1_split_l', node: 'w1_split', match: '罗拉娜', title: '往南边跑的那一路', who: ['laurana', 'sturm'], place: '塔西斯外的平原',
+      text: '门后，你跟着罗拉娜和骑士们往南边跑。狮鹫的影子从头顶掠过去，越来越小，带走了坦尼斯。\n罗拉娜一直没有回头。跑出很远以后，她停下来，扶着一棵树喘气。你看见她的嘴唇在动，没有声音。她在数——数她还剩下几支箭，数她还剩下几个人。',
+      tell: { laurana: '（罗拉娜很久没有说话）……那一路，我是会数的。（她笑了一下）数着，就不会哭。', sturm: '（史东点了点头）她会是一个好将军。我早就知道。' } },
+    { id: 'd_w1_split_t', node: 'w1_split', match: '坦尼斯', title: '扑向狮鹫的那一刻', who: ['tanis'], place: '塔西斯的废墟',
+      text: '门后，你跟着坦尼斯扑向了狮鹫。羽毛、风、一只抓住你衣领的手——你们离开了地面。\n塔西斯在脚底下越来越小，像一个摔碎了的盘子。坦尼斯在风里冲你喊了一句什么。你没有听清。你只看见他一直回头，看着南边，看着那一片你们丢下的人。',
+      tell: { tanis: '（坦尼斯沉默了很久）……我那天一直在回头。（他看着你）你怎么知道的？' } },
+    { id: 'd_w4_berem', node: 'w4_berem', match: '什么也不做', title: '什么也没做的那一刻', who: ['tanis', 'caramon'], place: '弗洛萨姆的码头',
+      text: '门后，你站着没有动。龙人们把那个男人按在了地上，撕开了他的衬衫——他的胸口上，嵌着一颗绿色的宝石，跟皮肉长在一起。\n一把刀落了下去。\n第二天早上，你在另一个码头上，又看见了他。他在补渔网，衬衫扣得好好的，什么也不记得。',
+      tell: { tanis: '（坦尼斯的脸色变了）死了……又活过来？（他想起了什么）那个舵手。那个总是不说话的舵手。', caramon: '（卡拉蒙打了个哆嗦）别说了。我不喜欢这种梦。……他还好吗？我是说，真的那个？' } },
+    { id: 'd_w5_fork', node: 'w5_fork', match: '站到史东身边', title: '站到史东身边的那一刻', who: ['sturm'], place: '雪林',
+      text: '门后，你站到了史东的身边。德瑞克的脸一下子白了，又一下子红了。\n“你们两个，”他说，“都会被除名。”\n史东没有看他。史东看着你，像看着一个很久以前认识的人。那天夜里，他把他的家族纹章借给你看了。他从来没有给别人看过。',
+      tell: { sturm: '（史东摸了摸胸甲里面的什么东西）……纹章。（他看了你很久，然后，他真的把它拿了出来）就一会儿。看完了还给我。' } },
+    { id: 'd_w6_eggs', node: 'w6_eggs', match: '说出来', title: '说出蛋的秘密的那一夜', who: ['gilthanas', 'laurana'], place: '圣克瑞斯特的冰窟',
+      text: '门后，你说出来了：“善龙不来，是因为黑暗之后拿着它们的蛋。”\n冰窟里静得能听见冰在裂。西悠瓦拉往后退了一步，又一步。她的影子在冰墙上变了形状——变得很大，有翅膀。\n吉尔赛那斯一直看着她。他没有拔剑。',
+      tell: { gilthanas: '（吉尔赛那斯的手指收紧了）……你梦见她的影子了。（他转过身去）我也梦见过。很多次。', laurana: '（罗拉娜看着弟弟的背影）他没有拔剑？……那就好。' } },
+    { id: 'd_w8_warn', node: 'w8_warn', match: '答应我', title: '没有说出口的那句嘱咐', who: ['sturm'], place: '圣白石的台阶',
+      text: '门后，你拉住了史东的袖子：“答应我。那天早上，别一个人站上去。”\n史东看着你，很久。“骑士不答应这种事，”他说。然后，他把手放在你的手上，“……可是我会记得，有人这样求过我。”',
+      tell: { sturm: '（史东把手按在剑柄上，看着北方）……“有人这样求过我”。（他点了点头）是的。我会记得。' } },
+    { id: 'd_w9_charge', node: 'w9_charge', match: '带着史东', title: '冲下城墙的那一刻', who: ['sturm', 'laurana'], place: '法王之塔下的雪原',
+      text: '门后，你和史东冲下了城墙。雪地上全是倒下的马，倒下的人。德瑞克的旗还竖着，竖在一大片黑色的潮水中间。\n你们没有够到他。可你们够到了一个年轻的骑士——他的腿被压在马下面，还在喊人。史东把他拖了出来，背在背上，一步一步地往回走。',
+      tell: { sturm: '（史东闭上了眼睛）……一个也好。（他睁开眼睛）一个也好。', laurana: '（罗拉娜望着雪原）在梦里，你们回来了吗？……你们都回来了吗？' } },
+    { id: 'd_w9_watch', node: 'w9_charge', match: '城垛上看着', title: '在城垛上看着的那一刻', who: ['laurana'], place: '法王之塔的城垛',
+      text: '门后，你站在城垛上，看着。\n骑士们冲下去的时候，旗子是亮的。然后，一面一面地，倒了。你数着。数到后来，你数不下去了。\n史东一直站在你旁边。他没有数。他一直看着最前面那一面旗，直到它也倒了。',
+      tell: { laurana: '（罗拉娜的声音很轻）我也数了。……我数到了最后。' } },
+    // ---- 第三卷 ----
+    { id: 'd_s1_truth', node: 's1_truth', match: '告诉他们实话', title: '说出实话的那一夜', who: ['tanis', 'caramon'], place: '佩瑞冲号的甲板',
+      text: '门后，坦尼斯终于开口了。他把在弗洛萨姆的那几天，一天一天地讲了出来——奇蒂拉，蓝龙，龙军的大营。\n讲完以后，甲板上没有人说话。只有卡拉蒙走了过去，在他身边坐下，什么也没说，把自己的酒袋递给了他。',
+      tell: { tanis: '（坦尼斯苦笑了一下）你在梦里替我说完了。……醒着的时候，我说不出口。', caramon: '（卡拉蒙挠了挠头）酒袋？……嗯。我会的。我会递给他。' } },
+    { id: 'd_s4_toede', node: 's4_toede', match: '放他走', title: '放走托德的那一天', who: ['tas'], place: '坎德人的营地',
+      text: '门后，你说：“放他走。”坎德人们很失望，可还是解开了绳子。\n托德跑了。他跑得飞快，一边跑一边回头骂——然后被一根树根绊倒了，摔进了一条小溪。他从水里爬出来，浑身是泥，接着跑。\n很久以后，你听说他在什么地方又当上了一个小官。每天都在骂坎德人。',
+      tell: { tas: '（泰斯笑得直不起腰）摔进小溪了？哈！（他停下来想了想）……他每天骂我们？那他一定很想我们。' } },
+    { id: 'd_s5_with', node: 's5_decide', match: '我跟你去', title: '跟她去的那一夜', who: ['tas', 'flint'], place: '卡拉曼城外的旧塔',
+      text: '门后，你跟着罗拉娜出了城。月亮很亮。旧塔的门开着，像是在等人。\n门里站着的不是坦尼斯。是奇蒂拉，和她身后的一排龙人。罗拉娜站住了，没有退。她回过头来，看了你一眼——那一眼里没有害怕，只有一句话：“快走。去告诉他们。”',
+      tell: { tas: '（泰斯的耳朵耷拉了下来）那个旧塔……我也在那儿吗？我在的话，一定会把那个巴卡瑞斯——（他没有说下去）', flint: '（佛林特重重地哼了一声）我就知道。我就知道那封信是假的。' } },
+    { id: 'd_s7_whisper', node: 's7_kit', match: '凑到坦尼斯耳边', title: '凑到他耳边的那一刻', who: ['tanis'], place: '奈拉卡的大营',
+      text: '门后，你凑到坦尼斯耳边：“她不会还的。明天在大殿上，她会把罗拉娜当成礼物送出去。”\n坦尼斯没有动。奇蒂拉在对面看着你们，笑了。“说悄悄话，”她说，“是小孩子才做的事，半精灵。”\n那天夜里，坦尼斯一夜没睡。他把剑拔出来，又插回去，拔出来，又插回去。',
+      tell: { tanis: '（坦尼斯的手按在剑上）……拔出来，又插回去。（他看着你）你看见我了。你看见我是什么样子了。' } },
+    { id: 'd_s8_raist', node: 's8_offer', match: '交给雷斯林', title: '把宝石交给他的那一刻', who: ['caramon', 'tanis'], place: '黑暗之后的神殿',
+      text: '门后，你把宝石放在了雷斯林的手心里。\n他握住了它。宝石一下子凉了——凉得像冬天的井水。他的眼睛里，那两个沙漏慢慢地转了一下。“原来如此，”他轻轻地说，“原来你是这样来的。”\n他把宝石还给了你。他什么也没有拿走。可从那以后，他看你的眼神，再也不一样了。',
+      tell: { caramon: '（卡拉蒙的脸一下子白了）你把那块石头给雷斯了？……他还给你了？（他擦了擦额头）他还给你了。那就好。那就……还是他。', tanis: '（坦尼斯盯着你）他什么也没拿？……那才是最让人担心的。' } },
+    { id: 'd_s8_twins', node: 's8_twins', match: '让他走吧', title: '对卡拉蒙说“让他走”的那一刻', who: ['caramon'], place: '神殿的废墟',
+      text: '门后，你对卡拉蒙说：“让他走吧。”\n卡拉蒙看着你，像是没听懂。然后他慢慢地坐了下来，坐在一块碎石头上，两只大手放在膝盖上，像一个在等人回家的孩子。\n雷斯林走远了。他一次也没有回头。卡拉蒙一直看着他走的那个方向，直到天亮。',
+      tell: { caramon: '（卡拉蒙低着头，很久很久）……我会等的。（他的声音很哑）我一直都在等。你说让他走，我就让他走。可我会等的。' } },
+    // ---- 插章 ----
+    { id: 'd_d3_girl', node: 'd3_stragglers', match: '抱起那个小女孩', title: '抱起那个小女孩的那一刻', who: ['riverwind', 'tika'], place: '通往山口的雪地',
+      text: '门后，你抱起了那个小女孩。她很轻，一直抓着你的头发。你跑啊跑，跑到了山口——回头看的时候，雪地上还有一家人，背着一个老祖母，一步一步地往这边挪。\n门在你们身后慢慢地合上了。你冲着他们喊，喊到嗓子都哑了。',
+      tell: { riverwind: '（河风闭上了眼睛）平原上的人说，你只能背一个人。可是梦里，你总是想背两个。', tika: '（蒂卡抹了一下眼睛）别说了……那个老祖母，她做的饼可好吃了。' } },
+    { id: 'd_d5_swap', node: 'd5_swap', match: '换吧', title: '换掉锤子的那一夜', who: ['flint'], place: '索巴丁的大殿',
+      text: '门后，你说：“换吧。真锤子要去打屠龙枪。”\n佛林特没有说话。他把那把假锤子用布包好，双手捧着，走到霍恩费尔的面前，跪了下去。他的手很稳。\n可是那天夜里，你听见他在铁匠铺里，一锤一锤地打一块什么也不是的铁，打到了天亮。',
+      tell: { flint: '（佛林特的胡子抖了一下）一锤一锤……（他别过脸去）矮人说话是算数的。我答应过他。……你梦见的那个我，比我还难受。' } },
+    { id: 'd_d5_keep', node: 'd5_swap', match: '佛林特答应过', title: '没有换锤子的那一夜', who: ['flint'], place: '索巴丁的大殿',
+      text: '门后，你说：“不。佛林特答应过霍恩费尔。”\n真锤子回到了矮人的手里。霍恩费尔把它举过头顶，大殿里响起了几千个矮人的歌声。佛林特站在人群里，跟着唱。他唱得很难听，可是他唱得很大声。\n那一年，屠龙枪打得很慢。',
+      tell: { flint: '（佛林特把胸膛挺了起来）唱歌？我唱得很好听。（停了一下）……打得很慢？慢一点就慢一点。矮人说话是算数的。' } },
+    { id: 'd_h1_mask', node: 'h1_mask', match: '扑上去', title: '扯下面罩的那一刻', who: ['laurana', 'tanis'], place: '城门外的战场',
+      text: '门后，你扑了上去，一把扯下了她的面罩。\n是一张很好看的脸。黑色的卷发，嘴角挂着一点笑——就好像她早就知道，总有一天会有人扯下这张面罩。\n“你认识我？”她问你。没等你回答，蓝龙的翅膀就把你们分开了。',
+      tell: { laurana: '（罗拉娜的脸色变了）黑色的卷发……（她没有再问下去）', tanis: '（坦尼斯一下子站了起来，又慢慢地坐了下去。他一句话也没有说。）' } },
+    { id: 'd_m1_queen', node: 'm1_queen', match: '挡在雷斯林身前', title: '挡在他身前的那一刻', who: ['raistlin'], place: '一座塔的最高处',
+      text: '门后，你握着宝石，挡在了雷斯林的身前。黑暗压了过来——五个声音，五个头，一齐在你耳边说话。\n宝石在你手里裂开了一道缝。你没有退。\n身后，雷斯林很轻很轻地笑了一声：“愚蠢。”他说，“……谢谢。”',
+      tell: { raistlin: '（雷斯林连眼皮都没抬）我从不说谢谢。（过了很久）……在梦里也不说。' } }
+  );
+
+  // =========================== 前路之影 ===========================
+  // hook：真到了那一刻，哪一章、哪一种检定——有优势。只用一次。
+  DR.FS.push(
+    // ---- 第二卷 ----
+    { id: 'fs_w3_feal', ch: ['w2', 'w3'], when: function () { return !F('w3_feal_dead') && !F('w3_feal_shaken'); }, place: '冰墙城堡', title: '睡不着的人',
+      hook: { ch: ['w3'], node: 'w3_feal', sk: 'insight', note: '你在梦里见过他发抖的手。这一次洞悉有优势。' },
+      text: '一座冰做的城堡。王座也是冰做的，上面坐着一个瘦高的精灵，手里握着一根冰杖，身边放着一颗乳白色的球。\n他在笑，笑得很得意。可是你走近了，看见他握着冰杖的手指在发抖——不是因为冷。\n他已经很久没有睡过觉了。球在夜里跟他说话。',
+      learn: '（梦痕：你看见了他的手。再见到他的时候，你会知道他在怕什么。）', who: ['laurana', 'raistlin'],
+      tell: { laurana: '（罗拉娜想了想）一个精灵，坐在冰做的王座上……他背叛了自己的族人，才会睡不着。', raistlin: '（雷斯林的眼睛眯了起来）球在夜里跟他说话。……我很想知道，它说了什么。' } },
+    { id: 'fs_w8_orb', ch: ['w7', 'w8'], when: function () { return !F('w8_council_done'); }, place: '圣白石前面的议事厅', title: '举过头顶的球',
+      hook: { ch: ['w8'], node: 'w8_tas', sk: 'athletics', note: '你在梦里看见过它从他手里滑出去的那一刻。这一次运动检定有优势。' },
+      text: '一间挤满了人的大厅，人们在吵架，吵得很凶。一个白胡子的矮人在吼，一个精灵在拍桌子。\n一个坎德人爬上了桌子，把一颗球举过了头顶。所有人都不吵了。\n然后，球从他的手里滑了出去。你看见了它离开他手指的那一刻——很慢，很慢。',
+      learn: '（梦痕：你记住了它滑出去的那一刻。）', who: ['tas', 'flint'],
+      tell: { tas: '（泰斯看了看自己的手）我？把球举过头顶？……（他想了想）那一定是一个很好的主意。', flint: '（佛林特一把抓住了泰斯的领子）你听见了没有？离球远一点！' } },
+    { id: 'fs_w9_derek', ch: ['w8', 'w9'], when: function () { return !F('w9_charge') && !F('w9_council'); }, place: '雪原', title: '冲锋',
+      hook: { ch: ['w9'], node: 'w9_derek', sk: 'persuasion', note: '你在梦里看见过那片雪原。你知道该跟他说什么。这一次说服有优势。' },
+      text: '一片雪原。天刚亮。一排骑士骑着马，从一座高塔下面冲了下去，冲进了一大片黑色的潮水里。\n领头的那个人，脸上全是骄傲。他一直没有回头。\n他们一个也没有回来。',
+      learn: '（梦痕：你看见了他们一个也没有回来。）', who: ['sturm', 'laurana'],
+      tell: { sturm: '（史东的手握紧了剑柄）……德瑞克。（他没有说下去。他知道你在说谁。）', laurana: '（罗拉娜的脸白了）一个也没有回来……我们得拦住他。不管用什么办法。' } },
+    // ---- 第三卷 ----
+    { id: 'fs_s2_shelf', ch: ['s1', 's2'], when: function () { return !F('s2_bargain') && !F('raist_bargain_heard'); }, place: '一座很大的图书馆', title: '书架后面',
+      hook: { ch: ['s2'], node: 's2_bargain', sk: 'stealth', note: '你在梦里躲过这一次。你知道哪一块地板会响。这一次隐匿有优势。' },
+      text: '一座很大很大的图书馆，书架一直排到看不见的地方。你躲在其中一排后面。\n书架那边，一个穿红袍的人在跟一个看不见的声音说话。你往前挪了一步——脚下的一块地板“吱”地响了一声。\n两个人都不说话了。',
+      learn: '（梦痕：你记住了哪一块地板会响。）', who: ['caramon'],
+      tell: { caramon: '（卡拉蒙的脸色变了）红袍子……是雷斯吗？他在跟谁说话？……（他摇了摇头）别告诉我。我不想知道。' } },
+    { id: 'fs_s3_column', ch: ['s2', 's3'], when: function () { return !F('s3_jasla_heard') && !F('s3_stone_lore'); }, place: '海底的神殿', title: '镶满宝石的柱子',
+      hook: { ch: ['s3'], node: 's3_berem', sk: 'religion', note: '你在梦里见过那根柱子。这一次宗教检定有优势。' },
+      text: '一座沉在海底的神殿。水是绿的，没有鱼。\n大殿的中间，本来应该立着一根柱子——地上还留着一个圆圆的坑，坑边上散落着几颗宝石，红的，蓝的，白的。\n一个男人跪在坑边，抱着一块碎石头，一遍一遍地喊一个名字：“洁思拉。洁思拉。”',
+      learn: '（梦痕：你知道那根柱子去了哪里。）', who: ['tanis'],
+      tell: { tanis: '（坦尼斯皱起了眉）一根柱子，从海底被挖走了……（他看着你）你知道它去了哪里，对不对？' } },
+    { id: 'fs_s5_letter', ch: ['s4', 's5'], when: function () { return !F('s5_going') && !F('laurana_taken'); }, place: '卡拉曼的城墙', title: '一封信',
+      hook: { ch: ['s5'], node: 's5_decide', sk: 'persuasion', note: '你在梦里看见过她读那封信的样子。你知道哪一句话她听得进去。这一次说服有优势。' },
+      text: '卡拉曼的城墙上，罗拉娜在读一封信。她读了一遍，又读了一遍。她的脸一点一点地白了下去。\n送信的人站在她身后，兜帽压得很低。兜帽底下，你看见了一点点——不是人的脸。',
+      learn: '（梦痕：你看见了送信的人的脸。）', who: ['tas', 'flint'],
+      tell: { tas: '（泰斯的眼睛瞪得圆圆的）不是人的脸？那是什么的脸？……我们得告诉罗拉娜！', flint: '（佛林特哼了一声）信？我从来不相信信。信又不会说话。' } },
+    { id: 'fs_s7_gate', ch: ['s6', 's7'], when: function () { return !F('s7_in') && !F('s7_captured'); }, place: '奈拉卡的城门', title: '木板上的一道',
+      hook: { ch: ['s7'], node: 's7_gate', sk: 'deception', note: '你在梦里听过那个军官笑。你知道他爱听什么。这一次欺瞒有优势。' },
+      text: '一座黑色的城门。城门口站着一个胖胖的大地精军官，手里拿着一块木板，每进去一个俘虏，他就在木板上画一道。\n一个俘虏一边走一边喊：“我死不了！我死不了！”\n军官哈哈大笑，笑得肚子都在抖。他在木板上画了两道。',
+      learn: '（梦痕：你知道他爱听疯话。）', who: ['tanis', 'caramon'],
+      tell: { tanis: '（坦尼斯想了想，看了一眼贝伦）“我死不了”……那倒是真话。', caramon: '（卡拉蒙咧开嘴笑了）装疯？这个我会！我装傻装了一辈子了。' } },
+    // ---- 插章 ----
+    { id: 'fs_d1_voice', ch: ['v1end', 'd1'], when: function () { return !F('d1_end'); }, place: '一个挤满了人的广场', title: '盔甲里面',
+      hook: { ch: ['d1'], node: 'd1_rumor', sk: 'insight', note: '你在梦里看见过面罩底下的光。这一次洞悉有优势。' },
+      text: '一个挤满了人的广场。一个龙人站在木箱上，喊着：“维敏纳德大人还活着！我亲眼看见的！”\n人群的后面，站着一个穿着黑色盔甲的人。他比维敏纳德矮一点。他的面罩底下，有一点金色的光，一闪一闪的。',
+      learn: '（梦痕：你看见了面罩底下的光。）', who: ['flint', 'tika'],
+      tell: { flint: '（佛林特皱起了眉）金色的光……（他没有说出那个名字，可是他看了一眼东边）', tika: '（蒂卡打了个哆嗦）穿着死人的盔甲？好吓人。' } },
+    { id: 'fs_d3_pass', ch: ['d2', 'd3'], when: function () { return !F('d3_saved') && !F('d3_sealed'); }, place: '通往山口的雪地', title: '最后一批',
+      hook: { ch: ['d3'], node: 'd3_stragglers', sk: 'athletics', note: '你在梦里背过她一次。你知道她有多轻。这一次运动检定有优势。' },
+      text: '雪地上，一长串难民往山口走。走在最后面的是一家人，背着一个老祖母。他们走得太慢了。\n山口的门开始合上了。你看见了那个老祖母的脸——她一直在笑，笑着跟背着她的儿子说：“放下我吧。”',
+      learn: '（梦痕：你知道她有多轻。）', who: ['riverwind'],
+      tell: { riverwind: '（河风看着雪地）平原上的老人也这么说。“放下我吧。”……我们从来不放。' } },
+    { id: 'fs_h1_mask', ch: ['w1', 'h1'], when: function () { return !F('h1_saw_kit') && !F('h1_end'); }, place: '城门外', title: '松了的面罩',
+      hook: { ch: ['h1'], node: 'h1_mask', sk: 'athletics', note: '你在梦里看见过面罩松开的那一边。这一次运动检定有优势。' },
+      text: '一个戴着龙盔的女人，背靠着城墙。她的面罩在打斗里松了，左边的扣子掉了，露出了一缕黑色的卷发。\n一头蓝龙在她头顶张开了翅膀。',
+      learn: '（梦痕：你看见了面罩松开的是哪一边。）', who: ['laurana'],
+      tell: { laurana: '（罗拉娜握紧了弓）一缕黑色的卷发……（她看着你，很久）你知道她是谁。' } },
+    { id: 'fs_m2_dice', ch: ['m1', 'm2'], when: function () { return !F('m2_io_helped') && !F('m2_done'); }, place: '一间点着蜡烛的屋子', title: '掷骰子的女人',
+      hook: { ch: ['m2'], node: 'm2_trap', sk: 'persuasion', note: '你在梦里看见过她掷骰子。你知道她这一次想输。这一次说服有优势。' },
+      text: '一间点着蜡烛的屋子。一个很好看的女法师坐在桌边，一个人掷骰子，掷了一次又一次。每一次都是她赢。\n她看起来很累。最后一次，她把骰子攥在手里，没有掷出去。“我想输一次，”她对着空空的屋子说，“就一次。”',
+      learn: '（梦痕：你知道她想输一次。）', who: ['raistlin'],
+      tell: { raistlin: '（雷斯林的嘴角动了一下）伊欧兰丝……她从来不输。（他沉默了一会儿）也许是该让她输一次了。' } }
+  );
+
+  // 真到了那一刻：这一次检定有优势（每个梦只用一次）
+  // 只认那一个选择里的检定：记下玩家刚刚回答的是哪一个选择
+  var D = DL.D, _answer = D.answer, lastNode = null;
+  D.answer = function (input) {
+    var p = DL.S && DL.S.pending; lastNode = p ? p.node : null;
+    try { return _answer.apply(this, arguments); } finally { lastNode = null; }
+  };
+  var HOOKS = DR.FS.filter(function (f) { return f.hook; });
+  var _check = DL.check;
+  DL.check = function (who, sk, dc, o) {
+    var S = DL.S;
+    if (who === 'player' && S && !S.dream && S.dreams && S.dreams.know) {
+      var used = S.dreams.hookUsed = S.dreams.hookUsed || {};
+      var h = HOOKS.filter(function (f) { return f.hook.ch.indexOf(S.chapter) >= 0 && f.hook.sk === sk && (!f.hook.node || f.hook.node === lastNode) && S.dreams.know[f.id] && !used[f.id]; })[0];
+      if (h) {
+        used[h.id] = S.time;
+        o = Object.assign({}, o || {}); o.adv = 1;
+        DL.out.sys('（梦痕）' + h.hook.note);
+      }
+    }
+    return _check.call(this, who, sk, dc, o);
+  };
+
+  // =========================== 冬天的影子，真的走到了 ===========================
+  // 第一卷末尾梦见的：雪中的高塔、会哭的森林、水晶球。第二卷里会认出来；第二卷那个森林里的梦，说服也有优势。
+  DR.FS.forEach(function (f) {
+    if (f.id === 'fs_winter') f.hook = { ch: ['w2'], node: 'w2_dream1', sk: 'persuasion', note: '会哭的树、红色的河——你在冬天的梦里见过这里。你知道这是梦。这一次说服有优势。' };
+  });
+  HOOKS = DR.FS.filter(function (f) { return f.hook; });
+  var told = function (who) { var k = DL.S.dreams && DL.S.dreams.know.fs_winter; return !!(k && k.told && k.told[who]); };
+  DL.EVENTS.unshift({ id: 'dr2_winter_forest', when: function (S) { return S.room === 'w2_forest' && DR.knows('fs_winter'); }, run: function () {
+    DL.out.narr('树在哭。你没有听错——风吹过来的时候，树皮的缝里渗出了一道一道的水，红的。河也是红的。\n你在第一个冬天的梦里，见过这片林子。');
+    if (here('laurana') && told('laurana')) DL.out.say('laurana', '（她看着那些树，声音很轻）你说过的。会哭的森林。……我的族人的传说，是真的。');
+    else if (here('laurana')) DL.out.say('laurana', '（她停住了脚步）这些树……在哭？');
+    DL.journal('西瓦那斯提的森林在哭。我在宝石里梦见过它，在第一个冬天。');
+  } });
+  DL.EVENTS.unshift({ id: 'dr2_winter_tower', when: function (S) { return S.room === 'w9_road' && DR.knows('fs_winter'); }, run: function () {
+    DL.out.narr('山口上，一座孤零零的高塔立在大雪里。城垛上，站着一个穿铠甲的人。\n是你在梦里见过的那一座。一模一样。');
+    if (here('sturm') && told('sturm')) DL.out.say('sturm', '（史东站住了。雪落在他的肩甲上）……父亲讲过的那座塔。你梦见的那座塔。（他很久没有说话）原来是这里。');
+    else if (here('sturm')) DL.out.say('sturm', '（史东抬头看着那座塔，看了很久）法王之塔。我小时候，父亲给我讲过它。');
+    DL.journal('法王之塔。我在第一个冬天的梦里见过它：雪中的高塔，城垛上站着一个穿铠甲的人。');
+  } });
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* 龙枪MUD · 后半部，同伴当场的反应（1.11）
+ * 第六卷以后，有 29 章里，你做的选择没有让任何一个同伴对你的看法动一下。
+ * 这里给其中有同伴在场的 23 章（有几章挂两处，走哪一条都有），各挑一个他会在意的选择：你说出口、或者动手的那一刻，他当场有一句话，好感 +1。
+ * 只在他真的在场的时候说；说了一次就不再说。 */
+(function (root) {
+  'use strict';
+  var DL = root.DL, W = DL.W, DLG = DL.DLG;
+  // [选择, 选项文字里的一段, [[谁, 说什么], …（第一个在场的人说）]]
+  var LIST = [
+    ['q2_vow', '我们会关上它', [['caramon', '（他重重地点了一下头）……我们会的。我欠雷斯一扇关上的门。'], ['tas', '对！关上！……（小声）关上之前，能让我看一眼吗？']]],
+    ['f6_gods', '你为什么要帮我们', [['palin', '（他小声说）……我也一直想问他。谢谢你替我问出来。']]],
+    ['g3_palin', '把卡拉蒙最后的话告诉帕林', [['palin', '（他低下头，很久）……他总是这样。连最后一句话，都在替别人操心。']]],
+    ['g3_palin', '让他安静一会儿', [['palin', '（帕林靠着墙坐了下来。过了很久，他小声说）……谢谢你没有问我。']]],
+    ['g4_try', '抓住帕林的胳膊', [['palin', '（他的胳膊僵了一下，又松了下来）……好。一起去。']]],
+    ['l2_tas', '你知道你最后会怎么做', [['tas', '（泰斯眨了眨眼睛）我知道。……我只是还不想知道。谢谢你没有骗我。']]],
+    ['l5_ring', '戒指里有毒', [['silvan', '（他把戒指摘了下来，手在抖）……我早该知道的。母亲从来不送我首饰。']]],
+    ['l7_retreat', '北门还开着', [['gerard', '（他咬着牙看了你一眼）……行。活下来的人，才能再打。']]],
+    ['n1_kneel', '挡在帕林身前', [['palin', '（他在你背后，声音在抖）你不用这样的。……可是，谢谢。']]],
+    ['n2_raist', '雷斯，等一下', [['tas', '（泰斯一把拉住你的袖子，眼睛红了）你也听见了？……卡拉蒙总是这么说。“雷斯，等一下。”']]],
+    ['n3_truth', '金属龙都去了哪里', [['mirror', '（明镜偏过头来）……你问到了我最想知道的事。']]],
+    ['n4_odila', '握住她的手', [['odila', '（奥迪拉握紧了你的手，握得生疼）……别松开。就一会儿。']]],
+    ['n5_gilthas', '把罗拉娜最后的话告诉他', [['alhana', '（阿尔瀚娜在一旁听着，轻轻点了一下头）谢谢你，把她的话带了这么远。'], ['silvan', '（西瓦诺西看着吉尔萨斯，又看着你）……她最后想的，还是别人。']]],
+    ['n5_gilthas', '她杀死了贝瑞尔', [['alhana', '（阿尔瀚娜闭了一下眼睛）……她是一个好姑姑。我的儿子说起过她。'], ['silvan', '（西瓦诺西低下了头）……我只见过她一次。她对我笑了。']]],
+    ['n6_rift', '握住他的手', [['tas', '（他的手很小，很暖）……别哭呀。坎德人最怕别人哭了。']]],
+    ['n7_offer', '冲上石台', [['gerard', '（杰拉德跟在你后面冲了上去，一边跑一边骂）疯子！……等等我！'], ['odila', '（奥迪拉笑了一声，拔出剑跟了上来）我就知道你会这么干。']]],
+    ['a4_ns', '跟我们走吧', [['rhys', '（里斯看着夜影，又看着你，轻轻点了点头）……他一个人走了很久了。']]],
+    ['a5_youth', '从凳子上拽开', [['rhys', '（里斯走过来，站到了你和那几个佣兵中间。他什么也没说，可他没有拦你。）']]],
+    ['a6_khas', '替他看棋', [['rhys', '（里斯没有回头）……左边那个骑士，我也看见了。谢谢。']]],
+    ['i1_gerard', '让夜影说', [['nightshade', '（夜影吓了一跳）我？……好吧。（他清了清嗓子，站直了一点）']]],
+    ['i6_zeboim', '他的弟弟刚死了', [['rhys', '（里斯没有说话。可他往你身边站近了一步。）'], ['nightshade', '（夜影攥住了里斯的袖子，冲着女神瞪了一眼——瞪完就躲到了你后面。）']]],
+    ['i6_lie', '他在骗你', [['nightshade', '（夜影停住了脚步，看着你，又看着那个人）……你说得对。死人也是这么说的。']]],
+    ['i6_tower', '接住她', [['rhys', '（里斯冲过来，和你一起托住了她。他的手很稳。）'], ['nightshade', '（夜影扑过来，抓住了她的袖子）抓住了！……我抓住了！']]],
+    ['b2_robes', '带着米娜往下跑', [['nightshade', '（夜影跑在最前面，一边跑一边回头喊）这边！死人说，这边没有人！']]],
+    ['b4_blood', '跪在杰拉德身边', [['gerard', '（杰拉德咬着牙，笑了一下）……按紧点。我还没打算死。']]],
+    ['b5_ask', '我们会陪她走到那里', [['rhys', '（里斯双手合十）……是的。我们会。']]],
+    ['b6_after', '跪在夜影身边', [['rhys', '（里斯在你对面跪了下来，把手放在了夜影的额头上。他一句话也没有说。）']]]
+  ];
+  var RE = DL.REACTS = { LIST: LIST, missing: [] };
+  LIST.forEach(function (e) {
+    var node = DLG[e[0]];
+    if (!node || !Array.isArray(node.options)) { RE.missing.push(e[0]); return; }
+    var opt = node.options.filter(function (o) { return typeof o.label === 'string' && o.label.indexOf(e[1]) >= 0; })[0];
+    if (!opt) { RE.missing.push(e[0] + '：' + e[1]); return; }
+    var go = opt.go;
+    opt.go = function (S) {
+      try {
+        var key = 'rx_' + e[0];
+        if (!(S.flags && S.flags[key])) {
+          // 在这个地方的；或者一直跟着你的（有些剧情直接把你“搬”到下一个地方，同伴在戏里，位置却没跟过来）
+          var with_ = function (id) { var n = S.npcs && S.npcs[id]; return W.present(id) || !!(n && n.met && n.follow && !(DL.CH.gone && DL.CH.gone(id))); };
+          var who = e[2].filter(function (x) { return with_(x[0]); })[0];
+          if (who) { DL.setFlag(key); DL.out.say(who[0], who[1]); DL.addRel(who[0], 'player', 1); }
+        }
+      } catch (x) { /* 只是一句话 */ }
+      return go ? go.apply(this, arguments) : null;
+    };
+  });
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* 龙枪MUD · 现代人的眼光，往后带（1.11）
+ * ［现代人］的选项一共 8 个，全在第一卷。可你是一个从书外面来的人——这件事不该到了第二卷就没人记得。
+ * 这里给第二到十三卷每卷两三个：一句只有现代人才会说的话，或者一件只有现代人才会做的事。
+ * 说完、做完，事情接着照原来那个选项往下走（只多一件事，不改大事）。第一次选，和第一卷一样，得一点灵感。
+ * 第七卷、第十二卷几乎没有检定，这两卷的几个，要掷一下。 */
+(function (root) {
+  'use strict';
+  var DL = root.DL, W = DL.W, DLG = DL.DLG;
+  var F = function (k) { return !!(DL.S && DL.S.flags && DL.S.flags[k]); };
+  var here = function (id) { return W.present(id); };
+  var ML = DL.MODERN_LATE = { LIST: [], missing: [] };
+
+  ML.LIST = [
+    // ---- 第二卷 ----
+    { id: 'w1_lawyer', vol: 2, node: 'w1_trial', use: 2, label: '“我要求见律师。”',
+      ok: '大厅里静了一下。领主看着你，像看着一个说胡话的人：“……什么？”\n“就是一个替我们说话的人。”你说。\n坦尼斯在你身后叹了一口气，往前走了一步。' },
+    { id: 'w8_object', vol: 2, node: 'w8_trial', use: 1, label: '“我反对。控方的证人，就是原告本人。”',
+      ok: '骑士们面面相觑。冈萨爵士用手挡住了嘴——你看见他的胡子在抖。\n“……反对什么？”德瑞克问。\n“反对你一个人，又当原告，又当证人。”你说，“在我们那里，这叫回避。”\n冈萨咳嗽了一声：“准则里……好像是有这么一条。你翻给他们看。”' },
+    // ---- 第三卷 ----
+    { id: 's2_pencil', vol: 3, node: 's2_astinus', use: 1, label: '“您试试铅笔？”',
+      ok: '阿斯提纳斯抬起了头。书房里的美学僧们后来说，那是他们第一次看见他在写字的时候抬头。\n“……铅笔，”他重复了一遍。他从桌子底下拿出一根炭条，在纸上划了一道。炭灰落在纸上，也散开了，不见了。\n“不是笔的事，”他说，“是你的事。”' },
+    { id: 's5_scam', vol: 3, node: 's5_letter', use: 0, label: '“这封信没写日子，没写只有他才知道的事，还催你今晚一个人去。在我们那里，这叫诈骗。”', sk: 'investigation', dc: 13,
+      ok: '罗拉娜又看了一遍那封信。这一次，她看得很慢。\n“……他从来不叫我‘亲爱的’，”她小声说，“他叫我罗拉娜。”', fail: '罗拉娜摇了摇头：“你不认识他的字。我认识。”',
+      rx: [['laurana', 1]] },
+    // ---- 第四卷 ----
+    { id: 't6_road', vol: 4, node: 't6_kp', use: 0, label: '“我们那里有一句老话：通往地狱的路，是用好意铺成的。”',
+      ok: '大殿里的光好像暗了一下——也许是你的错觉。神王身边一个年轻的牧师偷偷看了你一眼，又飞快地低下了头。\n克丽珊娜没有看你。可她攥着袖口的手指，收紧了。' },
+    { id: 't5_sip', vol: 4, node: 't5_kiiri', use: 1, label: '“你这是脱水了。小口喝，慢慢喝，别一口气灌下去。”',
+      ok: '奇莉瞪着你：“你是医者？”\n“不是。我们那里的人都知道。”你把水递给她。她盯着你看了很久，然后，真的一小口一小口地喝了起来。', rx: [['kiiri', 1]] },
+    // ---- 第五卷 ----
+    { id: 'x6_count', vol: 5, node: 'x6_duncan', use: 1, label: '“这一仗打下去，两边要死几万人。打仗花的钱，够把门外的人养十年。”',
+      ok: '邓肯王的胡子抖了一下：“你在算账？”\n“我在算人。”你说，“账，是你们的书记官算的。”\n大殿里很安静。几个矮人将军互相看了一眼。' },
+    { id: 'x4_boil', vol: 5, node: 'x4_dying', use: 1, label: '“别喝那口井里的水——病多半就是从那里来的。先烧开。”',
+      ok: '村子里剩下的人看着你，像看着一个疯子。可你还是生起了火，烧开了一锅水，等它凉了，才一碗一碗地端过去。\n克丽珊娜看着你做这些。“……你知道这种病？”她问。\n“我们那里，几百年前也有过。”', rx: [['crysania', 1]] },
+    // ---- 第六卷 ----
+    { id: 'q1_branch', vol: 6, node: 'q1_corpse', use: 0, label: '“这叫平行时间线。我们那里的书上是这么写的——这个世界还没有发生。我们还能回去。”',
+      ok: '泰斯的眼睛一下子亮了：“平行的时间线！像两条平行的路？那我们能不能走到另一条上去看看？”\n卡拉蒙没有理他。可是他从那具骨头旁边站了起来。', rx: [['tas', 1]] },
+    { id: 'q5_brace', vol: 6, node: 'q5_crash', use: 1, label: '“抱头！弯腰！——我们那里坐会飞的东西，都是这么教的！”',
+      ok: '泰斯学着你，抱着头弯下了腰，一边弯一边喊：“这是什么姿势？这是在给谁行礼？”\n城堡砸了下来。', rx: [['tas', 1]] },
+    // ---- 第七卷（要掷）----
+    { id: 'f2_pressure', vol: 7, node: 'f2_protector', use: 0, label: '“它像一个憋着气的罐子。敲开它，里面的东西不会一点一点出来——会一下子全出来。”', sk: 'arcana', dc: 13,
+      ok: '守护者看着你，慢慢地点了点头。“……一个憋着气的罐子，”他重复了一遍，“决策者听不懂这个。可是我听得懂。”', fail: '守护者皱起了眉：“罐子？它是石头。”' },
+    { id: 'f4_barefoot', vol: 7, node: 'f4_escape', use: 0, label: '“先把鞋脱了，挂在脖子上。光着脚，抓得牢。”', sk: 'athletics', dc: 13,
+      ok: '你们光着脚，顺着排水管滑到了屋顶上。邬霞落地的时候看着你：“……你以前也逃过跑？”\n“没有。电影里看的。”', fail: '你的手一滑，最后一人高是摔下去的。邬霞捂住了嘴，没有笑出声。',
+      rx: [['usha', 1]] },
+    { id: 'f7_tally', vol: 7, node: 'f7_cell', use: 1, label: '“坐牢的时候，最要紧的是记日子。来，在墙上划一道。”',
+      ok: '帕林看着你在墙上划了一道，愣了一下，笑了——这是他这几天第一次笑。\n“我伯父也会这么干吗？”\n“他会划得比我直。”', rx: [['palin', 1]] },
+    // ---- 第八卷 ----
+    { id: 'g5_frog', vol: 8, node: 'g5_silvan', use: 1, label: '“在我们那里，这叫温水煮青蛙：森林一点一点地死，城里的人自己不知道。烧水的，就是那个格劳柯斯。”',
+      ok: '罗兰抬起头看着你。“……青蛙，”他说，像是第一次听见这种说法，“可是对。就是这样。”\n西瓦诺西看着自己的手，好像想从上面看出一点什么来。' },
+    { id: 'g7_salt', vol: 8, node: 'g7_freed', use: 0, label: '“先别搬——让他们平躺，脚垫高，一点一点喂盐水。”', sk: 'medicine', dc: 12,
+      ok: '你让他们一个一个平躺下来，把脚垫高，往他们嘴里一点一点地喂盐水。有一个已经喘不上气了——你按着他的胸口，按了很久，他咳了一声，又开始喘气了。\n罗兰看着你，什么也没有问。', fail: '你忙了很久。他们还是那么虚弱，连眼睛都睁不开。' },
+    // ---- 第九卷 ----
+    { id: 'l4_delay', vol: 9, node: 'l4_trial', use: 0, label: '“我申请延期审理。新的证据，正在路上。”',
+      ok: '老骑士眨了眨眼睛：“……延期？”\n“就是先别判，”你说，“等一个人来作证。她已经在路上了——带着一整支军队。”' },
+    { id: 'l6_listen', vol: 9, node: 'l6_skie', use: 1, label: '“你想说说她吗？我们那里的人，失去了一个人，会找人说说话。”',
+      ok: '史凯看了你很久很久。然后，那头老蓝龙开始说话了——说那个夏天，说她的笑，说她骑在他背上的时候，从来不抓缰绳。\n他说了很久。你一直听着。' },
+    // ---- 第十卷 ----
+    { id: 'n3_invasive', vol: 10, node: 'n3_truth', use: 1, label: '“这些霸主，像是外来的物种。没有天敌，所以长得这么大。”', sk: 'nature', dc: 13,
+      ok: '史凯的眼睛睁大了一点：“外来的……是的。它们不是从这个世界的蛋里出来的。”\n明镜偏过头，像是第一次听见这种说法。', fail: '史凯又闭上了眼睛：“我听不懂你在说什么。”',
+      rx: [['mirror', 1]] },
+    { id: 'n2_selfie', vol: 10, node: 'n2_huma', use: 1, label: '“修玛……能跟你合一张影吗？”', cond: function (S) { return (S.counters && S.counters.battery || 0) > 0 && DL.W.has('phone'); },
+      ok: '修玛愣了一下，然后笑了——那个笑，和书上写的一模一样。你举起手机。“咔嚓。”\n照片上什么也没有。只有一片很亮很亮的光。',
+      run: function (S) {
+        S.counters.battery = Math.max(0, (S.counters.battery || 0) - 1);
+        S.photos = S.photos || [];
+        if (!S.photos.some(function (p) { return p.id === 'p_huma'; })) S.photos.push({ id: 'p_huma', title: '修玛', text: '照片上什么也没有，只有一片很亮的光。你知道他就在里面。', ch: S.chapter, t: S.time });
+        DL.out.sys('（相册里多了一张：修玛。电量 ' + S.counters.battery + '%。）');
+      }, rx: [['tas', 1]] },
+    // ---- 第十一卷 ----
+    { id: 'a3_eat', vol: 11, node: 'a3_rhys', use: 0, label: '“先去吃饭。我们那里的人说：天大的事，吃了饭再说。”',
+      ok: '里斯看了你一眼。过了一会儿，他站了起来。阿塔比他先跑到了门口，回头看着你们，尾巴摇个不停。', rx: [['rhys', 1]] },
+    { id: 'a6_gambit', vol: 11, node: 'a6_move', use: 0, label: '“弃一个兵，换他的后。我们那里管这个叫弃子争先。”',
+      ok: '里斯的手指停在棋盘上方，停了很久。然后，他把那个小兵推了出去。\n对面的那个人，第一次皱起了眉头。' },
+    // ---- 第十二卷（要掷）----
+    { id: 'i1_evidence', vol: 12, node: 'i1_gerard', use: 0, label: '“警长，查案子先看证据，不看人。去那座墓里看一眼——证据都在那里。”', sk: 'persuasion', dc: 13,
+      ok: '杰拉德看了你很久：“……证据。”他把这个词在嘴里转了一圈，“行。我去看一眼。看完了，你再接着说服我。”', fail: '杰拉德摇了摇头：“我在那座墓门口站了两年。我不用看。”',
+      rx: [['gerard', 1]] },
+    { id: 'i2_origin', vol: 12, node: 'i2_mina', use: 1, label: '“我们那里的孩子长大了，会去找亲生的父母。不是为了回去——是为了知道自己从哪里来。”', sk: 'insight', dc: 13,
+      ok: '米娜看了你很久：“……从哪里来。”她把这几个字说得很慢，“从来没有人问过我，想不想知道。”', fail: '米娜移开了眼睛：“我从金月的手里来。这就够了。”' },
+    // ---- 第十三卷 ----
+    { id: 'b3_sweep', vol: 13, node: 'b3_rhys', use: 1, label: '“我们那里有一种说法：难过的时候，就找点活儿干。”',
+      ok: '院长看了你一眼，笑了，把墙边的另一把扫帚递了过来。\n你们三个人一起扫地，谁也没有说话。扫到天窗底下的时候，里斯的肩膀松了下来。', rx: [['rhys', 1]] },
+    { id: 'b4_firebreak', vol: 13, node: 'b4_temple', use: 2, label: '“先把挨着神殿的那间木棚子拆了！断了火路，火就过不来！”', sk: 'persuasion', dc: 13,
+      ok: '几个拎着水桶的人愣了一下，看着你——然后真的抡起了斧子，把那间木棚子砍倒了。火烧到那里，停住了。', fail: '人群乱成了一团，没有人听见你在喊什么。' }
+  ];
+
+  var SKCN = function (sk) { return (DL.R && DL.R.SKILLS && DL.R.SKILLS[sk] && DL.R.SKILLS[sk].cn) || sk; };
+  ML.LIST.forEach(function (m) {
+    var node = DLG[m.node];
+    if (!node || !Array.isArray(node.options) || !node.options[m.use]) { ML.missing.push(m.id); return; }
+    var orig = node.options[m.use], key = 'md_' + m.id;
+    node.options.push({
+      label: m.label, modern: true, checkLabel: m.sk ? SKCN(m.sk) + ' DC ' + m.dc : undefined,
+      cond: function (S, a) { return !F(key) && (!orig.cond || orig.cond(S, a)) && (!m.cond || m.cond(S)); },
+      go: function (S, a) {
+        DL.setFlag(key);
+        // 第一次选［现代人］的选项：一点灵感（和第一卷一样）
+        try { var ins = S.insp = S.insp || { n: 0, got: 0, used: 0 }; ins.mod = ins.mod || {}; if (!ins.mod[key]) { ins.mod[key] = 1; DL.INSP && DL.INSP.add(1, '一个从书外面来的人'); } } catch (x) { /* 灵感只是锦上添花 */ }
+        var ok = true;
+        if (m.sk) ok = !!DL.check('player', m.sk, m.dc, { label: m.label }).ok;
+        DL.out.narr(ok ? m.ok : m.fail);
+        if (m.run) m.run(S, ok);
+        if (ok && m.rx) m.rx.forEach(function (x) { if (here(x[0])) DL.addRel(x[0], 'player', x[1]); });
+        return orig.go ? orig.go.apply(this, arguments) : null;
+      }
+    });
+  });
+
+  // =========================== 照片：后来的人 ===========================
+  var FUN = DL.FUN; if (!FUN || !FUN.PORTRAIT) return;
+  var P = FUN.PORTRAIT;
+  P.crysania = '克丽珊娜端端正正地坐着，像在等画师。拍完，她看了一眼：“……我的头发乱了。”她伸手去理，又停住了，“算了。帕拉丁不看头发。”';
+  P.dalamar = '达拉马对着镜头挑了一下眉毛：“你们那个世界的法术？很粗糙。”可他让你又拍了一张，从左边。';
+  P.palin = '帕林握着法杖，站得笔直，想站得像他舅舅。照片上的他，像一个很紧张的学徒。他自己也看出来了。';
+  P.usha = '邬霞冲着镜头做了一个鬼脸，又飞快地换成了一个笑脸：“用这张。……不对，用第一张。”';
+  P.steel = '史钢没有笑，也没有躲。他看着镜头，像看着一个对手。“我母亲……”他停了一下，“她会喜欢这种东西的。”';
+  P.gerard = '杰拉德板着脸，把头盔夹在胳膊底下：“拍完了没有？”照片上，他的耳朵是红的。';
+  P.odila = '奥迪拉一把搂过杰拉德的脖子，凑到镜头前：“两个人的！”杰拉德想挣开，没有挣开。';
+  P.mina = '照片上，米娜的琥珀色眼睛看着镜头，一眨也不眨。你后来看了很多遍，总觉得照片里的她，在看你身后的什么东西。';
+  P.rhys = '里斯双手合十，对着镜头欠了欠身，像对一个人行礼。阿塔也挤了进来，照片上只有它的一只耳朵。';
+  P.nightshade = '夜影一直往镜头后面躲：“它会把我的影子收走吗？……死人说不会。好吧。”照片上，他笑得很傻，也很开心。';
+  P.atta = '阿塔歪着头看着手机，两只耳朵竖得高高的。照片上是一条非常认真的狗。';
+  P.alhana = '阿尔瀚娜看了一会儿镜头：“在西瓦那斯提，只有死去的国王才会被画下来。”可她还是让你拍了。';
+  P.silvan = '西瓦诺西理了理衣领，站得笔直，像一个国王。拍完了，他小声问你：“……我看起来像吗？”';
+  P.gilthas = '吉尔萨斯本来在看一卷文书，抬起头的那一刻，你按下了快门。照片上的他很累，也很年轻。';
+  P.kerian = '凯瑞安拉开弓，对着镜头：“它会跑吗？”你说不会。她看起来有点失望。';
+  P.mirror = '明镜看不见镜头，可他把脸转向了快门响的地方：“我在里面吗？我是什么样子的？”你告诉了他。他听得很认真。';
+  P.medan = '梅丹元帅站在花园里，没有动，也没有问。照片上，他身后罗拉娜的花开得很好。';
+  P.jenna = '珍娜对着镜头理了理红袍，笑了：“魔法能做的事比这个多。不过这个不用念咒。”';
+  P.dougan = '道根·红锤挺着肚子，摆了一个他以为很威风的姿势：“拍胡子！拍我的胡子！”';
+  P.kiiri = '奇莉看着那块发光的小石板，皱着眉：“它里面有海吗？”你给她看了一张海的照片。她看了很久。';
+  P.pheragas = '菲拉格斯一把把卡拉蒙拽进了镜头里，两个人一起鼓起了胳膊。照片上全是胳膊。';
+  // 过了很多年，再拍一次：同一个人，换一张
+  FUN.LATER = {
+    caramon: [[4, '卡拉蒙使劲吸着肚子，憋得满脸通红。拍完，他长长地吐出一口气：“……别给蒂卡看。”'], [7, '卡拉蒙老了，胖了，笑起来还是那个样子。他想鼓一下胳膊上的肌肉，鼓到一半，自己先笑了：“算了。”']],
+    raistlin: [[4, '雷斯林没有转过脸。黑袍，沙漏一样的眼睛，直直地看着镜头。“拍吧，”他说，“这一次，我让你拍。”']],
+    tanis: [[7, '坦尼斯的胡子白了一半。他看了一会儿照片：“……我什么时候变成这个样子了？”']],
+    tas: [[7, '泰斯一点也没变。他看着照片，又看着你：“你也一点都没变！……这不公平，你应该老一点的。”']],
+    laurana: [[8, '罗拉娜看着镜头，笑得很淡。阳光底下，她的头发几乎是白的。她看了很久那张照片：“……坦尼斯会喜欢这一张的。”']],
+    goldmoon: [[9, '照片上是一个年轻的金月。她看着它，像看着一个陌生人：“……这是谁？”']]
+  };
+  ML.laterKey = function (id) {
+    var L = FUN.LATER[id]; if (!L || !DL.S) return null;
+    var v = DL.CH.VOL(DL.S.chapter), pick = null;
+    L.forEach(function (x) { if (v >= x[0]) pick = x; });
+    return pick ? { id: 'p_' + id + '_' + pick[0], text: pick[1] } : null;
+  };
+  // 拍照：后来的那个他，算一张新的
+  var _photo = FUN.photo;
+  FUN.photo = function (q) {
+    var S = DL.S, e = q && W.find(q, { items: false, details: false, units: false });
+    var lk = e && e.kind === 'npc' && ML.laterKey(e.id);
+    if (!lk) return _photo.apply(this, arguments);
+    var base = P[e.id], olds = (S.photos || []).filter(function (p) { return p.id === 'p_' + e.id && !p.old; });
+    // 早年拍过的那一张，先换个名字，这一次就不算“拍过了”；拍完换回来
+    olds.forEach(function (p) { p.id = 'p_' + e.id + '_early'; });
+    var before = (S.photos || []).length;
+    P[e.id] = lk.text;
+    try {
+      if ((S.photos || []).some(function (p) { return p.id === lk.id; })) { DL.out.narr('你已经给' + DL.nameOf(e.id) + '拍过了。'); return; }
+      _photo.apply(this, arguments);
+      var ps = S.photos || [];
+      if (ps.length > before) { var np = ps[ps.length - 1]; np.id = lk.id; np.title = DL.nameOf(e.id) + '的照片（' + (DL.CH.VOL(S.chapter) >= 7 ? '很多年以后' : '几年以后') + '）'; }
+    } finally {
+      P[e.id] = base;
+      olds.forEach(function (p) { p.id = 'p_' + e.id; });
+    }
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* 龙枪MUD · 从某一卷开始（1.11）
+ * 121 章只有一个入口：喜欢《灵魂之战》的读者，要先走七十多章。1.5 提过，当时没做。
+ * 现在标题画面多一个“从某一卷开始”：每个系列的第一卷都能直接开局——
+ *   第四卷《龙枪传奇》、第七卷《夏焰之巨龙》、第八卷《灵魂之战》、第十一卷《黑暗门徒》。
+ * 角色照常创建。醒过来之前，书问你几个问题，补上前情：你和谁走得最近、宝石是什么脾气、前面那几卷里你改过的几件事。
+ *   这几件事，都是后面的章节真的会读到的（史东有没有活下来、雷斯林记不记得你……）。
+ * 然后：等级、钢币、药水按那一卷开头的样子给齐，前几卷书上的结局照书上算，直接从那一卷的第一章开始。 */
+(function (root) {
+  'use strict';
+  var DL = root.DL, DLG = DL.DLG, CH = DL.CH, G = DL.game;
+  var SV = DL.STARTVOL = {};
+
+  // 前几卷书上的结局：后面的章节会读到的那几个，照书上算
+  var CANON = {
+    after3: ['s8_closed', 'berem_home', 'd5_hammer', 'h2_done']
+  };
+  var Q_GEM = { text: '口袋里那颗灰色的石头，跟了你好几卷书。这些年，它跟着你学会了什么脾气？',
+    opts: [
+      ['温柔的——你总是用它让人心软一点', function (S) { S.gemPast = { 温情: 6 }; }],
+      ['爱闹的——你用它干过很多荒唐事', function (S) { S.gemPast = { 荒唐: 6 }; }],
+      ['说真话的——你总是用它逼出真话', function (S) { S.gemPast = { 坦白: 6 }; }],
+      ['还没有脾气——你很少用它', function (S) { S.gemPast = null; }]
+    ] };
+  function close(list) {
+    return { text: '前面那几卷书里，你一直和他们在一起。你和谁走得最近？',
+      opts: list.map(function (id) { return [function () { return DL.nameOf(id); }, function (S) { SV.befriend(S, id); }]; }) };
+  }
+  var Q_STURM = { text: '第二卷，法王之塔的那个黎明。史东·布莱特布雷德——',
+    opts: [['照书上写的那样，死在了城墙上', function () {}], ['活了下来。那一天，你在他身边', function (S) { S.flags.sturm_lives = true; }]] };
+  SV.POINTS = [
+    { ch: 't1', vol: 4, series: '龙枪传奇', name: '第四卷 · 双子神殿',
+      blurb: '大战过去两年。卡拉蒙醉倒在最后家园旅店里，一个帕拉丁的女祭司找上门来，要去帕兰萨斯找他的弟弟。',
+      qs: [close(['caramon', 'tas', 'tanis', 'tika', 'goldmoon']), Q_GEM, Q_STURM,
+        { text: '第一卷，帕克斯·塔卡斯的那头老银龙——',
+          opts: [['照书上写的那样，和余烬同归于尽', function () {}], ['你叫住了她。她活了下来，留在了孩子们身边', function (S) { S.flags.matafleur_lives = true; }]] }] },
+    { ch: 'f1', vol: 7, series: '夏焰之巨龙', name: '第七卷 · 夏焰之巨龙',
+      blurb: '又过了二十多年。卡拉蒙的小儿子帕林要去参加法师的试炼；一个年轻的黑暗骑士，来索拉斯给史东的墓献上一朵花。',
+      qs: [close(['tanis', 'caramon', 'tas', 'laurana', 'dalamar']), Q_GEM, Q_STURM,
+        { text: '第六卷，奇蒂拉死的那一天。她倒下之前——',
+          opts: [['什么也没有说', function () {}], ['把史钢的事，告诉了卡拉蒙', function (S) { S.flags.q6_kit_son = true; }]] },
+        { text: '雷斯林最后一次看见你的时候——',
+          opts: [['不记得你是谁', function () {}], ['记得你。第五卷，在索巴丁，你让他的闪电拐了一个弯', function (S) { S.flags.raist_remembers = true; }]] }] },
+    { ch: 'g1', vol: 8, series: '灵魂之战', name: '第八卷 · 落日之巨龙',
+      blurb: '混沌之战过去了三十八年，众神离开了。一个风暴之夜，索拉斯的大树底下，一个坎德人从不该出现的地方掉了下来。',
+      qs: [close(['caramon', 'tas', 'laurana', 'goldmoon', 'palin']), Q_GEM,
+        { text: '第七卷的最后，泰斯跳进混沌脚底下的那一刻——',
+          opts: [['你没有来得及', function () {}], ['你伸出了手。指尖碰到了他那件五颜六色的衣服', function (S) { S.flags.f8_reached = true; }]] }] },
+    { ch: 'a1', vol: 11, series: '黑暗门徒', name: '第十一卷 · 琥珀与灰烬',
+      blurb: '众神回来了，米娜失去了她的女神。一个马哲理的修士，带着一条狗，要去找他走丢的弟弟。',
+      qs: [close(['gerard', 'palin', 'mina']), Q_GEM] }
+  ];
+  SV.BY = {}; SV.POINTS.forEach(function (p) { SV.BY[p.ch] = p; });
+
+  SV.befriend = function (S, id) {
+    S.rel[id] = S.rel[id] || {};
+    S.rel[id].player = Math.max(S.rel[id].player || 0, 3);
+    S.flags['sv_close_' + id] = true;
+  };
+
+  // 问题：一个一个问，问完了直接开始
+  SV.POINTS.forEach(function (p) {
+    p.qs.forEach(function (q, i) {
+      DLG['sv_' + p.ch + '_' + i] = {
+        noCancel: true,
+        text: (i === 0 ? '石头在你手心里转了一下。你听见了翻书的声音——一页一页，翻得很快，翻过了' + (p.vol - 1) + '本书。\n它停在了《' + CH.VOL_NAMES[p.vol - 1] + '》的第一页。\n“前面的事，”它好像在问你，“你还记得多少？”\n\n' : '') + q.text,
+        prompt: '你记得……',
+        options: q.opts.map(function (o) {
+          return { label: o[0], go: function (S) { o[1](S); return i + 1 < p.qs.length ? 'sv_' + p.ch + '_' + (i + 1) : SV.jump(p.ch); } };
+        })
+      };
+    });
+  });
+
+  // 新开局，从某一卷开始
+  SV.next = null;
+  SV.newGame = function (ch) {
+    if (!SV.BY[ch]) return G.newGame();
+    SV.next = ch;
+    try { G.newGame(); } finally { SV.next = null; }
+    if (DL.S) DL.S.startAt = ch;
+  };
+  // 开场：旧书店还是那家，只是这一次，店主把第几本推到了你面前
+  var PRO = DL.PROLOGUE, _intro = PRO.intro, _wake = PRO.wake;
+  PRO.intro = function () {
+    var ch = SV.next; if (!ch) return _intro.apply(this, arguments);
+    var p = SV.BY[ch];
+    DL.out.chapter('序章 · 灰色的石头', '');
+    DL.out.cut('雨下得没完没了。你在地铁站旁边那家快要关门的旧书店里躲雨。\n柜台上摊着一套旧书，十三本，书脊上的字都磨没了。店主是个话很少的老头。他看了你一眼，从里面抽出一本，推到了你面前——第' + ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二', '十三'][p.vol] + '本。\n“从这儿读也行，”他说，“前面的事，书会告诉你。”');
+    DL.out.cut('你翻开书。有什么东西从书页之间滑了出来，落进了你的手心——一颗灰色的石头，凉的，又好像有一点温度。\n那天夜里，你把石头放在床头。手机屏幕亮着：23:47。');
+    DL.D.show('cg_start');
+  };
+  PRO.wake = function () {
+    var S = DL.S, ch = S && S.startAt;
+    if (!ch || !SV.BY[ch]) return _wake.apply(this, arguments);
+    DL.D.show('sv_' + ch + '_0');
+  };
+
+  // 直接开始那一卷：等级、东西、前几卷书上的结局
+  SV.jump = function (ch) {
+    var S = DL.S, P = S.player, p = SV.BY[ch], idx = CH.ORDER.indexOf(ch);
+    S.mode = 'play';
+    S.chapter = CH.ORDER[idx - 1];
+    S.time = 1440 * 2 + 8 * 60 + 50;
+    S.lastLongRest = S.time - 2 * 60;
+    S.counters.battery = 12;
+    S.xp = Math.max(S.xp || 0, (DL.R.XP_TABLE && DL.R.XP_TABLE[DL.R.XP_TABLE.length - 1]) || 6500);
+    // 等级：这一卷开头的等级。升级时要选的（属性、法术），照推荐的选；选完不留在正文里
+    var need = 1;
+    Object.keys(CH.LEVEL).forEach(function (k) { if (CH.ORDER.indexOf(k) >= 0 && CH.ORDER.indexOf(k) <= idx) need = Math.max(need, CH.LEVEL[k]); });
+    var j0 = (S.journal || []).length;
+    if (P.level < need) {
+      S.lv = { to: need };
+      DL.LV.step();
+      var guard = 0;
+      while (S.pending && /^lv_/.test(S.pending.node) && guard++ < 200) DL.D.answer('1');
+    }
+    S.lv = null; S.lvPick = null; S.pending = null;
+    if (P.spells && DL.LV.finishWizard) DL.LV.finishWizard();
+    if (S.journal && S.journal.length > j0) S.journal.length = j0;
+    P.hp = P.hpMax;
+    // 东西：钢币和几瓶药水
+    for (var i = 0; i < 3; i++) S.inv.push('potion');
+    // 前几卷书上的结局
+    if (p.vol > 3) CANON.after3.forEach(function (f) { S.flags[f] = true; });
+    S.flags.party_formed = true;
+    S.flags['sv_from_' + p.vol] = true;
+    // 宝石的脾气：问题里答的，当作早就有了（不然开局第一下，它会在选项底下“刚刚学会”）
+    var dir = S.gemPast && Object.keys(S.gemPast)[0];
+    if (dir) { S.gemMood = { dir: dir, at: S.time, n: 1 }; S.gemMoodHist = [dir]; }
+    DL.out.clear();
+    // 章名底下，先说一句从哪里开始的（章节一开头就有对话，说在后面就落到选项底下去了）
+    var O = DL.out, _chap = O.chapter;
+    O.chapter = function () { var r = _chap.apply(this, arguments); O.chapter = _chap; O.sys('（你从' + p.name + '开始。前面几卷的事照书上算；想知道发生过什么，可以' + DL.tok.cmd('翻书') + '。' + (dir && DL.GEMMOOD ? '宝石的脾气：' + DL.GEMMOOD.NAME[dir] + '。' : '') + '）'); return r; };
+    try { CH.begin(ch); } finally { O.chapter = _chap; }
+    DL.journal('我是从《' + CH.VOL_NAMES[p.vol - 1] + '》开始读的。前面的事，书上都写着——我好像也都记得。');
+    if (G.refresh) G.refresh();
+    return null;
+  };
+
+  // 宝石的脾气：前几卷留下的（问题里答的），也算进去
+  var GM = DL.GEMMOOD;
+  if (GM && GM.counts) {
+    var _counts = GM.counts;
+    GM.counts = function (S) {
+      var c = _counts.apply(this, arguments), past = (S || DL.S || {}).gemPast;
+      if (past) Object.keys(past).forEach(function (d) { if (c[d] != null) c[d] += past[d]; });
+      return c;
+    };
+  }
 })(typeof window !== 'undefined' ? window : globalThis);
 
 </script>
@@ -54857,6 +56210,16 @@ button.wf-c:hover { border-color: var(--ember); }
   // 更新说明、试玩记录
   // =====================================================================
   UX.NOTES = [
+    ['1.11 · 书上写着', [
+      '书上写着：宝石凉下来的那一章，书上写着要走的那个人在你身边时，可以“书上写着”——把那一页念给他听、陪着他，或者替他做一件小事。事情照样发生，变的是他怎么面对；“他们走的时候”会记下这一笔。十五处都有。',
+      '宝石留下的记号，故事认账了：以前用戏剧效果留下的 44 个记号，后面没有一处接上。现在每一个都在后面有一处着落——一句台词、一个细节、一段回想。',
+      '后半部的边上的事：第六到十二卷补了 17 处，每卷到 4 处，大多要掷一下——着火的小巷里的一家人、法王之塔马厩里的孩子、米娜囚车里的精灵小姑娘……成了的，章末记一笔，命运之书多一个节点，卷末回头再提一句。',
+      '第二、三卷和插章的梦：20 扇手写的门（没走的那条路），11 个前路之影——梦见过的，真到了那一刻，那一次检定有优势。第一卷末尾梦见的“冬天的影子”，到了会哭的森林和法王之塔，你会认出来。',
+      '后半部的同伴白天也开口：第六卷以后每卷多了五段路上的话（一章里还没人说过话，走过两个地方就会有人开口；短休的时候也会聊几句）；23 章里，你的一个选择会让在场的同伴当场说一句。',
+      '现代人的眼光往后带：第二到十三卷每卷两三个［现代人］选项（“我要求见律师”“您试试铅笔？”“温水煮青蛙”……）。后来的人物都有了手写的照片；过了很多年，再给老朋友拍一张，也算新的一张。',
+      '从某一卷开始：标题画面多了一个按钮。第四、七、八、十一卷——每个系列的第一卷都能直接开始。醒来之前回答几个前情的问题（你和谁走得最近、宝石的脾气、史东有没有活下来……），后面的章节会读到。',
+      '修：法师升到 13 级时，七环法术不在“抄录法术”的选项里，升级会停住，第四卷开不了。'
+    ]],
     ['1.10.3 · 困了就能睡', [
       '修了一个卡关：离上次长休不到 16 小时，“长休”会被一口回绝（“你上一次睡下还没多久，现在根本睡不着”）。可剧情常常就靠这一觉往下走——弗洛萨姆白天睡过一觉，庆典那一夜“回后院长休，等开船”就睡不了，卡在后院。',
       '现在能睡的地方随时都能“长休”：剧情要接管这一觉的，当场就接着往下走；没有剧情的，先熬到能睡的时候（离上次满 16 小时），再睡 8 小时，跟营地里守夜一样。按钮栏上的“长休”也不再因为刚睡过就藏起来。',
@@ -56125,6 +57488,50 @@ button.wf-c:hover { border-color: var(--ember); }
       return o;
     };
   }
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* 龙枪MUD · 1.11 界面：从某一卷开始
+ * 标题画面“开始新的旅程”下面多一个“从某一卷开始”。点开：四个系列的第一卷，各一句前情。选一卷，照常创建角色，
+ * 醒过来之前回答几个问题（js/data/startvol.js），然后直接从那一卷的第一章开始。 */
+(function (root) {
+  'use strict';
+  var DL = root.DL, UI = DL && DL.ui, doc = root.document;
+  if (!UI || !doc || !DL.STARTVOL) return;
+  var SV = DL.STARTVOL;
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  UI.openStartVol = function () {
+    var h = '<p class="note">每个系列的第一卷都可以直接开始。角色照常创建；醒过来之前，书会问你几件前面发生过的事——你和谁走得最近、宝石是什么脾气、你改过的几件事。前面几卷的结局照书上算。</p>' +
+      '<div class="sv-list">' + SV.POINTS.map(function (p) {
+        return '<button type="button" class="sv-item" data-sv-ch="' + esc(p.ch) + '"><span class="sv-s">' + esc(p.series) + '</span><span class="sv-n">' + esc(p.name) + '</span><span class="sv-b">' + esc(p.blurb) + '</span></button>';
+      }).join('') + '</div>';
+    UI.openModal('从某一卷开始', h);
+    var body = doc.getElementById('modalBody');
+    Array.prototype.forEach.call(body.querySelectorAll('[data-sv-ch]'), function (b) {
+      b.addEventListener('click', function () {
+        var ch = b.getAttribute('data-sv-ch');
+        UI.closeModal();
+        SV.newGame(ch);
+        UI.refresh();
+        var inp = doc.getElementById('cmdInput'); if (inp) inp.focus();
+      });
+    });
+  };
+
+  var _title = UI.title;
+  UI.title = function () {
+    var r = _title.apply(this, arguments);
+    var bt = doc.querySelector('.title-screen .title-btns');
+    if (bt && !bt.querySelector('[data-sv]')) {
+      var nw = bt.querySelector('[data-act="new"]');
+      var h = '<button class="btn" type="button" data-sv="pick">从某一卷开始</button>';
+      if (nw) nw.insertAdjacentHTML('afterend', h); else bt.insertAdjacentHTML('afterbegin', h);
+      bt.querySelector('[data-sv]').addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); UI.openStartVol(); });
+    }
+    return r;
+  };
 })(typeof window !== 'undefined' ? window : globalThis);
 
 </script>
